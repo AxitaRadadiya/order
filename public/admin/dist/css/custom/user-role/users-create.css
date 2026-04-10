@@ -1,0 +1,16 @@
+.form-group label {
+  color: #0d2e2e;
+}
+
+.btn-theme-outline.group-toggle-btn {
+  padding: 0.32rem 0.7rem;
+  font-size: 0.74rem;
+}
+
+.icheck-primary label {
+  color: #0d2e2e;
+}
+
+.main-card + .main-card {
+  margin-top: 1.5rem;
+}
