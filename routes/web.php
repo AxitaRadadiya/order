@@ -4,11 +4,15 @@ use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\RoleController;
+use App\Http\Controllers\Admin\MasterController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\ActivityLogController;
 use App\Http\Controllers\Admin\AdminController;
 use App\Http\Controllers\Admin\PermissionController;
 use App\Http\Controllers\Admin\CustomerController;
+use App\Http\Controllers\Admin\CountryController;
+use App\Http\Controllers\Admin\StateController;
+use App\Http\Controllers\Admin\CityController;
 use Illuminate\Support\Facades\Artisan;
 
 
@@ -47,7 +51,16 @@ Route::group(['middleware' => ['auth']], function () {
     Route::get('customers-list', [CustomerController::class,'list'])->name('customers.list');
     Route::resource('customers', CustomerController::class);
 
-    // Admin profile (admin area)re
+    // Master data consolidated index
+    Route::get('master', [MasterController::class, 'index'])->name('master.index');
+    Route::get('countries-list', [CountryController::class,'list'])->name('country.list');
+    Route::resource('country', CountryController::class);
+    Route::get('states-list', [StateController::class,'list'])->name('state.list');
+    Route::resource('state', StateController::class);
+    Route::get('cities-list', [CityController::class,'list'])->name('city.list');
+    Route::resource('city', CityController::class);
+
+    // Admin profile (admin area)
     Route::get('admin/profile', [AdminController::class, 'edit'])->name('admin.profile.edit');
     Route::get('admin/profile/password', [AdminController::class, 'password'])->name('admin.profile.password');
     Route::patch('admin/profile', [AdminController::class, 'update'])->name('admin.profile.update');

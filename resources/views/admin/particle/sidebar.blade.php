@@ -44,6 +44,12 @@
               <p>User & Role</p>
             </a>
           </li>
+          <li class="nav-item">
+            <a href="{{ route('master.index') }}" class="nav-link {{ Request::routeIs('master.*') ? 'active' : '' }}">
+              <i class="nav-icon fas fa-layer-group"></i>
+              <p>Master Data</p>
+            </a>
+          </li>
          
         </ul>
       </li>

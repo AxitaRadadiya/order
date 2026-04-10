@@ -187,6 +187,293 @@ $(document).ready(function () {
         });
     }
     load_customer();
+    // load_Dealstage();
+    function load_Country(){
+
+        var table = $('#CountryTable').DataTable({
+          "paging": true,
+          "lengthChange": true,
+          "searching": true,
+          "ordering": true,
+          "info": true,
+          "autoWidth": false,
+          "responsive": true,
+          "processing": true,
+          "serverSide": true,
+        "order": [0, 'asc'],
+          
+          "ajax":{
+             "url": "{{ route('country.list') }}",
+             "dataType": "json",
+             "type": "GET",
+             "data":{ _token: "{{csrf_token()}}",route:'country.list'}
+          },
+          "columns": [
+             { "data": "id" },
+             { "data": "name" },
+             { "data": "action", "orderable": false }
+          ],
+          aoColumnDefs: [
+             {
+                bSortable: false,
+                aTargets: [ -1 ]
+             }
+          ],
+          "language": {
+                "paginate": {
+                    "previous": "<i class='mdi mdi-chevron-left'>",
+                    "next": "<i class='mdi mdi-chevron-right'>"
+                }
+            },
+            "drawCallback": function () {
+                $('.dataTables_paginate > .pagination').addClass('pagination-rounded');
+
+                $('[data-toggle="tooltip"]').tooltip();
+            }
+        });
+    }
+    
+    $(document).on('click', '.country-date-modal', function () {
+        $('#countryForm').attr('action', '{{ route("country.store") }}');
+        $('#CountryModal').modal('show');
+    });
+
+    $(document).on('click', '.edit-country-date-modal', function () {
+        let countryId = $(this).data('id');
+        let countryName = $(this).data('name');
+
+        $("#country_id").val(countryId);
+        $('#country_name').val(countryName);
+        
+        let updateUrl = '{{ route("country.update", ":id") }}'.replace(':id', countryId);
+        $('#countryForm').attr('action', updateUrl);
+
+        $('#countryForm').append('<input type="hidden" name="_method" value="PUT">');
+        $('#CountryModal').modal('show');
+
+    });
+
+    // Save the Country
+    $(document).on('click', '#saveCountry', function (e) {
+        e.preventDefault();
+
+        // Get input value
+        let country = $('#country_name').val();
+        
+        // Clear previous error messages
+        $('.error').text('');
+        $('input').removeClass('is-invalid');
+
+        let errors = {};
+
+        // Validate the input
+        if (!country) {
+            errors.country = "Country Name is required.";
+        }
+        
+        // If errors exist, show them
+        if (Object.keys(errors).length > 0) {
+            if (errors.country) {
+                $('#country_name').addClass('is-invalid');
+                $('.country-name-error').text(errors.country);
+            }
+            return;
+        }
+
+        // Submit the form if no errors
+        $('#countryForm').submit();
+    });
+    function load_State(){
+
+        var table = $('#StateTable').DataTable({
+          "paging": true,
+          "lengthChange": true,
+          "searching": true,
+          "ordering": true,
+          "info": true,
+          "autoWidth": false,
+          "responsive": true,
+          "processing": true,
+          "serverSide": true,
+        "order": [0, 'asc'],
+          
+          "ajax":{
+             "url": "{{ route('state.list') }}",
+             "dataType": "json",
+             "type": "GET",
+             "data":{ _token: "{{csrf_token()}}",route:'state.list'}
+          },
+          "columns": [
+             { "data": "id" },
+             { "data": "name" },
+             { "data": "action", "orderable": false }
+          ],
+          aoColumnDefs: [
+             {
+                bSortable: false,
+                aTargets: [ -1 ]
+             }
+          ],
+          "language": {
+                "paginate": {
+                    "previous": "<i class='mdi mdi-chevron-left'>",
+                    "next": "<i class='mdi mdi-chevron-right'>"
+                }
+            },
+            "drawCallback": function () {
+                $('.dataTables_paginate > .pagination').addClass('pagination-rounded');
+
+                $('[data-toggle="tooltip"]').tooltip();
+            }
+        });
+    }
+    
+    $(document).on('click', '.state-date-modal', function () {
+        $('#stateForm').attr('action', '{{ route("state.store") }}');
+        $('#StateModal').modal('show');
+    });
+
+    $(document).on('click', '.edit-state-date-modal', function () {
+        let stateId = $(this).data('id');
+        let stateName = $(this).data('name');
+
+        $("#state_id").val(stateId);
+        $('#state_name').val(stateName);
+        
+        let updateUrl = '{{ route("state.update", ":id") }}'.replace(':id', stateId);
+        $('#stateForm').attr('action', updateUrl);
+
+        $('#stateForm').append('<input type="hidden" name="_method" value="PUT">');
+        $('#StateModal').modal('show');
+
+    });
+
+    // Save the State
+    $(document).on('click', '#saveState', function (e) {
+        e.preventDefault();
+
+        // Get input value
+        let state = $('#state_name').val();
+        
+        // Clear previous error messages
+        $('.error').text('');
+        $('input').removeClass('is-invalid');
+
+        let errors = {};
+
+        // Validate the input
+        if (!state) {
+            errors.state = "State Name is required.";
+        }
+        
+        // If errors exist, show them
+        if (Object.keys(errors).length > 0) {
+            if (errors.state) {
+                $('#state_name').addClass('is-invalid');
+                $('.state-name-error').text(errors.state);
+            }
+            return;
+        }
+
+        // Submit the form if no errors
+        $('#stateForm').submit();
+    });
+     function load_City(){
+
+        var table = $('#CityTable').DataTable({
+          "paging": true,
+          "lengthChange": true,
+          "searching": true,
+          "ordering": true,
+          "info": true,
+          "autoWidth": false,
+          "responsive": true,
+          "processing": true,
+          "serverSide": true,
+        "order": [0, 'asc'],
+          
+          "ajax":{
+             "url": "{{ route('city.list') }}",
+             "dataType": "json",
+             "type": "GET",
+             "data":{ _token: "{{csrf_token()}}",route:'city.list'}
+          },
+          "columns": [
+             { "data": "id" },
+             { "data": "name" },
+             { "data": "action", "orderable": false }
+          ],
+          aoColumnDefs: [
+             {
+                bSortable: false,
+                aTargets: [ -1 ]
+             }
+          ],
+          "language": {
+                "paginate": {
+                    "previous": "<i class='mdi mdi-chevron-left'>",
+                    "next": "<i class='mdi mdi-chevron-right'>"
+                }
+            },
+            "drawCallback": function () {
+                $('.dataTables_paginate > .pagination').addClass('pagination-rounded');
+
+                $('[data-toggle="tooltip"]').tooltip();
+            }
+        });
+    }
+    
+    $(document).on('click', '.city-date-modal', function () {
+        $('#cityForm').attr('action', '{{ route("city.store") }}');
+        $('#CityModal').modal('show');
+    });
+
+    $(document).on('click', '.edit-city-date-modal', function () {
+        let cityId = $(this).data('id');
+        let cityName = $(this).data('name');
+
+        $("#city_id").val(cityId);
+        $('#city_name').val(cityName);
+        
+        let updateUrl = '{{ route("city.update", ":id") }}'.replace(':id', cityId);
+        $('#cityForm').attr('action', updateUrl);
+
+        $('#cityForm').append('<input type="hidden" name="_method" value="PUT">');
+        $('#CityModal').modal('show');
+
+    });
+
+    // Save the City
+    $(document).on('click', '#saveCity', function (e) {
+        e.preventDefault();
+
+        // Get input value
+        let city = $('#city_name').val();
+        
+        // Clear previous error messages
+        $('.error').text('');
+        $('input').removeClass('is-invalid');
+
+        let errors = {};
+
+        // Validate the input
+        if (!city) {
+            errors.city = "City Name is required.";
+        }
+        
+        // If errors exist, show them
+        if (Object.keys(errors).length > 0) {
+            if (errors.city) {
+                $('#city_name').addClass('is-invalid');
+                $('.city-name-error').text(errors.city);
+            }
+            return;
+        }
+
+        // Submit the form if no errors
+        $('#cityForm').submit();
+    });
+
 
 
 });
