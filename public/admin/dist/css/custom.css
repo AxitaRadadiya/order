@@ -1,0 +1,32 @@
+.main-header{
+    background: #fff !important;
+    border-bottom: 1px solid;
+    border-image: linear-gradient(0deg, #339d9d, #5CE1E6) 1;
+}
+.sidebar-light-primary .nav-sidebar>.nav-item>.nav-link.active {
+    background: linear-gradient(135deg, #5E60CE, #7F53AC);
+    color: #fff !important;
+}
+.nav-link:hover {
+    background: linear-gradient(135deg, #5E60CE, #7F53AC);
+    color: #fff !important;
+}
+.main-sidebar{
+    background: linear-gradient(0deg, #2D2560, #1E1B4B) !important;
+    border-right: 1px solid;
+    border-image: linear-gradient(0deg, #2D2560, #1E1B4B) 1;
+    overflow: hidden;
+}
+.main-footer {
+    background: #E6F4F4 !important;
+}
+.nav-header {
+    color: #fff !important;
+}
+.nav-link {
+    color: #fff !important;
+    border-radius: 12px !important;
+}
+.brand-link {
+    color: #fff !important;
+}

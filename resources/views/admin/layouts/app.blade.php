@@ -13,7 +13,7 @@
 <div class="wrapper">
 
   <!-- Navbar -->
-  <nav class="main-header navbar navbar-expand navbar-dark">
+  <nav class="main-header navbar navbar-expand">
     @include('admin.particle.navbar')
   </nav>
 
