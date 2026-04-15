@@ -1,7 +1,7 @@
 <!-- Left: Toggle -->
 <ul class="navbar-nav">
   <li class="nav-item">
-    <a class="nav-link" data-widget="pushmenu" href="#" role="button">
+    <a class="nav-link" style="color:#62748E !important;" data-widget="pushmenu" href="#" role="button">
       <i class="fas fa-bars"></i>
     </a>
   </li>
@@ -19,7 +19,7 @@
              style="width:100%;height:100%;object-fit:cover;border-radius:50%;">
       </span>
       <span class="d-none d-md-inline"
-            style="font-size:.83rem;font-weight:600;color:#fff;">
+            style="font-size:.83rem;font-weight:600;color:#62748E;">
         {{ ucfirst(Auth()->user()->name) }}
       </span>
       <i class="fas fa-caret-down ml-1" style="font-size:10px;opacity:.7;color:#fff;"></i>
@@ -53,7 +53,7 @@
   <!-- Fullscreen -->
   <li class="nav-item ml-1">
     <a class="nav-link" data-widget="fullscreen" href="#" role="button" title="Fullscreen"
-       style="width:34px;height:34px;display:flex;align-items:center;justify-content:center;border-radius:7px;">
+       style="width:34px;height:34px;display:flex;align-items:center;justify-content:center;border-radius:7px;color:#62748E !important;">
       <i class="fas fa-expand-arrows-alt" style="font-size:.82rem;"></i>
     </a>
   </li>
@@ -66,7 +66,7 @@
          onclick="event.preventDefault();this.closest('form').submit();"
          title="Logout"
          style="width:34px;height:34px;display:flex;align-items:center;justify-content:center;
-                border-radius:7px;color:rgba(255,255,255,.85) !important;
+                border-radius:7px;color:#62748E !important;
                 border:1px solid rgba(255,255,255,.25);">
         <i class="fas fa-power-off" style="font-size:.82rem;"></i>
       </a>
