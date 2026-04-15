@@ -25,7 +25,7 @@
 
                 @php
                     // Allowed tabs — default to 'category'
-                    $allowedTabs = ['category', 'group', 'size'];
+                    $allowedTabs = ['category', 'group', 'size', 'color'];
                     $activeTab   = in_array(request()->get('tab'), $allowedTabs)
                                     ? request()->get('tab')
                                     : 'category';
@@ -56,6 +56,13 @@
                             <span class="d-none d-lg-block">Size</span>
                         </a>
                     </li>
+                     <li class="nav-item">
+                        <a href="#color" data-toggle="tab" aria-expanded="false"
+                           class="nav-link {{ $activeTab === 'color' ? 'active' : '' }}">
+                            <i class="mdi mdi-palette d-lg-none d-block"></i>
+                            <span class="d-none d-lg-block">Color</span>
+                        </a>
+                    </li>
 
                 </ul>
 
@@ -71,6 +78,9 @@
 
                     <div class="tab-pane {{ $activeTab === 'size' ? 'show active' : '' }}" id="size">
                         @include('admin.item-master.size.index')
+                    </div>
+                    <div class="tab-pane {{ $activeTab === 'color' ? 'show active' : '' }}" id="color">
+                        @include('admin.item-master.color.index')
                     </div>
 
                 </div>

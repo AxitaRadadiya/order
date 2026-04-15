@@ -230,6 +230,7 @@ $(document).ready(function () {
         load_Category();
         load_Group();
         load_Size();
+        load_Color();
  
         // Re-init table when tab is shown (DataTables needs this for hidden tabs)
         $('#masterTab a[data-toggle="tab"]').on('shown.bs.tab', function (e) {
@@ -240,6 +241,7 @@ $(document).ready(function () {
             if (target === '#category') load_Category();
             if (target === '#group')    load_Group();
             if (target === '#size')     load_Size();
+            if(target === '#color')     load_Color();
         });
     }
  
@@ -919,7 +921,107 @@ $(document).ready(function () {
         $('.size-name-error').text('');
         $('input').removeClass('is-invalid');
     });
+ 
+        function load_Color() {
+        if ($.fn.dataTable.isDataTable('#ColorTable')) {
+            $('#ColorTable').DataTable().clear().destroy();
+            $('#ColorTable tbody').empty();
+        }
+ 
+        $('#ColorTable').DataTable({
+            paging:      true,
+            lengthChange: true,
+            searching:   true,
+            ordering:    true,
+            info:        true,
+            autoWidth:   false,
+            responsive:  true,
+            processing:  true,
+            serverSide:  true,
+            order:       [[0, 'asc']],
+            ajax: {
+                url:      "{{ route('color.list') }}",
+                dataType: "json",
+                type:     "GET",
+                data:     { _token: "{{ csrf_token() }}" }
+            },
+            columns: [
+                { data: 'id',     orderable: true  },
+                { data: 'name',   orderable: true  },
+                { data: 'action', orderable: false }
+            ],
+            language: {
+                paginate: {
+                    previous: "<i class='mdi mdi-chevron-left'>",
+                    next:     "<i class='mdi mdi-chevron-right'>"
+                }
+            },
+            drawCallback: function () {
+                $('.dataTables_paginate > .pagination').addClass('pagination-rounded');
+            }
+        });
+    }
+ 
+    $(document).on('click', '.color-date-modal', function () {
+        // Reset form for add mode
+        $('#colorForm')[0].reset();
+        $('#color_id').val('');
+        $('#color_name').val('');
+        $('.color-name-error').text('');
+        $('input').removeClass('is-invalid');
+ 
+        // Restore action to store route and remove any leftover _method=PUT
+        $('#colorForm').attr('action', '{{ route("color.store") }}');
+        $('#colorForm input[name="_method"]').remove();
+ 
+        $('#ColorModal').modal('show');
+    });
 
+    $(document).on('click', '.edit-color-date-modal', function () {
+        var colorId   = $(this).data('id');
+        var colorName = $(this).data('name');
+ 
+        // Reset errors
+        $('.color-name-error').text('');
+        $('input').removeClass('is-invalid');
+ 
+        $('#color_id').val(colorId);
+        $('#color_name').val(colorName);
+ 
+        var updateUrl = '{{ route("color.update", ":id") }}'.replace(':id', colorId);
+        $('#colorForm').attr('action', updateUrl);
+ 
+        // Remove any existing _method field before adding a fresh one
+        $('#colorForm input[name="_method"]').remove();
+        $('#colorForm').append('<input type="hidden" name="_method" value="PUT">');
+ 
+        $('#ColorModal').modal('show');
+    });
+ 
+    $(document).on('click', '#saveColor', function (e) {
+        e.preventDefault();
+ 
+        var name = $.trim($('#color_name').val());
+ 
+        // Clear previous errors
+        $('.error').text('');
+        $('input').removeClass('is-invalid');
+ 
+        if (!name) {
+            $('#color_name').addClass('is-invalid');
+            $('.color-name-error').text('Color Name is required.');
+            return;
+        }
+ 
+        $('#colorForm').submit();
+    });
+ 
+    $('#ColorModal').on('hidden.bs.modal', function () {
+        $('#colorForm input[name="_method"]').remove();
+        $('#colorForm')[0].reset();
+        $('.color-name-error').text('');
+        $('input').removeClass('is-invalid');
+    });
 
 
 });

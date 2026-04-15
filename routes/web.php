@@ -16,6 +16,7 @@ use App\Http\Controllers\Admin\CityController;
 use App\Http\Controllers\Admin\CategoryController;
 use App\Http\Controllers\Admin\GroupController;
 use App\Http\Controllers\Admin\SizeController;
+use App\Http\Controllers\Admin\ColorController;
 use App\Http\Controllers\Admin\ItemMasterController;
 use App\Http\Controllers\Admin\ItemController;
 use App\Http\Controllers\Admin\OrderMasterController;
@@ -75,6 +76,8 @@ Route::group(['middleware' => ['auth']], function () {
     Route::get('items-list', [ItemController::class,'itemList'])->name('items.list');
     Route::resource('items', ItemController::class);
     Route::resource('orders', OrderMasterController::class);
+    Route::get('color-list', [ColorController::class,'list'])->name('color.list');
+    Route::resource('color', ColorController::class);
 
     // Admin profile (admin area)
     Route::get('admin/profile', [AdminController::class, 'edit'])->name('admin.profile.edit');
