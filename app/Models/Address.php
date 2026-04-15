@@ -3,9 +3,11 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Traits\LogsActivity;
 
 class Address extends Model
 {
+    use LogsActivity;
     protected $fillable = [
         'customer_id',
         'billing_attention',

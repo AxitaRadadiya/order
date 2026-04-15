@@ -2,16 +2,16 @@
 <div class="row">
     <div class="col-12">
         <div class="card">
-            <div class="card-header d-flex align-items-center">
-                <h5 class="mb-0">Countries</h5>
+           <div class="card-header d-flex align-items-center">
+                <h5 class="mb-0">Size</h5>
                 <div class="ml-auto">
-                    <a href="#" class="btn btn-success btn-sm waves-effect waves-light country-date-modal">
-                        <i class="fa fa-plus"></i> Add Country
+                    <a href="#" class="btn btn-success btn-sm waves-effect waves-light size-date-modal">
+                        <i class="fa fa-plus"></i> Add Size
                     </a>
                 </div>
             </div>
             <div class="card-body">
-                <table id="CountryTable" class="table dt-responsive nowrap w-100">
+                <table id="SizeTable" class="table dt-responsive nowrap w-100">
                     <thead>
                         <tr>
                             <th>Sr No.</th>
@@ -33,26 +33,26 @@
     </div>
 </div>
 
-{{-- Country Modal --}}
-<div class="modal fade" id="CountryModal" tabindex="-1" role="dialog" aria-labelledby="CountryModalLabel" aria-hidden="true">
+{{-- Size Modal --}}
+<div class="modal fade" id="SizeModal" tabindex="-1" role="dialog" aria-labelledby="SizeModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered" role="document">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="CountryModalLabel">Country</h5>
+                <h5 class="modal-title" id="SizeModalLabel">Size</h5>
                 <button type="button" class="close waves-effect waves-light" data-dismiss="modal" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
                 </button>
             </div>
             <div class="modal-body">
-                <form action="{{ route('country.store') }}" method="POST" id="countryForm">
+                <form action="{{ route('size.store') }}" method="POST" id="sizeForm">
                     @csrf
-                    <input type="hidden" name="country_id" id="country_id">
+                    <input type="hidden" name="size_id" id="size_id">
                     <div class="row">
                         <div class="col-md-12">
                             <div class="form-group">
                                 <label>Name <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control" name="name" id="country_name" value="" required>
-                                <span class="text-danger error country-name-error"></span>
+                                <input type="text" class="form-control" name="name" id="size_name" value="" required>
+                                <span class="text-danger error size-name-error"></span>
                             </div>
                         </div>
                     </div>
@@ -60,7 +60,7 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary waves-effect waves-light" data-dismiss="modal">Close</button>
-                <button type="button" class="btn btn-primary waves-effect waves-light" id="saveCountry">Save</button>
+                <button type="button" class="btn btn-primary waves-effect waves-light" id="saveSize">Save</button>
             </div>
         </div>
     </div>

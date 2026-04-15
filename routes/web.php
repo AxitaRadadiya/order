@@ -13,8 +13,13 @@ use App\Http\Controllers\Admin\CustomerController;
 use App\Http\Controllers\Admin\CountryController;
 use App\Http\Controllers\Admin\StateController;
 use App\Http\Controllers\Admin\CityController;
+use App\Http\Controllers\Admin\CategoryController;
+use App\Http\Controllers\Admin\GroupController;
+use App\Http\Controllers\Admin\SizeController;
+use App\Http\Controllers\Admin\ItemMasterController;
+use App\Http\Controllers\Admin\ItemController;
+use App\Http\Controllers\Admin\OrderMasterController;
 use Illuminate\Support\Facades\Artisan;
-
 
 Route::get('/', function () {
     return redirect()->route('login');
@@ -59,6 +64,17 @@ Route::group(['middleware' => ['auth']], function () {
     Route::resource('state', StateController::class);
     Route::get('cities-list', [CityController::class,'list'])->name('city.list');
     Route::resource('city', CityController::class);
+    Route::get('states-by-country', [CityController::class, 'getStatesByCountry'])->name('states.by.country');
+     Route::get('item-master', [ItemMasterController::class, 'index'])->name('item-master.index');
+    Route::get('category-list', [CategoryController::class,'list'])->name('category.list');
+    Route::resource('category', CategoryController::class);
+    Route::get('group-list', [GroupController::class,'list'])->name('group.list');
+    Route::resource('group', GroupController::class);
+    Route::get('size-list', [SizeController::class,'list'])->name('size.list');
+    Route::resource('size', SizeController::class);
+    Route::get('items-list', [ItemController::class,'itemList'])->name('items.list');
+    Route::resource('items', ItemController::class);
+    Route::resource('orders', OrderMasterController::class);
 
     // Admin profile (admin area)
     Route::get('admin/profile', [AdminController::class, 'edit'])->name('admin.profile.edit');

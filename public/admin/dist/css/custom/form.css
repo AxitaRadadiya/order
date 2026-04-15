@@ -1,0 +1,20 @@
+.page-hero { display: none !important; }
+
+/* Main card/form layout */
+.main-card { background: #fff; border-radius: 8px; box-shadow: 0 6px 18px rgba(18,38,63,0.06); }
+.main-card-head { padding: 16px 20px; border-bottom: 1px solid #f1f3f5; }
+.main-card-title { font-size: 1.05rem; font-weight: 600; display: flex; align-items: center; gap: .5rem; }
+.main-card-body { padding: 20px; }
+
+.form-group label { font-weight: 600; font-size: .95rem; }
+.form-control, .form-control-file { border-radius: 6px; }
+
+.btn { border-radius: 6px; }
+.mt-3.text-right { display: flex; gap: .5rem; justify-content: flex-end; }
+
+/* Responsive tweaks */
+@media (max-width: 768px) {
+  .main-card { margin: 0 8px; }
+  .mt-3.text-right { flex-direction: column-reverse; align-items: stretch; }
+  .mt-3.text-right .btn { width: 100%; }
+}

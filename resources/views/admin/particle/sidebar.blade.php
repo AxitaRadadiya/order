@@ -27,9 +27,21 @@
           <p>Customers</p>
         </a>
       </li>
+      <li class="nav-item">
+        <a href="{{ route('items.index') }}" class="nav-link {{ Request::routeIs('items.*') ? 'active' : '' }}">
+          <i class="nav-icon fas fa-box"></i>
+          <p>Items</p>
+        </a>
+      </li>
+      <li class="nav-item">
+        <a href="{{ route('orders.index') }}" class="nav-link {{ Request::routeIs('orders.*') ? 'active' : '' }}">
+          <i class="nav-icon fas fa-box"></i>
+          <p>Orders</p>
+        </a>
+      </li>
 
-      <li class="nav-item {{ Request::routeIs('roles.*', 'users.*', 'lead-sources.*', 'lead-stages.*', 'items.*', 'category.*') ? 'menu-open' : '' }}">
-        <a href="#" class="nav-link {{ Request::routeIs('roles.*', 'users.*', 'lead-sources.*', 'lead-stages.*', 'items.*', 'category.*') ? 'active' : '' }}">
+      <li class="nav-item {{ Request::routeIs('roles.*', 'users.*', 'master.*', 'item-master.*') ? 'menu-open' : '' }}">
+        <a href="#" class="nav-link {{ Request::routeIs('roles.*', 'users.*', 'master.*', 'item-master.*') ? 'active' : '' }}">
           <i class="nav-icon fas fa-sliders-h"></i>
           <p>
             Settings
@@ -48,6 +60,12 @@
             <a href="{{ route('master.index') }}" class="nav-link {{ Request::routeIs('master.*') ? 'active' : '' }}">
               <i class="nav-icon fas fa-layer-group"></i>
               <p>Master Data</p>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a href="{{ route('item-master.index') }}" class="nav-link {{ Request::routeIs('item-master.*') ? 'active' : '' }}">
+              <i class="nav-icon fas fa-layer-group"></i>
+              <p>Item Master</p>
             </a>
           </li>
          

@@ -174,13 +174,22 @@
             <div class="col-md-4"><div class="form-group"><label>Street</label>
               <input type="text" class="form-control bf" id="b_str" name="billing_street" value="{{ old('billing_street', $addr->billing_street ?? '') }}"></div></div>
             <div class="col-md-4"><div class="form-group"><label>City</label>
-              <input type="text" class="form-control bf" id="b_cty" name="billing_city" value="{{ old('billing_city', $addr->billing_city ?? '') }}"></div></div>
+              <select class="form-control bf" id="b_cty" name="billing_city" data-selected="{{ old('billing_city', $addr->billing_city ?? '') }}">
+                <option value="">-- Select City --</option>
+              </select></div></div>
             <div class="col-md-3"><div class="form-group"><label>State</label>
-              <input type="text" class="form-control bf" id="b_st" name="billing_state" value="{{ old('billing_state', $addr->billing_state ?? '') }}"></div></div>
+              <select class="form-control bf" id="b_st" name="billing_state" data-selected="{{ old('billing_state', $addr->billing_state ?? '') }}">
+                <option value="">-- Select State --</option>
+              </select></div></div>
             <div class="col-md-3"><div class="form-group"><label>PIN Code</label>
               <input type="text" class="form-control bf pin-only" id="b_pin" name="billing_pin_code" value="{{ old('billing_pin_code', $addr->billing_pin_code ?? '') }}" maxlength="6"></div></div>
             <div class="col-md-3"><div class="form-group"><label>Country</label>
-              <input type="text" class="form-control bf" id="b_ctr" name="billing_country" value="{{ old('billing_country', $addr->billing_country ?? 'India') }}"></div></div>
+              <select class="form-control bf" id="b_ctr" name="billing_country">
+                <option value="">-- Select Country --</option>
+                @foreach($countries as $country)
+                  <option value="{{ $country->name }}" data-id="{{ $country->id }}" {{ (old('billing_country', $addr->billing_country ?? 'India'))==$country->name? 'selected' : '' }}>{{ $country->name }}</option>
+                @endforeach
+              </select></div></div>
             <div class="col-md-3"><div class="form-group"><label>GST Number</label>
               <input type="text" class="form-control bf upper" id="b_gst" name="billing_gst_number" value="{{ old('billing_gst_number', $addr->billing_gst_number ?? '') }}"></div></div>
           </div>
@@ -207,13 +216,22 @@
             <div class="col-md-4"><div class="form-group"><label>Street</label>
               <input type="text" class="form-control" id="s_str" name="shipping_street" value="{{ old('shipping_street', $addr->shipping_street ?? '') }}"></div></div>
             <div class="col-md-4"><div class="form-group"><label>City</label>
-              <input type="text" class="form-control" id="s_cty" name="shipping_city" value="{{ old('shipping_city', $addr->shipping_city ?? '') }}"></div></div>
+              <select class="form-control" id="s_cty" name="shipping_city" data-selected="{{ old('shipping_city', $addr->shipping_city ?? '') }}">
+                <option value="">-- Select City --</option>
+              </select></div></div>
             <div class="col-md-3"><div class="form-group"><label>State</label>
-              <input type="text" class="form-control" id="s_st" name="shipping_state" value="{{ old('shipping_state', $addr->shipping_state ?? '') }}"></div></div>
+              <select class="form-control" id="s_st" name="shipping_state" data-selected="{{ old('shipping_state', $addr->shipping_state ?? '') }}">
+                <option value="">-- Select State --</option>
+              </select></div></div>
             <div class="col-md-3"><div class="form-group"><label>PIN Code</label>
               <input type="text" class="form-control pin-only" id="s_pin" name="shipping_pin_code" value="{{ old('shipping_pin_code', $addr->shipping_pin_code ?? '') }}" maxlength="6"></div></div>
             <div class="col-md-3"><div class="form-group"><label>Country</label>
-              <input type="text" class="form-control" id="s_ctr" name="shipping_country" value="{{ old('shipping_country', $addr->shipping_country ?? 'India') }}"></div></div>
+              <select class="form-control" id="s_ctr" name="shipping_country">
+                <option value="">-- Select Country --</option>
+                @foreach($countries as $country)
+                  <option value="{{ $country->name }}" data-id="{{ $country->id }}" {{ (old('shipping_country', $addr->shipping_country ?? 'India'))==$country->name? 'selected' : '' }}>{{ $country->name }}</option>
+                @endforeach
+              </select></div></div>
             <div class="col-md-3"><div class="form-group"><label>GST Number</label>
               <input type="text" class="form-control upper" id="s_gst" name="shipping_gst_number" value="{{ old('shipping_gst_number', $addr->shipping_gst_number ?? '') }}"></div></div>
           </div>
@@ -260,26 +278,68 @@ $(function () {
         $inp.attr('type', $inp.attr('type') === 'password' ? 'text' : 'password');
         $(this).find('i').toggleClass('fa-eye fa-eye-slash');
     });
+  // Data lists from server
+  @php
+    $statesArr = $states->map(function($s){ return ['id'=>$s->id, 'country_id'=>$s->country_id, 'name'=>$s->name]; })->toArray();
+    $citiesArr = $cities->map(function($c){ return ['id'=>$c->id, 'state_id'=>$c->state_id, 'country_id'=>$c->country_id, 'name'=>$c->name]; })->toArray();
+  @endphp
+  var states = @json($statesArr);
+  var cities = @json($citiesArr);
 
-    // Init on load if same_as is checked
-    if ($('#same_as').is(':checked')) lockShipping();
+  function populateStates($select, countryId) {
+    var selected = $select.data('selected') || '';
+    $select.empty().append('<option value="">-- Select State --</option>');
+    states.forEach(function(s){ if(s.country_id == countryId){ var sel = (s.name==selected)?' selected':''; $select.append('<option value="'+s.name+'" data-id="'+s.id+'" data-country-id="'+s.country_id+'"'+sel+'>'+s.name+'</option>'); } });
+  }
+  function populateCities($select, stateId) {
+    var selected = $select.data('selected') || '';
+    $select.empty().append('<option value="">-- Select City --</option>');
+    cities.forEach(function(c){ if(c.state_id == stateId){ var sel = (c.name==selected)?' selected':''; $select.append('<option value="'+c.name+'" data-id="'+c.id+'" data-state-id="'+c.state_id+'" data-country-id="'+c.country_id+'"'+sel+'>'+c.name+'</option>'); } });
+  }
 
-    $('#same_as').on('change', syncShipping);
-    $('.bf').on('input', function () { if ($('#same_as').is(':checked')) syncShipping(); });
-
-    function syncShipping() {
-        if (!$('#same_as').is(':checked')) {
-            $('#shippingFields input').prop('readonly', false).removeClass('bg-light');
-            return;
-        }
-        var map = {s_att:'b_att', s_str:'b_str', s_cty:'b_cty', s_st:'b_st', s_pin:'b_pin', s_ctr:'b_ctr', s_gst:'b_gst'};
-        $.each(map, function(s, b) { $('#'+s).val($('#'+b).val()); });
-        lockShipping();
+  // Initialize billing and shipping selects
+  ['b','s'].forEach(function(prefix){
+    var $country = $('#'+prefix+'_ctr');
+    var $state = $('#'+prefix+'_st');
+    var $city = $('#'+prefix+'_cty');
+    var cid = $country.find(':selected').data('id') || null;
+    if(cid) populateStates($state, cid);
+    var preState = $state.data('selected') || '';
+    if(preState) {
+      var obj = states.find(function(s){ return s.name==preState && (cid==null || s.country_id==cid); });
+      if(obj) populateCities($city, obj.id);
     }
-    function lockShipping() { $('#shippingFields input').prop('readonly', true).addClass('bg-light'); }
 
-    $(document).on('input', '.upper', function () { $(this).val($(this).val().toUpperCase()); });
-    $(document).on('input', '.pin-only', function () { $(this).val($(this).val().replace(/\D/g,'')); });
+    $country.on('change', function(){
+      var newCid = $(this).find(':selected').data('id');
+      populateStates($state, newCid);
+      $city.empty().append('<option value="">-- Select City --</option>');
+    });
+    $state.on('change', function(){
+      var newSid = $(this).find(':selected').data('id');
+      populateCities($city, newSid);
+    });
+  });
+
+  // Init on load if same_as is checked
+  if ($('#same_as').is(':checked')) lockShipping();
+
+  $('#same_as').on('change', syncShipping);
+  $('.bf').on('input change', function () { if ($('#same_as').is(':checked')) syncShipping(); });
+
+  function syncShipping() {
+    if (!$('#same_as').is(':checked')) {
+      $('#shippingFields input, #shippingFields select').prop('readonly', false).removeClass('bg-light');
+      return;
+    }
+    var map = {s_att:'b_att', s_str:'b_str', s_cty:'b_cty', s_st:'b_st', s_pin:'b_pin', s_ctr:'b_ctr', s_gst:'b_gst'};
+    $.each(map, function(s, b) { $('#'+s).val($('#'+b).val()).trigger('change'); });
+    lockShipping();
+  }
+  function lockShipping() { $('#shippingFields input, #shippingFields select').prop('readonly', true).addClass('bg-light'); }
+
+  $(document).on('input', '.upper', function () { $(this).val($(this).val().toUpperCase()); });
+  $(document).on('input', '.pin-only', function () { $(this).val($(this).val().replace(/\D/g,'')); });
 });
 </script>
 @endpush

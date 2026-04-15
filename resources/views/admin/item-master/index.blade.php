@@ -1,15 +1,15 @@
 @extends('admin.layouts.app')
-@section('title', 'Master Manage')
+@section('title', 'Item Master')
 @section('content')
 
 <div class="row">
     <div class="col-12">
         <div class="page-title-box d-flex align-items-center justify-content-between">
-            <h4 class="mb-0 font-size-18"></h4>
+            <h4 class="mb-0 font-size-18">Item Master</h4>
             <div class="page-title-right">
                 <ol class="breadcrumb m-0">
                     <li class="breadcrumb-item"><a href="{{ route('dashboard') }}">Dashboard</a></li>
-                    <li class="breadcrumb-item active">Master Manage</li>
+                    <li class="breadcrumb-item active">Item Master</li>
                 </ol>
             </div>
         </div>
@@ -21,39 +21,39 @@
         <div class="card">
             <div class="card-body">
 
-                <h4 class="card-title">Master Manage</h4>
+                <h4 class="card-title">Item Master</h4>
 
                 @php
-                    // Allowed tabs — default to 'country'
-                    $allowedTabs = ['country', 'state', 'city'];
+                    // Allowed tabs — default to 'category'
+                    $allowedTabs = ['category', 'group', 'size'];
                     $activeTab   = in_array(request()->get('tab'), $allowedTabs)
                                     ? request()->get('tab')
-                                    : 'country';
+                                    : 'category';
                 @endphp
 
                 <ul class="nav nav-tabs mb-3" id="masterTab" role="tablist">
 
                     <li class="nav-item">
-                        <a href="#country" data-toggle="tab" aria-expanded="true"
-                           class="nav-link {{ $activeTab === 'country' ? 'active' : '' }}">
+                        <a href="#category" data-toggle="tab" aria-expanded="true"
+                           class="nav-link {{ $activeTab === 'category' ? 'active' : '' }}">
                             <i class="mdi mdi-home-variant d-lg-none d-block"></i>
-                            <span class="d-none d-lg-block">Country</span>
+                            <span class="d-none d-lg-block">Category</span>
                         </a>
                     </li>
 
                     <li class="nav-item">
-                        <a href="#state" data-toggle="tab" aria-expanded="false"
-                           class="nav-link {{ $activeTab === 'state' ? 'active' : '' }}">
-                            <i class="mdi mdi-map d-lg-none d-block"></i>
-                            <span class="d-none d-lg-block">State</span>
+                        <a href="#group" data-toggle="tab" aria-expanded="false"
+                           class="nav-link {{ $activeTab === 'group' ? 'active' : '' }}">
+                            <i class="mdi mdi-account-group d-lg-none d-block"></i>
+                            <span class="d-none d-lg-block">Group</span>
                         </a>
                     </li>
 
                     <li class="nav-item">
-                        <a href="#city" data-toggle="tab" aria-expanded="false"
-                           class="nav-link {{ $activeTab === 'city' ? 'active' : '' }}">
-                            <i class="mdi mdi-city d-lg-none d-block"></i>
-                            <span class="d-none d-lg-block">City</span>
+                        <a href="#size" data-toggle="tab" aria-expanded="false"
+                           class="nav-link {{ $activeTab === 'size' ? 'active' : '' }}">
+                            <i class="mdi mdi-ruler d-lg-none d-block"></i>
+                            <span class="d-none d-lg-block">Size</span>
                         </a>
                     </li>
 
@@ -61,16 +61,16 @@
 
                 <div class="tab-content">
 
-                    <div class="tab-pane {{ $activeTab === 'country' ? 'show active' : '' }}" id="country">
-                        @include('admin.master.country.index')
+                    <div class="tab-pane {{ $activeTab === 'category' ? 'show active' : '' }}" id="category">
+                        @include('admin.item-master.category.index')
                     </div>
 
-                    <div class="tab-pane {{ $activeTab === 'state' ? 'show active' : '' }}" id="state">
-                        @include('admin.master.state.index')
+                    <div class="tab-pane {{ $activeTab === 'group' ? 'show active' : '' }}" id="group">
+                        @include('admin.item-master.group.index')
                     </div>
 
-                    <div class="tab-pane {{ $activeTab === 'city' ? 'show active' : '' }}" id="city">
-                        @include('admin.master.city.index')
+                    <div class="tab-pane {{ $activeTab === 'size' ? 'show active' : '' }}" id="size">
+                        @include('admin.item-master.size.index')
                     </div>
 
                 </div>

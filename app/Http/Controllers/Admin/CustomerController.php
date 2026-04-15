@@ -6,6 +6,9 @@ use App\Http\Controllers\Controller;
 use App\Models\Customer;
 use App\Models\Address;
 use App\Models\BankDetail;
+use App\Models\Country;
+use App\Models\State;
+use App\Models\City;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -20,7 +23,10 @@ class CustomerController extends Controller
 
     public function create()
     {
-        return view('admin.customer.create');
+        $countries = Country::orderBy('name')->get();
+        $states = State::orderBy('name')->get();
+        $cities = City::orderBy('name')->get();
+        return view('admin.customer.create', compact('countries', 'states', 'cities'));
     }
 
     public function store(Request $request)
@@ -119,7 +125,10 @@ class CustomerController extends Controller
     public function edit(Customer $customer)
     {
         $customer->load(['address', 'bankDetail']);
-        return view('admin.customer.edit', compact('customer'));
+        $countries = Country::orderBy('name')->get();
+        $states = State::orderBy('name')->get();
+        $cities = City::orderBy('name')->get();
+        return view('admin.customer.edit', compact('customer', 'countries', 'states', 'cities'));
     }
 
     public function update(Request $request, Customer $customer)
