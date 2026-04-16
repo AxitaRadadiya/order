@@ -7,7 +7,7 @@
   <div class="container-fluid">
     <div class="row mb-2">
       <div class="col-12 text-center">
-        <h1 class="m-0"><i class="fas fa-user mr-2 text-teal"></i>Profile</h1>
+        <h1 class="m-0"><i class="mr-2 text-teal"></i>Profile</h1>
       </div>
     </div>
   </div>
@@ -53,7 +53,7 @@
                 @error('profile_image') <small class="text-danger">{{ $message }}</small> @enderror
               </div>
 
-              <button class="btn btn-teal" type="submit">Save Profile</button>
+              <button class="btn-submit" type="submit">Save Profile</button>
             </form>
           </div>
         </div>
