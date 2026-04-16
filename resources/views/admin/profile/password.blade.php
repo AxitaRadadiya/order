@@ -7,7 +7,7 @@
   <div class="container-fluid">
     <div class="row mb-2">
       <div class="col-12 text-center">
-        <h1 class="m-0"><i class="fas fa-key mr-2 text-teal"></i>Change Password</h1>
+        <h1 class="m-0"><i class="mr-2 text-teal"></i>Change Password</h1>
       </div>
     </div>
   </div>
@@ -43,7 +43,7 @@
                 <input type="password" name="password_confirmation" class="form-control" required>
               </div>
 
-              <button class="btn btn-teal" type="submit">Update Password</button>
+              <button class="btn-submit" type="submit">Update Password</button>
             </form>
           </div>
         </div>
