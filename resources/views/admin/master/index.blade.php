@@ -57,6 +57,14 @@
                         </a>
                     </li>
 
+                    <li class="nav-item">
+                        <a href="#customerType" data-toggle="tab" aria-expanded="false"
+                           class="nav-link {{ $activeTab === 'customerType' ? 'active' : '' }}">
+                            <i class="mdi mdi-account-group d-lg-none d-block"></i>
+                            <span class="d-none d-lg-block">Customer Type</span>
+                        </a>
+                    </li>
+
                 </ul>
 
                 <div class="tab-content">
@@ -71,6 +79,10 @@
 
                     <div class="tab-pane {{ $activeTab === 'city' ? 'show active' : '' }}" id="city">
                         @include('admin.master.city.index')
+                    </div>
+
+                     <div class="tab-pane {{ $activeTab === 'customerType' ? 'show active' : '' }}" id="customerType">
+                        @include('admin.master.customerType.index')
                     </div>
 
                 </div>

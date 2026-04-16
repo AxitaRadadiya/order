@@ -42,25 +42,25 @@
       <div class="card card-outline card-primary">
         <div class="card-header">
           <h3 class="card-title"><i class="fas fa-user mr-1"></i>Basic Information</h3>
-          <div class="card-tools"><button type="button" class="btn btn-tool" data-card-widget="collapse"><i class="fas fa-minus"></i></button></div>
+          <!-- <div class="card-tools"><button type="button" class="btn btn-tool" data-card-widget="collapse"><i class="fas fa-minus"></i></button></div> -->
         </div>
         <div class="card-body">
           <div class="row">
-            <div class="col-md-4">
+            <div class="col-md-3">
               <div class="form-group">
                 <label>Name <span class="text-danger">*</span></label>
                 <input type="text" class="form-control @error('name') is-invalid @enderror" name="name" value="{{ old('name') }}" placeholder="Full name" required>
                 @error('name')<div class="invalid-feedback">{{ $message }}</div>@enderror
               </div>
             </div>
-            <div class="col-md-4">
+            <div class="col-md-3">
               <div class="form-group">
                 <label>Company Name</label>
                 <input type="text" class="form-control @error('company_name') is-invalid @enderror" name="company_name" value="{{ old('company_name') }}" placeholder="Company name">
                 @error('company_name')<div class="invalid-feedback">{{ $message }}</div>@enderror
               </div>
             </div>
-            <div class="col-md-4">
+            <div class="col-md-3">
               <div class="form-group">
                 <label>Email <span class="text-danger">*</span></label>
                 <input type="email" class="form-control @error('email') is-invalid @enderror" name="email" value="{{ old('email') }}" placeholder="Email address" required>
@@ -69,14 +69,8 @@
             </div>
             <div class="col-md-3">
               <div class="form-group">
-                <label>Phone</label>
-                <input type="text" class="form-control" name="phone" value="{{ old('phone') }}" placeholder="Phone number">
-              </div>
-            </div>
-            <div class="col-md-3">
-              <div class="form-group">
-                <label>Website</label>
-                <input type="url" class="form-control" name="website" value="{{ old('website') }}" placeholder="https://example.com">
+                <label>Mobile Number</label>
+                <input type="text" class="form-control" name="phone" value="{{ old('phone') }}" placeholder="Mobile number">
               </div>
             </div>
             <div class="col-md-3">
@@ -93,6 +87,18 @@
             </div>
             <div class="col-md-3">
               <div class="form-group">
+                <label>Confirm Password <span class="text-danger">*</span></label>
+                <div class="input-group">
+                  <input type="password" class="form-control @error('password_confirmation') is-invalid @enderror" id="password_confirmation" name="password_confirmation" placeholder="Confirm Password" required>
+                  <div class="input-group-append">
+                    <button class="btn btn-outline-secondary toggle-password" type="button" data-target="password_confirmation"><i class="fas fa-eye"></i></button>
+                  </div>
+                  @error('password_confirmation')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                </div>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="form-group">
                 <label>Payment Terms</label>
                 <select class="form-control" name="payment_terms">
                   <option value="">-- Select --</option>
@@ -102,206 +108,135 @@
                 </select>
               </div>
             </div>
-          </div>
-        </div>
-      </div>
-
-      {{-- 2. Tax & Financial --}}
-      <div class="card card-outline card-success">
-        <div class="card-header">
-          <h3 class="card-title"><i class="fas fa-rupee-sign mr-1"></i>Tax & Financial Details</h3>
-          <div class="card-tools"><button type="button" class="btn btn-tool" data-card-widget="collapse"><i class="fas fa-minus"></i></button></div>
-        </div>
-        <div class="card-body">
-          <div class="row">
             <div class="col-md-3">
               <div class="form-group">
-                <label>GST Treatment</label>
-                <select class="form-control" name="gst_treatment">
-                  <option value="">-- Select --</option>
-                  @foreach(['registered_business_regular'=>'Registered – Regular','registered_business_composition'=>'Registered – Composition','unregistered_business'=>'Unregistered Business','consumer'=>'Consumer','overseas'=>'Overseas','sez'=>'Special Economic Zone'] as $val=>$label)
-                    <option value="{{ $val }}" {{ old('gst_treatment')==$val?'selected':'' }}>{{ $label }}</option>
-                  @endforeach
-                </select>
-              </div>
-            </div>
-            <div class="col-md-3">
-              <div class="form-group">
-                <label>GST Number</label>
-                <input type="text" class="form-control upper" name="gst_number" value="{{ old('gst_number') }}" placeholder="22AAAAA0000A1Z5" maxlength="15">
-              </div>
-            </div>
-            <div class="col-md-3">
-              <div class="form-group">
-                <label>PAN Number</label>
-                <input type="text" class="form-control upper" name="pan_number" value="{{ old('pan_number') }}" placeholder="ABCDE1234F" maxlength="10">
-              </div>
-            </div>
-            <div class="col-md-3">
-              <div class="form-group">
-                <label>Place of Supply</label>
-                <select class="form-control" name="place_of_supply">
-                  <option value="">-- Select State --</option>
-                  @foreach(['Andhra Pradesh','Arunachal Pradesh','Assam','Bihar','Chhattisgarh','Goa','Gujarat','Haryana','Himachal Pradesh','Jharkhand','Karnataka','Kerala','Madhya Pradesh','Maharashtra','Manipur','Meghalaya','Mizoram','Nagaland','Odisha','Punjab','Rajasthan','Sikkim','Tamil Nadu','Telangana','Tripura','Uttar Pradesh','Uttarakhand','West Bengal','Andaman and Nicobar Islands','Chandigarh','Dadra and Nagar Haveli and Daman and Diu','Delhi','Jammu and Kashmir','Ladakh','Lakshadweep','Puducherry'] as $state)
-                    <option value="{{ $state }}" {{ old('place_of_supply')==$state?'selected':'' }}>{{ $state }}</option>
-                  @endforeach
-                </select>
-              </div>
-            </div>
-            <div class="col-md-3">
-              <div class="form-group">
-                <label>Discount (%)</label>
-                <input type="number" class="form-control" name="discount" value="{{ old('discount',0) }}" min="0" max="100" step="0.01">
-              </div>
-            </div>
-            <div class="col-md-3">
-              <div class="form-group">
-                <label>Credit Limit (₹)</label>
-                <input type="number" class="form-control" name="credit_limit" value="{{ old('credit_limit',0) }}" min="0" step="0.01">
-              </div>
+                  <label>Place of Supply</label>
+                  <select class="form-control" name="place_of_supply">
+                    <option value="">-- Select State --</option>
+                    @foreach($states->pluck('name')->unique()->sort()->values() as $stateName)
+                      <option value="{{ $stateName }}" {{ old('place_of_supply') == $stateName ? 'selected' : '' }}>
+                        {{ $stateName }}
+                      </option>
+                    @endforeach
+                  </select>
+                </div>
             </div>
           </div>
         </div>
       </div>
 
-      {{-- 3. Billing Address --}}
-      <div class="card card-outline card-warning">
-        <div class="card-header">
-          <h3 class="card-title"><i class="fas fa-map-marker-alt mr-1"></i>Billing Address</h3>
-          <div class="card-tools"><button type="button" class="btn btn-tool" data-card-widget="collapse"><i class="fas fa-minus"></i></button></div>
+      {{-- 3 & 4. Billing + Shipping Address (Side by Side) --}}
+      <div class="row">
+        <div class="col-lg-6">
+          <div class="card card-outline card-warning h-100">
+            <div class="card-header">
+              <h3 class="card-title"><i class="fas fa-map-marker-alt mr-1"></i>Billing Address</h3>
+            </div>
+            <div class="card-body">
+              <div class="row">
+                <div class="col-md-6">
+                  <div class="form-group"><label>Attention</label>
+                    <input type="text" class="form-control bf" id="b_att" name="billing_attention" value="{{ old('billing_attention') }}" placeholder="Attention"></div>
+                </div>
+                <div class="col-md-6">
+                  <div class="form-group"><label>Street</label>
+                    <input type="text" class="form-control bf" id="b_str" name="billing_street" value="{{ old('billing_street') }}" placeholder="Street"></div>
+                </div>
+                <div class="col-md-6">
+                  <div class="form-group"><label>City</label>
+                    <select class="form-control" id="b_cty" name="billing_city" data-selected="{{ old('billing_city') }}">
+                      <option value="">-- Select City --</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="form-group"><label>State</label>
+                    <select class="form-control bf" id="b_st" name="billing_state" data-selected="{{ old('billing_state') }}">
+                      <option value="">-- Select State --</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="form-group"><label>PIN Code</label>
+                    <input type="text" class="form-control bf pin-only" id="b_pin" name="billing_pin_code" value="{{ old('billing_pin_code') }}" placeholder="PIN Code" maxlength="6"></div>
+                </div>
+                <div class="col-md-6">
+                  <div class="form-group"><label>Country</label>
+                    <select class="form-control bf" id="b_ctr" name="billing_country">
+                      <option value="">-- Select Country --</option>
+                      @foreach($countries as $country)
+                        <option value="{{ $country->name }}" data-id="{{ $country->id }}" {{ old('billing_country','India')==$country->name? 'selected' : '' }}>{{ $country->name }}</option>
+                      @endforeach
+                    </select>
+                  </div>
+                </div>
+                <div class="col-md-12">
+                  <div class="form-group"><label>GST Number</label>
+                    <input type="text" class="form-control bf upper" id="b_gst" name="billing_gst_number" value="{{ old('billing_gst_number') }}" placeholder="GST Number"></div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
-        <div class="card-body">
-          <div class="row">
-            <div class="col-md-4">
-              <div class="form-group"><label>Attention</label>
-                <input type="text" class="form-control bf" id="b_att" name="billing_attention" value="{{ old('billing_attention') }}" placeholder="Attention"></div>
-            </div>
-            <div class="col-md-4">
-              <div class="form-group"><label>Street</label>
-                <input type="text" class="form-control bf" id="b_str" name="billing_street" value="{{ old('billing_street') }}" placeholder="Street"></div>
-            </div>
-            <div class="col-md-4">
-              <div class="form-group"><label>City</label>
-                <select class="form-control" id="b_cty" name="billing_city" data-selected="{{ old('billing_city') }}">
-                  <option value="">-- Select City --</option>
-                </select>
+
+        <div class="col-lg-6">
+          <div class="card card-outline card-info h-100">
+            <div class="card-header">
+              <h3 class="card-title"><i class="fas fa-shipping-fast mr-1"></i>Shipping Address</h3>
+              <div class="card-tools d-flex align-items-center">
+                <div class="custom-control custom-switch mr-3">
+                  <input type="checkbox" class="custom-control-input" id="same_as" name="same_as" value="1" {{ old('same_as')?'checked':'' }}>
+                  <label class="custom-control-label font-weight-normal" for="same_as">Same as Billing</label>
+                </div>
               </div>
             </div>
-            <div class="col-md-3">
-              <div class="form-group"><label>State</label>
-                <select class="form-control bf" id="b_st" name="billing_state" data-selected="{{ old('billing_state') }}">
-                  <option value="">-- Select State --</option>
-                </select>
+            <div class="card-body" id="shippingFields">
+              <div class="row">
+                <div class="col-md-6">
+                  <div class="form-group"><label>Attention</label>
+                    <input type="text" class="form-control" id="s_att" name="shipping_attention" value="{{ old('shipping_attention') }}" placeholder="Attention"></div>
+                </div>
+                <div class="col-md-6">
+                  <div class="form-group"><label>Street</label>
+                    <input type="text" class="form-control" id="s_str" name="shipping_street" value="{{ old('shipping_street') }}" placeholder="Street"></div>
+                </div>
+                <div class="col-md-6">
+                  <div class="form-group"><label>City</label>
+                    <select class="form-control" id="s_cty" name="shipping_city" data-selected="{{ old('shipping_city') }}">
+                      <option value="">-- Select City --</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="form-group"><label>State</label>
+                    <select class="form-control" id="s_st" name="shipping_state" data-selected="{{ old('shipping_state') }}">
+                      <option value="">-- Select State --</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="form-group"><label>PIN Code</label>
+                    <input type="text" class="form-control pin-only" id="s_pin" name="shipping_pin_code" value="{{ old('shipping_pin_code') }}" placeholder="PIN Code" maxlength="6"></div>
+                </div>
+                <div class="col-md-6">
+                  <div class="form-group"><label>Country</label>
+                    <select class="form-control" id="s_ctr" name="shipping_country">
+                      <option value="">-- Select Country --</option>
+                      @foreach($countries as $country)
+                        <option value="{{ $country->name }}" data-id="{{ $country->id }}" {{ old('shipping_country','India')==$country->name? 'selected' : '' }}>{{ $country->name }}</option>
+                      @endforeach
+                    </select>
+                  </div>
+                </div>
+                <div class="col-md-12">
+                  <div class="form-group"><label>GST Number</label>
+                    <input type="text" class="form-control upper" id="s_gst" name="shipping_gst_number" value="{{ old('shipping_gst_number') }}" placeholder="GST Number"></div>
+                </div>
               </div>
-            </div>
-            <div class="col-md-3">
-              <div class="form-group"><label>PIN Code</label>
-                <input type="text" class="form-control bf pin-only" id="b_pin" name="billing_pin_code" value="{{ old('billing_pin_code') }}" placeholder="PIN Code" maxlength="6"></div>
-            </div>
-            <div class="col-md-3">
-              <div class="form-group"><label>Country</label>
-                <select class="form-control bf" id="b_ctr" name="billing_country">
-                  <option value="">-- Select Country --</option>
-                  @foreach($countries as $country)
-                    <option value="{{ $country->name }}" data-id="{{ $country->id }}" {{ old('billing_country','India')==$country->name? 'selected' : '' }}>{{ $country->name }}</option>
-                  @endforeach
-                </select>
-              </div>
-            </div>
-            <div class="col-md-3">
-              <div class="form-group"><label>GST Number</label>
-                <input type="text" class="form-control bf upper" id="b_gst" name="billing_gst_number" value="{{ old('billing_gst_number') }}" placeholder="GST Number"></div>
             </div>
           </div>
         </div>
       </div>
-
-      {{-- 4. Shipping Address --}}
-      <div class="card card-outline card-info">
-        <div class="card-header">
-          <h3 class="card-title"><i class="fas fa-shipping-fast mr-1"></i>Shipping Address</h3>
-          <div class="card-tools d-flex align-items-center">
-            <div class="custom-control custom-switch mr-3">
-              <input type="checkbox" class="custom-control-input" id="same_as" name="same_as" value="1" {{ old('same_as')?'checked':'' }}>
-              <label class="custom-control-label font-weight-normal" for="same_as">Same as Billing</label>
-            </div>
-            <button type="button" class="btn btn-tool" data-card-widget="collapse"><i class="fas fa-minus"></i></button>
-          </div>
-        </div>
-        <div class="card-body" id="shippingFields">
-          <div class="row">
-            <div class="col-md-4">
-              <div class="form-group"><label>Attention</label>
-                <input type="text" class="form-control" id="s_att" name="shipping_attention" value="{{ old('shipping_attention') }}" placeholder="Attention"></div>
-            </div>
-            <div class="col-md-4">
-              <div class="form-group"><label>Street</label>
-                <input type="text" class="form-control" id="s_str" name="shipping_street" value="{{ old('shipping_street') }}" placeholder="Street"></div>
-            </div>
-            <div class="col-md-4">
-              <div class="form-group"><label>City</label>
-                <select class="form-control" id="s_cty" name="shipping_city" data-selected="{{ old('shipping_city') }}">
-                  <option value="">-- Select City --</option>
-                </select>
-              </div>
-            </div>
-            <div class="col-md-3">
-              <div class="form-group"><label>State</label>
-                <select class="form-control" id="s_st" name="shipping_state" data-selected="{{ old('shipping_state') }}">
-                  <option value="">-- Select State --</option>
-                </select>
-              </div>
-            </div>
-            <div class="col-md-3">
-              <div class="form-group"><label>PIN Code</label>
-                <input type="text" class="form-control pin-only" id="s_pin" name="shipping_pin_code" value="{{ old('shipping_pin_code') }}" placeholder="PIN Code" maxlength="6"></div>
-            </div>
-            <div class="col-md-3">
-              <div class="form-group"><label>Country</label>
-                <select class="form-control" id="s_ctr" name="shipping_country">
-                  <option value="">-- Select Country --</option>
-                  @foreach($countries as $country)
-                    <option value="{{ $country->name }}" data-id="{{ $country->id }}" {{ old('shipping_country','India')==$country->name? 'selected' : '' }}>{{ $country->name }}</option>
-                  @endforeach
-                </select>
-              </div>
-            </div>
-            <div class="col-md-3">
-              <div class="form-group"><label>GST Number</label>
-                <input type="text" class="form-control upper" id="s_gst" name="shipping_gst_number" value="{{ old('shipping_gst_number') }}" placeholder="GST Number"></div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {{-- 5. Bank Details --}}
-      <div class="card card-outline card-secondary">
-        <div class="card-header">
-          <h3 class="card-title"><i class="fas fa-university mr-1"></i>Bank Details</h3>
-          <div class="card-tools"><button type="button" class="btn btn-tool" data-card-widget="collapse"><i class="fas fa-minus"></i></button></div>
-        </div>
-        <div class="card-body">
-          <div class="row">
-            <div class="col-md-3">
-              <div class="form-group"><label>Bank Name</label>
-                <input type="text" class="form-control" name="bank_name" value="{{ old('bank_name') }}" placeholder="Bank name"></div>
-            </div>
-            <div class="col-md-3">
-              <div class="form-group"><label>Account Number</label>
-                <input type="text" class="form-control" name="account_no" value="{{ old('account_no') }}" placeholder="Account number"></div>
-            </div>
-            <div class="col-md-3">
-              <div class="form-group"><label>IFSC Code</label>
-                <input type="text" class="form-control upper" name="ifsc_code" value="{{ old('ifsc_code') }}" placeholder="SBIN0000001" maxlength="11"></div>
-            </div>
-            <div class="col-md-3">
-              <div class="form-group"><label>Branch Name</label>
-                <input type="text" class="form-control" name="branch_name" value="{{ old('branch_name') }}" placeholder="Branch name"></div>
-            </div>
-          </div>
-        </div>
-      </div>
-
       <div class="card">
         <div class="card-body text-right">
           <a href="{{ route('customers.index') }}" class="btn btn-secondary mr-2"><i class="fas fa-times mr-1"></i>Cancel</a>

@@ -20,10 +20,11 @@ use App\Http\Controllers\Admin\ColorController;
 use App\Http\Controllers\Admin\ItemMasterController;
 use App\Http\Controllers\Admin\ItemController;
 use App\Http\Controllers\Admin\OrderMasterController;
+use App\Http\Controllers\Admin\CustomerTypeController;
 use Illuminate\Support\Facades\Artisan;
 
 Route::get('/', function () {
-    return redirect()->route('login');
+    return view('frontend.home');
 });
 
 Route::get('/clear-caches', function () {
@@ -78,6 +79,8 @@ Route::group(['middleware' => ['auth']], function () {
     Route::resource('orders', OrderMasterController::class);
     Route::get('color-list', [ColorController::class,'list'])->name('color.list');
     Route::resource('color', ColorController::class);
+    Route::get('customer-type-list', [CustomerTypeController::class,'list'])->name('customer-type.list');
+    Route::resource('customer-type', CustomerTypeController::class);
 
     // Admin profile (admin area)
     Route::get('admin/profile', [AdminController::class, 'edit'])->name('admin.profile.edit');

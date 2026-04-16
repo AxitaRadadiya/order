@@ -231,6 +231,7 @@ $(document).ready(function () {
         load_Group();
         load_Size();
         load_Color();
+        load_customerType();
  
         // Re-init table when tab is shown (DataTables needs this for hidden tabs)
         $('#masterTab a[data-toggle="tab"]').on('shown.bs.tab', function (e) {
@@ -242,6 +243,7 @@ $(document).ready(function () {
             if (target === '#group')    load_Group();
             if (target === '#size')     load_Size();
             if(target === '#color')     load_Color();
+            if(target === '#customer-type') load_customerType();
         });
     }
  
@@ -1022,6 +1024,106 @@ $(document).ready(function () {
         $('.color-name-error').text('');
         $('input').removeClass('is-invalid');
     });
+            function load_customerType() {
+            if ($.fn.dataTable.isDataTable('#CustomerTypeTable')) {
+                $('#CustomerTypeTable').DataTable().clear().destroy();
+                $('#CustomerTypeTable tbody').empty();
+            }
+    
+            $('#CustomerTypeTable').DataTable({
+                paging:      true,
+                lengthChange: true,
+                searching:   true,
+                ordering:    true,
+                info:        true,
+                autoWidth:   false,
+                responsive:  true,
+                processing:  true,
+                serverSide:  true,
+                order:       [[0, 'asc']],
+                ajax: {
+                    url:      "{{ route('customer-type.list') }}",
+                    dataType: "json",
+                    type:     "GET",
+                    data:     { _token: "{{ csrf_token() }}" }
+                },
+                columns: [
+                    { data: 'id',     orderable: true  },
+                    { data: 'name',   orderable: true  },
+                    { data: 'action', orderable: false }
+                ],
+                language: {
+                    paginate: {
+                        previous: "<i class='mdi mdi-chevron-left'>",
+                        next:     "<i class='mdi mdi-chevron-right'>"
+                    }
+                },
+                drawCallback: function () {
+                    $('.dataTables_paginate > .pagination').addClass('pagination-rounded');
+                }
+            });
+        }
+    
+        $(document).on('click', '.customer-type-modal', function () {
+            // Reset form for add mode
+            $('#customerTypeForm')[0].reset();
+            $('#customer_type_id').val('');
+            $('#customer_type_name').val('');
+            $('.customer-type-name-error').text('');
+            $('input').removeClass('is-invalid');
+    
+            // Restore action to store route and remove any leftover _method=PUT
+            $('#customerTypeForm').attr('action', '{{ route("customer-type.store") }}');
+            $('#customerTypeForm input[name="_method"]').remove();
+    
+            $('#CustomerTypeModal').modal('show');
+        });
+
+        $(document).on('click', '.edit-customer-type-modal', function () {
+            var customerTypeId   = $(this).data('id');
+            var customerTypeName = $(this).data('name');
+    
+            // Reset errors
+            $('.customer-type-name-error').text('');
+            $('input').removeClass('is-invalid');
+    
+            $('#customer_type_id').val(customerTypeId);
+            $('#customer_type_name').val(customerTypeName);
+    
+            var updateUrl = '{{ route("customer-type.update", ":id") }}'.replace(':id', customerTypeId);
+            $('#customerTypeForm').attr('action', updateUrl);
+    
+            // Remove any existing _method field before adding a fresh one
+            $('#customerTypeForm input[name="_method"]').remove();
+            $('#customerTypeForm').append('<input type="hidden" name="_method" value="PUT">');
+    
+            $('#CustomerTypeModal').modal('show');
+        });
+    
+        $(document).on('click', '#saveCustomerType', function (e) {
+            e.preventDefault();
+    
+            var name = $.trim($('#customer_type_name').val());
+    
+            // Clear previous errors
+            $('.error').text('');
+            $('input').removeClass('is-invalid');
+    
+            if (!name) {
+                $('#customer_type_name').addClass('is-invalid');
+                $('.customer-type-name-error').text('Customer Type Name is required.');
+                return;
+            }
+    
+            $('#customerTypeForm').submit();
+        });
+    
+        $('#CustomerTypeModal').on('hidden.bs.modal', function () {
+            $('#customerTypeForm input[name="_method"]').remove();
+            $('#customerTypeForm')[0].reset();
+            $('.customer-type-name-error').text('');
+            $('input').removeClass('is-invalid');
+        });
 
 
 });

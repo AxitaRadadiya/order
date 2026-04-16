@@ -227,6 +227,12 @@ html,body{min-height:100%;font-family:var(--sans);background:var(--bg);color:var
         <svg class="arrow" width="15" height="15" fill="#fff" viewBox="0 0 24 24"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6z"/></svg>
       </button>
     </form>
+    
+    @if (Route::has('register'))
+      <p style="text-align:center;margin-top:12px">
+        <a class="forgot" href="{{ route('register') }}">Create an account</a>
+      </p>
+    @endif
 
     <div class="card-foot">Secured by <span>{{ config('app.name') }}</span> · v2.0</div>
   </div>
