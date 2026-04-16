@@ -36,10 +36,10 @@
 
     <div class="main-card">
       <div class="main-card-head">
-        <div class="main-card-title">
+        <!-- <div class="main-card-title">
           <i class="fas fa-list"></i> All Roles
           <span class="count-badge">{{ $roles->count() }}</span>
-        </div>
+        </div> -->
         <a href="{{ route('roles.create') }}" class="btn-create">
           <i class="fas fa-plus"></i> New Role
         </a>

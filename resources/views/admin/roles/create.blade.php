@@ -30,9 +30,9 @@
       @csrf
 
       <div class="main-card mb-4">
-        <div class="main-card-head">
+        <div class="main-card-head" style="justify-content: space-between;">
           <div class="main-card-title"><i class="fas fa-tag"></i> Role Info</div>
-          <a href="{{ route('roles.index') }}" class="btn-theme-outline">
+          <a href="{{ route('roles.index') }}" class="btn-cancel mb-1">
             <i class="fas fa-arrow-left mr-1"></i> Back
           </a>
         </div>
@@ -55,16 +55,16 @@
       </div>
 
       <div class="main-card">
-        <div class="main-card-head">
+        <div class="main-card-head" style="justify-content: space-between;">
           <div class="main-card-title">
             <i class="fas fa-key"></i> Permissions
             <span class="count-badge">{{ $permissions->flatten()->count() }} total</span>
           </div>
           <div>
-            <button type="button" class="btn-theme mr-1" onclick="selectAll(true)">
+            <button type="button" class="btn-submit mr-1 mb-1" onclick="selectAll(true)">
               <i class="fas fa-check-double mr-1"></i> Select All
             </button>
-            <button type="button" class="btn-theme-outline" onclick="selectAll(false)">
+            <button type="button" class="btn-cancel mb-1" onclick="selectAll(false)">
               <i class="fas fa-times mr-1"></i> Clear All
             </button>
           </div>
@@ -82,7 +82,7 @@
                           {{ $group }}
                           <span class="permission-chip ml-1">{{ $perms->count() }}</span>
                         </span>
-                        <button type="button" class="btn-theme-outline group-toggle-btn"
+                        <button type="button" class="btn-outline-primary group-toggle-btn"
                                 onclick="toggleGroup(this)">All</button>
                       </h6>
                     </div>
@@ -111,10 +111,10 @@
           @endif
         </div>
         <div class="main-card-body pt-0">
-          <button type="submit" class="btn-theme">
+          <button type="submit" class="btn-submit">
             <i class="fas fa-shield-alt mr-1"></i> Create Role
           </button>
-          <a href="{{ route('roles.index') }}" class="btn-theme-outline ml-2">
+          <a href="{{ route('roles.index') }}" class="btn-cancel ml-2">
             <i class="fas fa-times mr-1"></i> Cancel
           </a>
         </div>

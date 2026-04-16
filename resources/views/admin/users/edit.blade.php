@@ -24,12 +24,12 @@
 <div class="pull-card">
   <div class="container-fluid" style="padding:0;">
     <div class="main-card">
-      <div class="main-card-head">
+      <div class="main-card-head" style="justify-content: space-between;">
         <div class="main-card-title">
           <i class="fas fa-pen"></i>Edit User
           <span class="count-badge">{{ $user->name }}</span>
         </div>
-        <a href="{{ route('users.index') }}" class="btn-theme-outline">
+        <a href="{{ route('users.index') }}" class="btn-cancel mb-1">
           <i class="fas fa-arrow-left mr-1"></i> Back
         </a>
       </div>
@@ -119,10 +119,10 @@
 
       </div>
       <div class="main-card-body pt-0">
-        <button type="submit" class="btn-theme">
+        <button type="submit" class="btn-submit">
           <i class="fas fa-save mr-1"></i> Save Changes
         </button>
-        <a href="{{ route('users.index') }}" class="btn-theme-outline ml-2">
+        <a href="{{ route('users.index') }}" class="btn-cancel ml-2">
           <i class="fas fa-times mr-1"></i> Cancel
         </a>
       </div>

@@ -43,10 +43,10 @@
             <span class="badge badge-{{ $user->is_active ? 'info' : 'warning' }}">{{ $user->is_active ? 'Enabled' : 'Disabled' }}</span>
           </div>
           <div class="d-flex">
-            <a href="{{ route('users.edit', $user->id) }}" class="btn btn-primary btn-sm mr-2 w-50">
+            <a href="{{ route('users.edit', $user->id) }}" class="btn-submit mr-2 w-50">
               <i class="fas fa-edit"></i> Edit
             </a>
-            <a href="{{ route('users.index') }}" class="btn btn-outline-secondary btn-sm w-50">
+            <a href="{{ route('users.index') }}" class="btn-cancel w-50">
               <i class="fas fa-arrow-left"></i> Back
             </a>
           </div>

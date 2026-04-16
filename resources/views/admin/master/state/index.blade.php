@@ -5,7 +5,7 @@
             <div class="card-header d-flex align-items-center">
                 <h5 class="mb-0">State</h5>
                 <div class="ml-auto">
-                    <a href="#" class="btn btn-success btn-sm waves-effect waves-light state-date-modal">
+                    <a href="#" class="btn-create state-date-modal">
                         <i class="fa fa-plus"></i> Add State
                     </a>
                 </div>
@@ -77,8 +77,8 @@
                 </form>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary waves-effect waves-light" data-dismiss="modal">Close</button>
-                <button type="button" class="btn btn-primary waves-effect waves-light" id="saveState">Save</button>
+                <button type="button" class="btn-cancel" data-dismiss="modal">Close</button>
+                <button type="button" class="btn-submit" id="saveState">Save</button>
             </div>
         </div>
     </div>

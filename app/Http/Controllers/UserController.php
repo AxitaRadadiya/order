@@ -179,7 +179,6 @@ class UserController extends Controller
             $actionHtml .= '</form>';
 
             $avatarHtml = '<div class="user-name-cell">'
-                . '<img src="' . e($u->profile_image_url) . '" alt="' . e($u->name) . '" class="user-list-avatar">'
                 . '<span>' . e($u->name) . '</span>'
                 . '</div>';
 
