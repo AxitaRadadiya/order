@@ -9,7 +9,7 @@
     <div class="row mb-2">
       <div class="col-sm-6">
         <h1 class="m-0">
-          <i class="fas fa-history mr-2 text-teal"></i>Activity Logs
+          <i class="mr-2 text-teal"></i>Activity Logs
         </h1>
       </div>
       <div class="col-sm-6">
@@ -79,10 +79,10 @@
             </div>
 
             <div class="col-12 col-md-12 col-lg-3 mb-3 d-flex" style="gap:.5rem;">
-              <button type="submit" class="btn btn-teal btn-sm">
+              <button type="submit" class="btn-submit">
                 <i class="fas fa-search mr-1"></i>Filter
               </button>
-              <a href="{{ route('activity-logs.index') }}" class="btn btn-default btn-sm">
+              <a href="{{ route('activity-logs.index') }}" class="btn-cancel">
                 <i class="fas fa-times mr-1"></i>Clear
               </a>
             </div>
@@ -137,10 +137,10 @@
           @endif
         </div>
       </div>
-      <div class="card-body p-0">
+      <div class="card-body">
         <div class="table-responsive">
           <table class="table table-hover table-sm table-bordered mb-0">
-            <thead class="thead-dark">
+            <thead class="thead">
               <tr>
                 <th width="40">#</th>
                 <th>User</th>

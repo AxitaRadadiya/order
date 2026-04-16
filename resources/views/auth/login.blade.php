@@ -10,7 +10,7 @@
 @vite(['resources/css/app.css', 'resources/js/app.js'])
 <style>
 :root{
-  --bg:#0a0d12;--bg2:#10141c;--bg3:#161b26;--bg4:#1c2333;
+  --bg:#F4F7FE;--bg2:#fff;--bg3:#fff;--bg4:#1c2333;
   --accent:#6c63ff;--accent2:#9d8fff;--accent-glow:rgba(108,99,255,.22);
   --border:#ffffff0f;--border2:#ffffff18;
   --text:#e8eaf0;--text2:#8892a4;--text3:#525d70;
@@ -45,7 +45,7 @@ html,body{min-height:100%;font-family:var(--sans);background:var(--bg);color:var
   border:1px solid var(--border2);
   border-radius:16px;padding:40px 36px;
   position:relative;z-index:1;
-  box-shadow:0 24px 80px rgba(0,0,0,.5),0 0 0 1px rgba(255,255,255,.04);
+  /* box-shadow:0 24px 80px rgba(0,0,0,.5),0 0 0 1px rgba(255,255,255,.04); */
 }
 @media(max-width:480px){.card{padding:32px 24px}}
 
@@ -66,7 +66,7 @@ html,body{min-height:100%;font-family:var(--sans);background:var(--bg);color:var
   box-shadow:0 8px 32px rgba(108,99,255,.4);
 }
 .brand-icon svg{width:22px;height:22px;fill:#fff}
-.brand h1{font-size:1.5rem;font-weight:800;color:#fff;letter-spacing:-.5px;margin-bottom:6px}
+.brand h1{font-size:1.5rem;font-weight:800;color:black;letter-spacing:-.5px;margin-bottom:6px}
 .brand p{font-size:.82rem;color:var(--text2)}
 .brand p span{color:var(--accent2);font-weight:600}
 
@@ -119,7 +119,7 @@ html,body{min-height:100%;font-family:var(--sans);background:var(--bg);color:var
 .remember{display:flex;align-items:center;gap:7px;font-size:.8rem;color:var(--text2);cursor:pointer}
 .remember input[type="checkbox"]{accent-color:var(--accent);width:14px;height:14px}
 .forgot{font-size:.8rem;color:var(--accent2);text-decoration:none;font-weight:600;transition:color .18s}
-.forgot:hover{color:#fff}
+.forgot:hover{color:#6c63ff}
 
 /* Submit */
 .btn-submit{
@@ -146,7 +146,7 @@ html,body{min-height:100%;font-family:var(--sans);background:var(--bg);color:var
 </head>
 <body>
 <div class="page">
-  <div class="glow"></div>
+  <!-- <div class="glow"></div> -->
   <div class="card">
 
     {{-- Brand --}}
@@ -155,7 +155,7 @@ html,body{min-height:100%;font-family:var(--sans);background:var(--bg);color:var
         <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>
       </div>
       <h1>Welcome back</h1>
-      <p>Sign in to <span>{{ config('app.name') }} CRM</span></p>
+      <p>Sign in to continue to your dashboard</span></p>
     </div>
 
     {{-- Session status --}}

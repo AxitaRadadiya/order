@@ -3,6 +3,16 @@
     border-radius: 40px;
     margin-right: 5px;
 }
+.main-card-body {
+    background-color: #fff;
+    padding: 15px;
+    border-radius: 12px;
+}
+.main-card-head {
+    display: flex;
+    justify-content: end;
+    align-items: center;
+}
 .sidebar-light-primary .nav-sidebar>.nav-item>.nav-link.active {
     background: linear-gradient(135deg, #5E60CE, #7F53AC);
     color: #fff !important;
@@ -62,6 +72,9 @@ a {
 .card {
     border-radius: 12px;
 }
+.card-primary.card-outline {
+    border-top: 3px solid #5E60CE !important;
+}
 .card-teal.card-outline {
     border-top: 3px solid #7F53AC !important;
 }
@@ -86,4 +99,14 @@ a {
     border: 1px solid #62748E;
     border-radius: 12px;
     padding: 7px 15px;
+}
+.thead {
+    background-color: #F4F7FE !important;
+}
+.page-item.active .page-link {
+    background: linear-gradient(135deg, #5E60CE, #7F53AC) !important;
+    border-color: #7F53AC !important;
+}
+.page-link {
+    color: #7F53AC;
 }

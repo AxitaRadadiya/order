@@ -9,7 +9,9 @@
         <h1 class="m-0">Orders</h1>
       </div>
       <div class="col-sm-6 text-right">
-        <a href="{{ route('orders.create') }}" class="btn btn-primary">New Order</a>
+        <a href="{{ route('orders.create') }}" class="btn-create">
+          <i class="fas fa-plus mr-1"></i>New Order
+        </a>
       </div>
     </div>
   </div>

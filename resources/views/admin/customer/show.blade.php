@@ -39,7 +39,7 @@
       <div class="col-md-6">
         <div class="card card-outline card-primary">
           <div class="card-header"><h3 class="card-title"><i class="fas fa-user mr-1"></i>Basic Information</h3></div>
-          <div class="card-body p-0">
+          <div class="card-body">
             <table class="table table-sm table-borderless mb-0">
               <tr><th width="40%" class="pl-3 text-muted">Name</th><td>{{ $customer->name }}</td></tr>
               <tr class="bg-light"><th class="pl-3 text-muted">Company</th><td>{{ $customer->company_name ?? '-' }}</td></tr>
@@ -59,7 +59,7 @@
       <div class="col-md-6">
         <div class="card card-outline card-success">
           <div class="card-header"><h3 class="card-title"><i class="fas fa-rupee-sign mr-1"></i>Tax & Financial Details</h3></div>
-          <div class="card-body p-0">
+          <div class="card-body">
             <table class="table table-sm table-borderless mb-0">
               <tr><th width="40%" class="pl-3 text-muted">GST Treatment</th>
                 <td>{{ $customer->gst_treatment ? str_replace('_',' ', ucfirst($customer->gst_treatment)) : '-' }}</td></tr>
@@ -78,7 +78,7 @@
       <div class="col-md-6">
         <div class="card card-outline card-warning">
           <div class="card-header"><h3 class="card-title"><i class="fas fa-map-marker-alt mr-1"></i>Billing Address</h3></div>
-          <div class="card-body p-0">
+          <div class="card-body">
             <table class="table table-sm table-borderless mb-0">
               <tr><th width="40%" class="pl-3 text-muted">Attention</th><td>{{ $addr->billing_attention ?? '-' }}</td></tr>
               <tr class="bg-light"><th class="pl-3 text-muted">Street</th><td>{{ $addr->billing_street ?? '-' }}</td></tr>
@@ -103,7 +103,7 @@
               @endif
             </h3>
           </div>
-          <div class="card-body p-0">
+          <div class="card-body">
             <table class="table table-sm table-borderless mb-0">
               <tr><th width="40%" class="pl-3 text-muted">Attention</th><td>{{ $addr->shipping_attention ?? '-' }}</td></tr>
               <tr class="bg-light"><th class="pl-3 text-muted">Street</th><td>{{ $addr->shipping_street ?? '-' }}</td></tr>
@@ -121,7 +121,7 @@
       <div class="col-md-6">
         <div class="card card-outline card-secondary">
           <div class="card-header"><h3 class="card-title"><i class="fas fa-university mr-1"></i>Bank Details</h3></div>
-          <div class="card-body p-0">
+          <div class="card-body">
             <table class="table table-sm table-borderless mb-0">
               <tr><th width="40%" class="pl-3 text-muted">Bank Name</th><td>{{ $bank->bank_name ?? '-' }}</td></tr>
               <tr class="bg-light"><th class="pl-3 text-muted">Account No.</th><td>{{ $bank->account_no ?? '-' }}</td></tr>
@@ -136,7 +136,7 @@
       <div class="col-md-6">
         <div class="card card-outline card-dark">
           <div class="card-header"><h3 class="card-title"><i class="fas fa-clock mr-1"></i>Record Info</h3></div>
-          <div class="card-body p-0">
+          <div class="card-body">
             <table class="table table-sm table-borderless mb-0">
               <tr><th width="40%" class="pl-3 text-muted">Customer ID</th><td>#{{ $customer->id }}</td></tr>
               <tr class="bg-light"><th class="pl-3 text-muted">Created At</th><td>{{ $customer->created_at->format('d M Y, h:i A') }}</td></tr>
