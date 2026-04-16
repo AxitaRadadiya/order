@@ -6,7 +6,7 @@
   <div class="container-fluid">
 	<div class="row mb-2">
 	  <div class="col-sm-6">
-		<h1 class="m-0"><i class="fas fa-box mr-2 text-teal"></i>Create Item</h1>
+		<h1 class="m-0"><i class="mr-2 text-teal"></i>Create Item</h1>
 	  </div>
 	  <div class="col-sm-6">
 		<ol class="breadcrumb float-sm-right">
@@ -21,9 +21,6 @@
 <div class="pull-card">
   <div class="container-fluid">
 	<div class="main-card mt-4">
-	  <div class="main-card-head">
-		<div class="main-card-title"><i class="fas fa-plus"></i> New Item</div>
-	  </div>
 	  <div class="main-card-body">
 		<form action="{{ route('items.store') }}" method="POST" enctype="multipart/form-data">
 		  @csrf
@@ -130,8 +127,8 @@
 		  </div>
 
 		  <div class="mt-3 text-right">
-			<button class="btn btn-primary">Save</button>
-			<a href="{{ route('items.index') }}" class="btn btn-secondary">Cancel</a>
+			<button class="btn-submit">Save</button>
+			<a href="{{ route('items.index') }}" class="btn-cancel">Cancel</a>
 		  </div>
 		</form>
 	  </div>

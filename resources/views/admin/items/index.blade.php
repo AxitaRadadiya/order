@@ -6,7 +6,7 @@
   <div class="container-fluid">
     <div class="row mb-2">
       <div class="col-sm-6">
-        <h1 class="m-0"><i class="fas fa-box mr-2 text-teal"></i>Items</h1>
+        <h1 class="m-0"><i class="mr-2 text-teal"></i>Items</h1>
       </div>
       <div class="col-sm-6">
         <ol class="breadcrumb float-sm-right">
@@ -32,12 +32,12 @@
       <div class="card-header">
         <h3 class="card-title">Item List</h3>
         <div class="card-tools d-flex align-items-center">
-          <a href="{{ route('items.create') }}" class="btn btn-sm btn-primary">
+          <a href="{{ route('items.create') }}" class="btn-create">
             <i class="fas fa-plus mr-1"></i>Add Item
           </a>
         </div>
       </div>
-      <div class="card-body p-0">
+      <div class="card-body">
         <div class="table-responsive">
           <table id="itemTable" class="table table-hover table-bordered mb-0" style="width:100%">
             <thead class="thead-light">

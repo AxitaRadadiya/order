@@ -6,7 +6,7 @@
   <div class="container-fluid">
     <div class="row mb-2">
       <div class="col-sm-6">
-        <h1 class="m-0"><i class="fas fa-user-plus mr-2 text-teal"></i>Create Customer</h1>
+        <h1 class="m-0"><i class="mr-2 text-teal"></i>Create Customer</h1>
       </div>
       <div class="col-sm-6">
         <ol class="breadcrumb float-sm-right">
@@ -304,8 +304,8 @@
 
       <div class="card">
         <div class="card-body text-right">
-          <a href="{{ route('customers.index') }}" class="btn btn-secondary mr-2"><i class="fas fa-times mr-1"></i>Cancel</a>
-          <button type="submit" class="btn btn-primary"><i class="fas fa-save mr-1"></i>Save Customer</button>
+          <a href="{{ route('customers.index') }}" class="btn-cancel mr-2"><i class="fas fa-times mr-1"></i>Cancel</a>
+          <button type="submit" class="btn-submit"><i class="fas fa-save mr-1"></i>Save Customer</button>
         </div>
       </div>
     </form>
