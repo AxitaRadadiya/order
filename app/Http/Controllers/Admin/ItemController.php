@@ -7,6 +7,9 @@ use App\Models\Category;
 use App\Models\Group;
 use App\Models\Item;
 use App\Models\Size;
+use App\Models\SubCategory;
+use App\Models\SubGroup;
+use App\Models\Color;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -21,16 +24,20 @@ class ItemController extends Controller
 
     public function index(Request $request): View
     {
-        $items = Item::with(['category', 'group'])->orderBy('id', 'desc')->paginate(15);
+        $items = Item::with(['category', 'group', 'color'])->orderBy('id', 'desc')->paginate(15);
 
         return view('admin.items.index', compact('items'));
     }
 
     public function create(): View
     {
+
         return view('admin.items.create', [
             'categories' => Category::orderBy('name')->get(),
             'groups' => Group::orderBy('name')->get(),
+            'sub_categories' => SubCategory::orderBy('name')->get(),
+            'sub_groups' => SubGroup::orderBy('name')->get(),
+            'colors' => Color::orderBy('name')->get(),
             'sizes' => Size::orderBy('name')->pluck('name')->toArray(),
         ]);
     }
@@ -39,25 +46,35 @@ class ItemController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'sku' => 'nullable|string|max:100|unique:items,sku',
-            'sub_category' => 'nullable|string|max:255',
-            'sub_group' => 'nullable|string|max:255',
+            'article_number' => 'nullable|string|max:100|unique:items,article_number',
+            'item_code' => 'nullable|string|max:100|unique:items,item_code',
+            'sub_category' => 'nullable|exists:sub_categories,id',
+            'sub_group' => 'nullable|exists:sub_groups,id',
+            'color' => 'nullable|exists:colors,id',
+            'sizes' => 'nullable|array',
             'description' => 'nullable|string',
             'category_id' => 'nullable|exists:categories,id',
             'group_id' => 'nullable|exists:groups,id',
             'unit' => 'nullable|string|max:50',
             'price' => 'required|numeric|min:0',
-            'discount_percent' => 'nullable|numeric|min:0',
             'tax_percent' => 'nullable|numeric|min:0',
             'image' => 'nullable|image|max:2048',
             'status' => 'nullable|in:0,1',
+            'show_item_on_web' => 'nullable|in:0,1',
         ]);
 
         if ($request->hasFile('image')) {
             $validated['image'] = $request->file('image')->store('items', 'public');
         }
 
+        // auto-generate item_code when not provided
+        if (empty($validated['item_code'])) {
+            $validated['item_code'] = Item::generateItemCode($validated['name'] ?? null);
+        }
+
         $validated['status'] = (int) ($validated['status'] ?? 1);
+        $validated['show_item_on_web'] = (int) ($validated['show_item_on_web'] ?? 1);
+
 
         Item::create($validated);
 
@@ -76,6 +93,9 @@ class ItemController extends Controller
             'item' => $item,
             'categories' => Category::orderBy('name')->get(),
             'groups' => Group::orderBy('name')->get(),
+            'sub_categories' => SubCategory::orderBy('name')->get(),
+            'sub_groups' => SubGroup::orderBy('name')->get(),
+            'colors' => Color::orderBy('name')->get(),
             'sizes' => Size::orderBy('name')->pluck('name')->toArray(),
         ]);
     }
@@ -84,18 +104,21 @@ class ItemController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'sku' => 'nullable|string|max:100|unique:items,sku,' . $item->id,
-            'sub_category' => 'nullable|string|max:255',
-            'sub_group' => 'nullable|string|max:255',
+            'article_number' => 'nullable|string|max:100|unique:items,article_number,' . $item->id,
+            'item_code' => 'nullable|string|max:100|unique:items,item_code,' . $item->id,
+            'sub_category' => 'nullable|exists:sub_categories,id',
+            'sub_group' => 'nullable|exists:sub_groups,id',
+            'color' => 'nullable|exists:colors,id',
+            'sizes' => 'nullable|array',
             'description' => 'nullable|string',
             'category_id' => 'nullable|exists:categories,id',
             'group_id' => 'nullable|exists:groups,id',
             'unit' => 'nullable|string|max:50',
             'price' => 'required|numeric|min:0',
-            'discount_percent' => 'nullable|numeric|min:0',
             'tax_percent' => 'nullable|numeric|min:0',
             'image' => 'nullable|image|max:2048',
             'status' => 'nullable|in:0,1',
+            'show_item_on_web' => 'nullable|in:0,1',
         ]);
 
         if ($request->hasFile('image')) {
@@ -107,6 +130,7 @@ class ItemController extends Controller
         }
 
         $validated['status'] = (int) ($validated['status'] ?? 1);
+        $validated['show_item_on_web'] = (int) ($validated['show_item_on_web'] ?? 1);
 
         $item->update($validated);
 
@@ -125,7 +149,7 @@ class ItemController extends Controller
     }
     public function itemList(Request $request)
     {
-        $query = Item::with(['category', 'group']);
+        $query = Item::with(['category', 'group', 'color']);
 
         $totalData = $query->count();
         $totalFiltered = $totalData;
@@ -137,7 +161,7 @@ class ItemController extends Controller
         if (! empty($search)) {
             $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
-                    ->orWhere('sku', 'like', "%{$search}%");
+                    ->orWhere('article_number', 'like', "%{$search}%");
             });
 
             $totalFiltered = $query->count();
@@ -166,11 +190,10 @@ class ItemController extends Controller
             $data[] = [
                 'id' => $start + $idx + 1,
                 'name' => $item->name,
-                'sku' => $item->sku,
+                'article_number' => $item->article_number,
                 'category' => optional($item->category)->name,
-                'sub_category' => $item->sub_category,
                 'group' => optional($item->group)->name,
-                'sub_group' => $item->sub_group,
+                'color' => optional($item->color)->name,
                 'price' => $item->price,
                 'status' => $item->status ? 'Active' : 'Inactive',
                 'action' => $actionHtml,
@@ -184,5 +207,4 @@ class ItemController extends Controller
             'data' => $data,
         ]);
     }
-
 }

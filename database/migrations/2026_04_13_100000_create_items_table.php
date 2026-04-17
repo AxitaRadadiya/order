@@ -11,13 +11,12 @@ return new class extends Migration
         Schema::create('items', function (Blueprint $table) {
             $table->id();
             $table->string('name');
-            $table->string('sku')->nullable()->unique();
+            $table->string('article_number')->nullable()->unique();
             $table->text('description')->nullable();
             $table->foreignId('category_id')->nullable()->constrained('categories')->nullOnDelete();
             $table->foreignId('group_id')->nullable()->constrained('groups')->nullOnDelete();
             $table->string('unit')->nullable();
             $table->decimal('price', 10, 2)->default(0);
-            $table->decimal('discount_percent', 5, 2)->default(0);
             $table->decimal('tax_percent', 5, 2)->default(0);
             $table->string('image')->nullable();
             $table->boolean('status')->default(true);

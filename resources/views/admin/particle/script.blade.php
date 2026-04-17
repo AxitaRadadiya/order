@@ -202,10 +202,10 @@ $(document).ready(function () {
             columns: [
             { data: 'id' },
             { data: 'name' },
-            { data: 'sku' },
+            { data: 'article_number' },
             { data: 'category' },
             { data: 'group' },
-            { data: 'sizes' },
+            { data: 'color' },
             { data: 'price' },
             { data: 'status' },
             { data: 'action' }
