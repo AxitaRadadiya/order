@@ -40,7 +40,8 @@
           </div>
           <div class="col-md-8">
             <h4>{{ $item->name }}</h4>
-            <p class="text-muted">SKU: {{ $item->sku ?? '-' }}</p>
+            <p class="text-muted">Article Number: {{ $item->article_number ?? '-' }}</p>
+            <p class="text-muted">Item Code: {{ $item->item_code ?? '-' }}</p>
             <p>{{ $item->description }}</p>
 
             <dl class="row">
@@ -61,9 +62,6 @@
 
               <dt class="col-sm-4">Price</dt>
               <dd class="col-sm-8">{{ number_format($item->price,2) }}</dd>
-
-              <dt class="col-sm-4">Discount</dt>
-              <dd class="col-sm-8">{{ $item->discount_percent }}%</dd>
 
               <dt class="col-sm-4">Tax</dt>
               <dd class="col-sm-8">{{ $item->tax_percent }}%</dd>

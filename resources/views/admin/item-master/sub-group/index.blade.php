@@ -46,7 +46,7 @@
             <div class="modal-body">
                 <form action="{{ route('sub-group.store') }}" method="POST" id="subGroupForm">
                     @csrf
-                    <input type="hidden" name="sub_group_id" id="sub_group_id_hidden">
+                    <input type="hidden" name="sub_group" id="sub_group_hidden">
 
                     <div class="row">
                         <div class="col-md-12">

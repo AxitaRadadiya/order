@@ -29,16 +29,22 @@
 					@csrf
 
 					<div class="row">
-						<div class="col-md-6">
+						<div class="col-md-4">
 							<div class="form-group">
-								<label>Name <span class="text-danger">*</span></label>
+								<label>Item Name <span class="text-danger">*</span></label>
 								<input type="text" name="name" value="{{ old('name') }}" class="form-control" required>
 							</div>
 						</div>
-						<div class="col-md-6">
+						<div class="col-md-4">
 							<div class="form-group">
-								<label>SKU</label>
-								<input type="text" name="sku" value="{{ old('sku') }}" class="form-control">
+								<label>Article Number <span class="text-danger">*</span></label>
+								<input type="text" name="article_number" value="{{ old('article_number') }}" class="form-control" required>
+							</div>
+						</div>
+						<div class="col-md-4">
+							<div class="form-group">
+								<label>Item Code <span class="text-danger">*</span></label>
+								<input type="text" name="item_code" value="{{ old('item_code') }}" class="form-control" readonly>
 							</div>
 						</div>
 
@@ -63,6 +69,17 @@
 						</div>
 						<div class="col-md-4">
 							<div class="form-group">
+								<label>Sub-Group</label>
+								<select name="sub_group" class="form-control">
+									<option value="">-- Select --</option>
+									@foreach($sub_groups as $subG)
+									<option value="{{ $subG->id }}" {{ old('sub_group') == $subG->id ? 'selected' : '' }}>{{ $subG->name }}</option>
+									@endforeach
+								</select>
+							</div>
+						</div>
+						<div class="col-md-4">
+							<div class="form-group">
 								<label>Category</label>
 								<select name="category_id" class="form-control">
 									<option value="">-- Select --</option>
@@ -72,6 +89,29 @@
 								</select>
 							</div>
 						</div>
+						<div class="col-md-4">
+							<div class="form-group">
+								<label>Sub-Category</label>
+								<select name="sub_category" class="form-control">
+									<option value="">-- Select --</option>
+									@foreach($sub_categories as $subCat)
+									<option value="{{ $subCat->id }}" {{ old('sub_category') == $subCat->id ? 'selected' : '' }}>{{ $subCat->name }}</option>
+									@endforeach
+								</select>
+							</div>
+						</div>
+						<div class="col-md-4">
+							<div class="form-group">
+								<label>Color</label>
+								<select name="color" class="form-control">
+									<option value="">-- Select --</option>
+									@foreach($colors as $color)
+									<option value="{{ $color->id }}" {{ old('color') == $color->id ? 'selected' : '' }}>{{ $color->name }}</option>
+									@endforeach
+								</select>
+							</div>
+						</div>
+
 						{{-- Sizes (master list) --}}
 						<div class="col-md-12">
 							<div class="form-group">
@@ -94,14 +134,8 @@
 
 						<div class="col-md-3">
 							<div class="form-group">
-								<label>Price</label>
+								<label>MRP</label>
 								<input type="number" step="0.01" name="price" value="{{ old('price', 0) }}" class="form-control">
-							</div>
-						</div>
-						<div class="col-md-3">
-							<div class="form-group">
-								<label>Discount %</label>
-								<input type="number" step="0.01" name="discount_percent" value="{{ old('discount_percent', 0) }}" class="form-control">
 							</div>
 						</div>
 						<div class="col-md-3">
@@ -127,6 +161,24 @@
 								</select>
 							</div>
 						</div>
+						<div class="col-md-6 p-4">
+							<div class="form-group">
+								<input type="hidden" name="show_item_on_web" value="0">
+								<div class="custom-control custom-switch">
+									<input
+										type="checkbox"
+										class="custom-control-input"
+										id="show_item_on_web"
+										name="show_item_on_web"
+										value="1"
+										{{ old('show_item_on_web', 1) ? 'checked' : '' }}>
+									<label class="custom-control-label" for="show_item_on_web">
+										Show Item on Web
+									</label>
+								</div>
+							</div>
+						</div>
+
 					</div>
 
 					<div class="mt-3 mb-3 text-right">

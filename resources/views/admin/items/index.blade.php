@@ -44,7 +44,7 @@
               <tr>
                 <th>ID</th>
                 <th>Name</th>
-                <th>SKU</th>
+                <th>Article Number</th>
                 <th>Category</th>
                 <th>Group</th>
                 <th>Sizes</th>
