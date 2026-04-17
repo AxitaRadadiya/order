@@ -12,8 +12,7 @@ class CustomerTypesSeeder extends Seeder
      */
     public function run(): void
     {
-        CustomerType::firstOrCreate([
-            'name' => 'retailer',
-        ]);
+        CustomerType::firstOrCreate(['name' => 'retailer']);
+        CustomerType::firstOrCreate(['name' => 'admin']);
     }
 }

@@ -121,7 +121,7 @@ $(document).ready(function () {
         autoWidth: false, responsive: true, processing: true, serverSide: true,
         order: [0, 'desc'],
         ajax: { url: '{{ route('roles.list') }}', dataType: 'json', type: 'GET', data: { _token: '{{csrf_token()}}', route: 'roles.list' } },
-        columns: [{ data: 'id' }, { data: 'name' }],
+        columns: [{ data: 'id' }, { data: 'name' }, { data: 'action' }],
         aoColumnDefs: [{ bSortable: false, aTargets: [-1] }]
     });
 

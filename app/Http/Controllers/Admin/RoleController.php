@@ -55,30 +55,16 @@ class RoleController extends Controller
                     ->implode('');
 
             // Action buttons
-            // $actions = '';
-
-            // if (auth()->user()) {
-            //     $actions .= '<a href="' . route('roles.edit', $role->id) . '"
-            //                    class="btn btn-xs btn-primary mr-1">
-            //                    <i class="fas fa-pen"></i> Edit
-            //                  </a>';
-
-            //     $actions .= '<form action="' . route('roles.destroy', $role->id) . '"
-            //                        method="POST"
-            //                        class="deleteForm d-inline">
-            //                     ' . csrf_field() . '
-            //                     <input type="hidden" name="_method" value="DELETE">
-            //                     <button type="submit" class="btn btn-xs btn-danger deleteButton">
-            //                         <i class="fas fa-trash"></i> Delete
-            //                     </button>
-            //                  </form>';
-            // }
+            $actions = '';
+            if (auth()->user()) {
+                $actions .= '<a href="' . route('roles.edit', $role->id) . '" class="btn btn-xs btn-primary mr-1"><i class="fas fa-pen"></i> Edit</a>';
+            }
 
             $data[] = [
                 'id'          => $start + $i + 1,
                 'name'        => '<strong>' . e($role->name) . '</strong>',
                 'permissions' => $permHtml,
-                // 'action'      => $actions ?: '<span class="text-muted">—</span>',
+                'action'      => $actions ?: '<span class="text-muted">—</span>',
             ];
         }
 

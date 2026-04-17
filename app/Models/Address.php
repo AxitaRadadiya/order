@@ -4,12 +4,13 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use App\Traits\LogsActivity;
+use App\Models\User;
 
 class Address extends Model
 {
     use LogsActivity;
     protected $fillable = [
-        'customer_id',
+        'user_id',
         'billing_attention',
         'billing_street',
         'billing_city',
@@ -29,6 +30,6 @@ class Address extends Model
 
     public function customer()
     {
-        return $this->belongsTo(Customer::class);
+        return $this->belongsTo(User::class, 'user_id');
     }
 }

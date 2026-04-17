@@ -51,6 +51,7 @@
             <tr>
               <th>#</th>
               <th>Role Name</th>
+              <th>Actions</th>
             </tr>
           </thead>
           <tbody></tbody>

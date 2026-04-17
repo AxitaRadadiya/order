@@ -10,7 +10,7 @@ class OrderMaster extends Model
     use SoftDeletes;
 
     protected $fillable = [
-        'customer_id','date','eway_bill_number','transport_number','lr_number',
+        'user_id','date','eway_bill_number','transport_number','lr_number',
         'billing_address','shipping_address','subtotal','discount','adjustment','grand_total',
         'terms','notes','status','expected_date'
     ];
@@ -27,6 +27,6 @@ class OrderMaster extends Model
 
     public function customer()
     {
-        return $this->belongsTo(Customer::class);
+        return $this->belongsTo(User::class, 'user_id');
     }
 }

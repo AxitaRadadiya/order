@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\Customer;
+use App\Models\User as Customer;
 use App\Models\Address;
 use App\Models\BankDetail;
 use App\Models\Country;
@@ -35,7 +35,7 @@ class CustomerController extends Controller
     {
         $request->validate([
             'name'         => 'required|string|max:255',
-            'email'        => 'required|email|unique:customers,email',
+            'email'        => 'required|email|unique:users,email',
             'phone'        => 'nullable|string|max:20',
             'company_name' => 'nullable|string|max:255',
             'website'      => 'nullable|url|max:255',
@@ -97,7 +97,7 @@ class CustomerController extends Controller
 
             // 3. Create Address
             Address::create(array_merge([
-                'customer_id'        => $customer->id,
+                'user_id'        => $customer->id,
                 'billing_attention'  => $request->billing_attention,
                 'billing_street'     => $request->billing_street,
                 'billing_city'       => $request->billing_city,
@@ -110,7 +110,7 @@ class CustomerController extends Controller
 
             // 4. Create Bank Detail
             BankDetail::create([
-                'customer_id' => $customer->id,
+                'user_id' => $customer->id,
                 'bank_name'   => $request->bank_name,
                 'account_no'  => $request->account_no,
                 'ifsc_code'   => $request->ifsc_code,
@@ -148,7 +148,7 @@ class CustomerController extends Controller
     {
         $request->validate([
             'name'         => 'required|string|max:255',
-            'email'        => 'required|email|unique:customers,email,' . $customer->id,
+            'email'        => 'required|email|unique:users,email,' . $customer->id,
             'phone'        => 'nullable|string|max:20',
             'company_name' => 'nullable|string|max:255',
             'website'      => 'nullable|url|max:255',
@@ -203,7 +203,7 @@ class CustomerController extends Controller
             ];
 
             Address::updateOrCreate(
-                ['customer_id' => $customer->id],
+                ['user_id' => $customer->id],
                 array_merge([
                     'billing_attention'  => $request->billing_attention,
                     'billing_street'     => $request->billing_street,
@@ -218,7 +218,7 @@ class CustomerController extends Controller
 
             // 4. Update or Create Bank Detail
             BankDetail::updateOrCreate(
-                ['customer_id' => $customer->id],
+                ['user_id' => $customer->id],
                 [
                     'bank_name'   => $request->bank_name,
                     'account_no'  => $request->account_no,

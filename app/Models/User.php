@@ -85,6 +85,16 @@ class User extends Authenticatable
         'mobile',
         'note',
         'is_active',
+        'company_name',
+        'phone',
+        'website',
+        'payment_terms',
+        'gst_number',
+        'discount',
+        'gst_treatment',
+        'place_of_supply',
+        'pan_number',
+        'credit_limit',
     ];
 
     protected $hidden = ['password', 'remember_token'];
@@ -108,6 +118,21 @@ class User extends Authenticatable
     public function customerType()
     {
         return $this->belongsTo(CustomerType::class);
+    }
+
+    public function addresses()
+    {
+        return $this->hasMany(Address::class, 'user_id');
+    }
+
+    public function address()
+    {
+        return $this->hasOne(Address::class, 'user_id');
+    }
+
+    public function bankDetail()
+    {
+        return $this->hasOne(BankDetail::class, 'user_id');
     }
 
     public function getProfileImagePathAttribute(): string

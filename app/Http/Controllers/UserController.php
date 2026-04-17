@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Role;
 use App\Models\User;
+use App\Models\CustomerType;
 use Auth;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -21,8 +22,11 @@ class UserController extends Controller
 
     public function index(): View
     {
+        $adminType = CustomerType::firstOrCreate(['name' => 'admin']);
+
         return view('admin.users.index', [
             'users' => User::with(['role'])
+                ->where('customer_type_id', $adminType->id)
                 ->orderBy('id')
                 ->paginate(15),
         ]);
@@ -39,7 +43,15 @@ class UserController extends Controller
     {
         $validated = $request->validate($this->storeRules());
 
-        $user = User::create($this->userPayload($request, $validated));
+        // ensure admin customer type exists and default new users to admin type
+        $adminType = CustomerType::firstOrCreate(['name' => 'admin']);
+
+        $payload = $this->userPayload($request, $validated);
+        if (! isset($payload['customer_type_id'])) {
+            $payload['customer_type_id'] = $adminType->id;
+        }
+
+        $user = User::create($payload);
 
         $user->assignRole((int) $validated['role_id']);
 
@@ -138,7 +150,8 @@ class UserController extends Controller
 
     public function userList(Request $request)
     {
-        $query = User::with(['role']);
+        $adminType = CustomerType::firstOrCreate(['name' => 'admin']);
+        $query = User::with(['role'])->where('customer_type_id', $adminType->id);
 
         $totalData = $query->count();
         $totalFiltered = $totalData;
@@ -243,6 +256,7 @@ class UserController extends Controller
             'status' => (int) ($validated['status'] ?? 1),
             'note' => $validated['note'] ?? null,
             'is_active' => $request->boolean('is_active', (int) ($validated['status'] ?? 1) === 1),
+            'customer_type_id' => $request->input('customer_type_id') ?? null,
         ];
 
         if (! $user || $request->filled('password')) {

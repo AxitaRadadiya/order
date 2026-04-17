@@ -7,7 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Models\OrderMaster;
 use App\Models\OrderItem;
-use App\Models\Customer;
+use App\Models\User;
 use App\Models\Item;
 use App\Models\Size;
 
@@ -21,7 +21,7 @@ class OrderMasterController extends Controller
 
     public function create()
     {
-        $customers = Customer::with('address')->orderBy('name')->get();
+        $customers = User::with('address')->orderBy('name')->get();
         $items     = Item::orderBy('name')->get();
         $itemsJson = $this->buildItemsJson($items);
         $sizesJson = Size::activeLabels(); // dynamic from DB
@@ -32,14 +32,14 @@ class OrderMasterController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'customer_id' => 'required|exists:customers,id',
+            'user_id' => 'required|exists:users,id',
             'date'        => 'required|date',
         ]);
 
         DB::beginTransaction();
         try {
             $data  = $request->only([
-                'customer_id', 'date', 'expected_date',
+                'user_id', 'date', 'expected_date',
                 'eway_bill_number', 'transport_number', 'lr_number',
                 'billing_address', 'shipping_address',
                 'subtotal', 'discount', 'adjustment', 'grand_total',
@@ -65,7 +65,7 @@ class OrderMasterController extends Controller
 
     public function edit(OrderMaster $order)
     {
-        $customers = Customer::with('address')->orderBy('name')->get();
+        $customers = User::with('address')->orderBy('name')->get();
         $items     = Item::orderBy('name')->get();
         $itemsJson = $this->buildItemsJson($items);
         $sizesJson = Size::activeLabels(); // dynamic from DB
@@ -77,14 +77,14 @@ class OrderMasterController extends Controller
     public function update(Request $request, OrderMaster $order)
     {
         $request->validate([
-            'customer_id' => 'required|exists:customers,id',
+            'user_id' => 'required|exists:users,id',
             'date'        => 'required|date',
         ]);
 
         DB::beginTransaction();
         try {
             $data = $request->only([
-                'customer_id', 'date', 'expected_date',
+                'user_id', 'date', 'expected_date',
                 'eway_bill_number', 'transport_number', 'lr_number',
                 'billing_address', 'shipping_address',
                 'subtotal', 'discount', 'adjustment', 'grand_total',
