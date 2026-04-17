@@ -232,6 +232,8 @@ $(document).ready(function () {
         load_Size();
         load_Color();
         load_customerType();
+        load_SubCategory();
+        load_SubGroup();
  
         // Re-init table when tab is shown (DataTables needs this for hidden tabs)
         $('#masterTab a[data-toggle="tab"]').on('shown.bs.tab', function (e) {
@@ -244,6 +246,8 @@ $(document).ready(function () {
             if (target === '#size')     load_Size();
             if(target === '#color')     load_Color();
             if(target === '#customer-type') load_customerType();
+            if(target === '#sub-category') load_SubCategory();
+            if(target === '#sub-group') load_SubGroup();
         });
     }
  
@@ -664,7 +668,7 @@ $(document).ready(function () {
     $(document).on('click', '.category-date-modal', function () {
         // Reset form for add mode
         $('#categoryForm')[0].reset();
-        $('#category_id').val('');
+        $('#category_id_hidden').val('');
         $('#category_name').val('');
         $('.category-name-error').text('');
         $('input').removeClass('is-invalid');
@@ -684,7 +688,7 @@ $(document).ready(function () {
         $('.category-name-error').text('');
         $('input').removeClass('is-invalid');
  
-        $('#category_id').val(categoryId);
+        $('#category_id_hidden').val(categoryId);
         $('#category_name').val(categoryName);
  
         var updateUrl = '{{ route("category.update", ":id") }}'.replace(':id', categoryId);
@@ -1124,6 +1128,208 @@ $(document).ready(function () {
             $('.customer-type-name-error').text('');
             $('input').removeClass('is-invalid');
         });
+
+        function load_SubCategory() {
+        if ($.fn.dataTable.isDataTable('#SubCategoryTable')) {
+            $('#SubCategoryTable').DataTable().clear().destroy();
+            $('#SubCategoryTable tbody').empty();
+        }
+ 
+        $('#SubCategoryTable').DataTable({
+            paging:      true,
+            lengthChange: true,
+            searching:   true,
+            ordering:    true,
+            info:        true,
+            autoWidth:   false,
+            responsive:  true,
+            processing:  true,
+            serverSide:  true,
+            order:       [[0, 'asc']],
+            ajax: {
+                url:      "{{ route('sub-category.list') }}",
+                dataType: "json",
+                type:     "GET",
+                data:     { _token: "{{ csrf_token() }}" }
+            },
+            columns: [
+                { data: 'id',     orderable: true  },
+                { data: 'name',   orderable: true  },
+                { data: 'action', orderable: false }
+            ],
+            language: {
+                paginate: {
+                    previous: "<i class='mdi mdi-chevron-left'>",
+                    next:     "<i class='mdi mdi-chevron-right'>"
+                }
+            },
+            drawCallback: function () {
+                $('.dataTables_paginate > .pagination').addClass('pagination-rounded');
+            }
+        });
+    }
+ 
+    $(document).on('click', '.sub-category-date-modal', function () {
+        // Reset form for add mode
+        $('#subCategoryForm')[0].reset();
+        $('#subCategoryForm input[name="category_id"]').val('');
+        $('#sub_category_name').val('');
+        $('.sub-category-name-error').text('');
+        $('input').removeClass('is-invalid');
+ 
+        // Restore action to store route and remove any leftover _method=PUT
+        $('#subCategoryForm').attr('action', '{{ route("sub-category.store") }}');
+        $('#subCategoryForm input[name="_method"]').remove();
+
+        $('#SubCategoryModal').modal('show');
+    });
+
+    $(document).on('click', '.edit-sub-category-date-modal', function () {
+        var subCategoryId   = $(this).data('id');
+        var subCategoryName = $(this).data('name');
+ 
+        // Reset errors
+        $('.sub-category-name-error').text('');
+        $('input').removeClass('is-invalid');
+ 
+        $('#subCategoryForm input[name="category_id"]').val(subCategoryId);
+        $('#sub_category_name').val(subCategoryName);
+ 
+        var updateUrl = '{{ route("sub-category.update", ":id") }}'.replace(':id', subCategoryId);
+        $('#subCategoryForm').attr('action', updateUrl);
+ 
+        // Remove any existing _method field before adding a fresh one
+        $('#subCategoryForm input[name="_method"]').remove();
+        $('#subCategoryForm').append('<input type="hidden" name="_method" value="PUT">');
+ 
+        $('#SubCategoryModal').modal('show');
+    });
+ 
+    $(document).on('click', '#saveSubCategory', function (e) {
+        e.preventDefault();
+ 
+        var name = $.trim($('#sub_category_name').val());
+ 
+        // Clear previous errors
+        $('.error').text('');
+        $('input').removeClass('is-invalid');
+ 
+        if (!name) {
+            $('#sub_category_name').addClass('is-invalid');
+            $('.sub-category-name-error').text('Sub-Category Name is required.');
+            return;
+        }
+ 
+        $('#subCategoryForm').submit();
+    });
+ 
+    $('#SubCategoryModal').on('hidden.bs.modal', function () {
+        $('#subCategoryForm input[name="_method"]').remove();
+        $('#subCategoryForm')[0].reset();
+        $('.sub-category-name-error').text('');
+        $('input').removeClass('is-invalid');
+    });
+
+    function load_SubGroup() {
+        if ($.fn.dataTable.isDataTable('#SubGTable')) {
+            $('#SubGTable').DataTable().clear().destroy();
+            $('#SubGTable tbody').empty();
+        }
+ 
+        $('#SubGTable').DataTable({
+            paging:      true,
+            lengthChange: true,
+            searching:   true,
+            ordering:    true,
+            info:        true,
+            autoWidth:   false,
+            responsive:  true,
+            processing:  true,
+            serverSide:  true,
+            order:       [[0, 'asc']],
+            ajax: {
+                url:      "{{ route('sub-group.list') }}",
+                dataType: "json",
+                type:     "GET",
+                data:     { _token: "{{ csrf_token() }}" }
+            },
+            columns: [
+                { data: 'id',     orderable: true  },
+                { data: 'name',   orderable: true  },
+                { data: 'action', orderable: false }
+            ],
+            language: {
+                paginate: {
+                    previous: "<i class='mdi mdi-chevron-left'>",
+                    next:     "<i class='mdi mdi-chevron-right'>"
+                }
+            },
+            drawCallback: function () {
+                $('.dataTables_paginate > .pagination').addClass('pagination-rounded');
+            }
+        });
+    }
+ 
+    $(document).on('click', '.sub-group-date-modal', function () {
+        // Reset form for add mode
+        $('#subGroupForm')[0].reset();
+        $('#sub_group_id').val('');
+        $('#sub_group_name').val('');
+        $('.sub-group-name-error').text('');
+        $('input').removeClass('is-invalid');
+ 
+        // Restore action to store route and remove any leftover _method=PUT
+        $('#subGroupForm').attr('action', '{{ route("sub-group.store") }}');
+        $('#subGroupForm input[name="_method"]').remove();
+
+        $('#SubGroupModal').modal('show');
+    });
+
+    $(document).on('click', '.edit-sub-group-date-modal', function () {
+        var subGroupId   = $(this).data('id');
+        var subGroupName = $(this).data('name');
+ 
+        // Reset errors
+        $('.sub-group-name-error').text('');
+        $('input').removeClass('is-invalid');
+ 
+        $('#sub_group_id').val(subGroupId);
+        $('#sub_group_name').val(subGroupName);
+ 
+        var updateUrl = '{{ route("sub-group.update", ":id") }}'.replace(':id', subGroupId);
+        $('#subGroupForm').attr('action', updateUrl);
+ 
+        // Remove any existing _method field before adding a fresh one
+        $('#subGroupForm input[name="_method"]').remove();
+        $('#subGroupForm').append('<input type="hidden" name="_method" value="PUT">');
+ 
+        $('#SubGroupModal').modal('show');
+    });
+ 
+    $(document).on('click', '#saveSubGroup', function (e) {
+        e.preventDefault();
+ 
+        var name = $.trim($('#sub_group_name').val());
+ 
+        // Clear previous errors
+        $('.error').text('');
+        $('input').removeClass('is-invalid');
+ 
+        if (!name) {
+            $('#sub_group_name').addClass('is-invalid');
+            $('.sub-group-name-error').text('Sub-Group Name is required.');
+            return;
+        }
+ 
+        $('#subGroupForm').submit();
+    });
+ 
+    $('#SubGroupModal').on('hidden.bs.modal', function () {
+        $('#subGroupForm input[name="_method"]').remove();
+        $('#subGroupForm')[0].reset();
+        $('.sub-group-name-error').text('');
+        $('input').removeClass('is-invalid');
+    });
 
 
 });

@@ -37,6 +37,21 @@ class AuthenticatedSessionController extends Controller
         // Store the token in the current session so middleware can verify it
         $request->session()->put('session_token', $newToken);
 
+        // Set allowed modules in session based on role / customer type.
+        // Admins get full access (no restriction). Retailer customer type gets items and orders only.
+        try {
+            if ($user->hasRole('admin')) {
+                $request->session()->forget('allowed_modules');
+            } elseif ($user->customerType && strcasecmp($user->customerType->name, 'retailer') === 0) {
+                $request->session()->put('allowed_modules', ['items', 'orders']);
+            } else {
+                $request->session()->forget('allowed_modules');
+            }
+        } catch (\Throwable $e) {
+            // Don't let session-setting failures block login; fall back to no restrictions.
+            $request->session()->forget('allowed_modules');
+        }
+
         return redirect()->intended(route('dashboard', absolute: false));
     }
 

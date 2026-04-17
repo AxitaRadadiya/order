@@ -63,6 +63,17 @@
             </div>
             <div class="col-md-4">
               <div class="form-group">
+                <label>Customer Type</label>
+                <select name="customer_type_id" class="form-control">
+                  <option value="">-- Default (retailer) --</option>
+                  @foreach($customerTypes as $ct)
+                    <option value="{{ $ct->id }}" {{ (old('customer_type_id', $customer->customer_type_id) == $ct->id) ? 'selected' : '' }}>{{ $ct->name }}</option>
+                  @endforeach
+                </select>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="form-group">
                 <label>Email <span class="text-danger">*</span></label>
                 <input type="email" class="form-control @error('email') is-invalid @enderror" name="email" value="{{ old('email',$customer->email) }}" required>
                 @error('email')<div class="invalid-feedback">{{ $message }}</div>@enderror

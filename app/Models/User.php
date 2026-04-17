@@ -80,6 +80,7 @@ class User extends Authenticatable
         'password',
         'profile_image',
         'role_id',
+        'customer_type_id',
         'status',
         'mobile',
         'note',
@@ -102,6 +103,11 @@ class User extends Authenticatable
     public function role()
     {
         return $this->belongsTo(Role::class);
+    }
+
+    public function customerType()
+    {
+        return $this->belongsTo(CustomerType::class);
     }
 
     public function getProfileImagePathAttribute(): string

@@ -21,8 +21,14 @@ class Customer extends Model
         'gst_treatment',
         'place_of_supply',
         'pan_number',
-        'credit_limit'
+        'credit_limit',
+        'customer_type_id',
     ];
+
+    public function customerType()
+    {
+        return $this->belongsTo(CustomerType::class);
+    }
 
     public function addresses()
     {

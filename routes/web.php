@@ -21,6 +21,8 @@ use App\Http\Controllers\Admin\ItemMasterController;
 use App\Http\Controllers\Admin\ItemController;
 use App\Http\Controllers\Admin\OrderMasterController;
 use App\Http\Controllers\Admin\CustomerTypeController;
+use App\Http\Controllers\Admin\SubGroupController;
+use App\Http\Controllers\Admin\SubCategoryController;
 use Illuminate\Support\Facades\Artisan;
 
 Route::get('/', function () {
@@ -81,6 +83,11 @@ Route::group(['middleware' => ['auth']], function () {
     Route::resource('color', ColorController::class);
     Route::get('customer-type-list', [CustomerTypeController::class,'list'])->name('customer-type.list');
     Route::resource('customer-type', CustomerTypeController::class);
+    Route::get('sub-category-list', [SubCategoryController::class,'list'])->name('sub-category.list');
+    Route::resource('sub-category', SubCategoryController::class);
+    Route::get('sub-group-list', [SubGroupController::class,'list'])->name('sub-group.list');
+    Route::resource('sub-group', SubGroupController::class);
+
 
     // Admin profile (admin area)
     Route::get('admin/profile', [AdminController::class, 'edit'])->name('admin.profile.edit');

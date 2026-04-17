@@ -43,15 +43,9 @@ class LoginRequest extends FormRequest
     {
         $this->ensureIsNotRateLimited();
 
+        // Allow authentication for all users; access will be controlled after login
+        // based on role and customer type.
         $user = User::where('email', $this->string('email')->toString())->first();
-
-        if ($user && (int) $user->status !== 1) {
-            RateLimiter::hit($this->throttleKey());
-
-            throw ValidationException::withMessages([
-                'email' => 'Your account is inactive. Please contact the administrator.',
-            ]);
-        }
 
         if (! Auth::attempt($this->only('email', 'password'), $this->boolean('remember'))) {
             RateLimiter::hit($this->throttleKey());

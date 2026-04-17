@@ -25,7 +25,7 @@
 
                 @php
                     // Allowed tabs — default to 'category'
-                    $allowedTabs = ['category', 'group', 'size', 'color'];
+                    $allowedTabs = ['category', 'sub-category', 'group', 'sub-group', 'size', 'color'];
                     $activeTab   = in_array(request()->get('tab'), $allowedTabs)
                                     ? request()->get('tab')
                                     : 'category';
@@ -40,12 +40,27 @@
                             <span class="d-none d-lg-block">Category</span>
                         </a>
                     </li>
+                     <li class="nav-item">
+                        <a href="#sub-category" data-toggle="tab" aria-expanded="true"
+                           class="nav-link {{ $activeTab === 'sub-category' ? 'active' : '' }}">
+                            <i class="mdi mdi-home-variant d-lg-none d-block"></i>
+                            <span class="d-none d-lg-block">Sub-Category</span>
+                        </a>
+                    </li>
 
                     <li class="nav-item">
                         <a href="#group" data-toggle="tab" aria-expanded="false"
                            class="nav-link {{ $activeTab === 'group' ? 'active' : '' }}">
                             <i class="mdi mdi-account-group d-lg-none d-block"></i>
                             <span class="d-none d-lg-block">Group</span>
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a href="#sub-group" data-toggle="tab" aria-expanded="false"
+                           class="nav-link {{ $activeTab === 'sub-group' ? 'active' : '' }}">
+                            <i class="mdi mdi-account-group d-lg-none d-block"></i>
+                            <span class="d-none d-lg-block">Sub-Group</span>
                         </a>
                     </li>
 
@@ -72,8 +87,16 @@
                         @include('admin.item-master.category.index')
                     </div>
 
+                    <div class="tab-pane {{ $activeTab === 'sub-category' ? 'show active' : '' }}" id="sub-category">
+                        @include('admin.item-master.sub-category.index')
+                    </div>
+
                     <div class="tab-pane {{ $activeTab === 'group' ? 'show active' : '' }}" id="group">
                         @include('admin.item-master.group.index')
+                    </div>
+
+                    <div class="tab-pane {{ $activeTab === 'sub-group' ? 'show active' : '' }}" id="sub-group">
+                        @include('admin.item-master.sub-group.index')
                     </div>
 
                     <div class="tab-pane {{ $activeTab === 'size' ? 'show active' : '' }}" id="size">

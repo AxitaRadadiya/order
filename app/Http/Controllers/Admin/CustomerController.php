@@ -9,6 +9,7 @@ use App\Models\BankDetail;
 use App\Models\Country;
 use App\Models\State;
 use App\Models\City;
+use App\Models\CustomerType;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -26,7 +27,8 @@ class CustomerController extends Controller
         $countries = Country::orderBy('name')->get();
         $states = State::orderBy('name')->get();
         $cities = City::orderBy('name')->get();
-        return view('admin.customer.create', compact('countries', 'states', 'cities'));
+        $customerTypes = CustomerType::orderBy('name')->get();
+        return view('admin.customer.create', compact('countries', 'states', 'cities', 'customerTypes'));
     }
 
     public function store(Request $request)
@@ -38,6 +40,7 @@ class CustomerController extends Controller
             'company_name' => 'nullable|string|max:255',
             'website'      => 'nullable|url|max:255',
             'password'     => 'required|min:6',
+            'customer_type_id' => 'nullable|exists:customer_types,id',
             'gst_number'   => 'nullable|string|max:20',
             'pan_number'   => 'nullable|string|max:15',
             'credit_limit' => 'nullable|numeric|min:0',
@@ -47,6 +50,14 @@ class CustomerController extends Controller
         DB::beginTransaction();
         try {
             // 1. Create Customer
+            $customerType = null;
+            if ($request->filled('customer_type_id')) {
+                $customerType = CustomerType::find($request->customer_type_id);
+            }
+            if (! $customerType) {
+                $customerType = CustomerType::firstOrCreate(['name' => 'retailer']);
+            }
+
             $customer = Customer::create([
                 'name'            => $request->name,
                 'company_name'    => $request->company_name,
@@ -54,6 +65,7 @@ class CustomerController extends Controller
                 'phone'           => $request->phone,
                 'website'         => $request->website,
                 'password'        => Hash::make($request->password),
+                'customer_type_id'=> $customerType->id,
                 'payment_terms'   => $request->payment_terms,
                 'gst_treatment'   => $request->gst_treatment,
                 'gst_number'      => $request->gst_number,
@@ -128,7 +140,8 @@ class CustomerController extends Controller
         $countries = Country::orderBy('name')->get();
         $states = State::orderBy('name')->get();
         $cities = City::orderBy('name')->get();
-        return view('admin.customer.edit', compact('customer', 'countries', 'states', 'cities'));
+        $customerTypes = CustomerType::orderBy('name')->get();
+        return view('admin.customer.edit', compact('customer', 'countries', 'states', 'cities', 'customerTypes'));
     }
 
     public function update(Request $request, Customer $customer)
@@ -155,6 +168,7 @@ class CustomerController extends Controller
                 'email'           => $request->email,
                 'phone'           => $request->phone,
                 'website'         => $request->website,
+                'customer_type_id'=> $request->filled('customer_type_id') ? $request->customer_type_id : ($customer->customer_type_id ?? CustomerType::firstOrCreate(['name' => 'retailer'])->id),
                 'payment_terms'   => $request->payment_terms,
                 'gst_treatment'   => $request->gst_treatment,
                 'gst_number'      => $request->gst_number,
