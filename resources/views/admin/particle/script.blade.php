@@ -117,7 +117,7 @@ $(document).ready(function () {
 
    
     $('#roleTable').DataTable({
-        paging: true, lengthChange: false, searching: true, ordering: true, info: true,
+        paging: true, lengthChange: true, searching: true, ordering: true, info: true,
         autoWidth: false, responsive: true, processing: true, serverSide: true,
         order: [0, 'desc'],
         ajax: { url: '{{ route('roles.list') }}', dataType: 'json', type: 'GET', data: { _token: '{{csrf_token()}}', route: 'roles.list' } },
@@ -127,7 +127,7 @@ $(document).ready(function () {
 
     // Permissions table
     $('#permissionsTable').DataTable({
-        paging: true, lengthChange: false, searching: true, ordering: true, info: true,
+        paging: true, lengthChange: true, searching: true, ordering: true, info: true,
         autoWidth: false, responsive: true, processing: true, serverSide: true,
         order: [0, 'desc'],
         ajax: { url: '{{ route('permissions.list') }}', dataType: 'json', type: 'GET', data: { _token: '{{csrf_token()}}', route: 'permissions.list' } },
@@ -138,7 +138,7 @@ $(document).ready(function () {
     // Users table loader
     function load_user() {
         $('#userTable').DataTable({
-            paging: true, lengthChange: false, searching: true, ordering: true, info: true,
+            paging: true, lengthChange: true, searching: true, ordering: true, info: true,
             autoWidth: false, responsive: true, processing: true, serverSide: true,
             order: [0, 'desc'],
             ajax: {
@@ -165,7 +165,7 @@ $(document).ready(function () {
             $('#customerTable tbody').empty();
         }
         $('#customerTable').DataTable({
-            paging: true, lengthChange: false, searching: true, ordering: true, info: true,
+            paging: true, lengthChange: true, searching: true, ordering: true, info: true,
             autoWidth: false, responsive: true, processing: true, serverSide: true,
             order: [0, 'desc'],
             ajax: {
