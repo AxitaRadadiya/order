@@ -5,7 +5,7 @@
             <div class="card-header d-flex align-items-center">
                 <h5 class="mb-0">Group</h5>
                 <div class="ml-auto">
-                    <a href="#" class="btn btn-success btn-sm waves-effect waves-light group-date-modal">
+                    <a href="#" class="btn-create group-date-modal">
                         <i class="fa fa-plus"></i> Add Group
                     </a>
                 </div>
@@ -60,8 +60,8 @@
                 </form>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary waves-effect waves-light" data-dismiss="modal">Close</button>
-                <button type="button" class="btn btn-primary waves-effect waves-light" id="saveGroup">Save</button>
+                <button type="button" class="btn-cancel" data-dismiss="modal">Close</button>
+                <button type="button" class="btn-submit" id="saveGroup">Save</button>
             </div>
         </div>
     </div>

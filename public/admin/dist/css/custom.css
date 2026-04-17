@@ -100,6 +100,15 @@ a {
     border-radius: 12px;
     padding: 7px 15px;
 }
+.btn-outline-primary {
+    color: #7F53AC !important;
+    border-color: #7F53AC !important;
+    border-radius: 12px;
+}
+.btn-outline-primary:hover {
+    background: linear-gradient(135deg, #5E60CE, #7F53AC) !important;
+    color: #fff !important;
+}
 .thead {
     background-color: #F4F7FE !important;
 }
@@ -109,4 +118,10 @@ a {
 }
 .page-link {
     color: #7F53AC;
+}
+.breadcrumb {
+    background-color: #F4F7FE !important;
+}
+.pull-card {
+    padding: 10px 20px;
 }

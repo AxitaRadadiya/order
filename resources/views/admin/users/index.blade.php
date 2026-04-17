@@ -35,10 +35,10 @@
 
     <div class="main-card">
       <div class="main-card-head">
-        <div class="main-card-title">
+        <!-- <div class="main-card-title">
           <i class="fas fa-list"></i> All Users
           <span class="count-badge">{{ $users->total() }}</span>
-        </div>
+        </div> -->
         <a href="{{ route('users.create') }}" class="btn-create">
           <i class="fas fa-plus"></i> New User
         </a>
