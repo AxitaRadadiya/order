@@ -32,19 +32,21 @@
 						<div class="col-md-4">
 							<div class="form-group">
 								<label>Item Name <span class="text-danger">*</span></label>
-								<input type="text" name="name" value="{{ old('name') }}" class="form-control" required>
+								<input type="text" name="name" value="{{ old('name') }}" class="form-control @error('name') is-invalid @enderror" required>
+								@error('name')<div class="invalid-feedback">{{ $message }}</div>@enderror
 							</div>
 						</div>
 						<div class="col-md-4">
 							<div class="form-group">
 								<label>Article Number <span class="text-danger">*</span></label>
-								<input type="text" name="article_number" value="{{ old('article_number') }}" class="form-control" required>
+								<input type="text" name="article_number" value="{{ old('article_number') }}" class="form-control @error('article_number') is-invalid @enderror" required>
+								@error('article_number')<div class="invalid-feedback">{{ $message }}</div>@enderror
 							</div>
 						</div>
 						<div class="col-md-4">
 							<div class="form-group">
-								<label>Item Code <span class="text-danger">*</span></label>
-								<input type="text" name="item_code" value="{{ old('item_code') }}" class="form-control" readonly>
+								<label>Item Code</label>
+								<input type="text" name="item_code" value="{{ old('item_code', $generatedItemCode ?? '') }}" class="form-control" readonly>
 							</div>
 						</div>
 
@@ -55,7 +57,6 @@
 							</div>
 						</div>
 
-						{{-- Category and Sub-category removed; sizes will be used instead --}}
 						<div class="col-md-4">
 							<div class="form-group">
 								<label>Group</label>
@@ -112,19 +113,19 @@
 							</div>
 						</div>
 
-						{{-- Sizes (master list) --}}
+						{{-- Sizes --}}
 						<div class="col-md-12">
 							<div class="form-group">
 								<label>Sizes</label>
 								@php
-								// use sizes passed from controller, fallback to default list
-								$sizesList = $sizes ?? [28,30,32,34,36,38,40,42,44,46,48];
+								$sizesList    = $sizes ?? [28,30,32,34,36,38,40,42,44,46,48];
 								$selectedSizes = old('sizes', []);
 								@endphp
 								<div>
 									@foreach($sizesList as $sz)
 									<div class="form-check form-check-inline">
-										<input class="form-check-input" type="checkbox" name="sizes[]" id="size_{{ $sz }}" value="{{ $sz }}" {{ in_array((string)$sz, array_map('strval', (array)$selectedSizes)) || in_array($sz, (array)$selectedSizes) ? 'checked' : '' }}>
+										<input class="form-check-input" type="checkbox" name="sizes[]" id="size_{{ $sz }}" value="{{ $sz }}"
+											{{ in_array((string)$sz, array_map('strval', (array)$selectedSizes)) ? 'checked' : '' }}>
 										<label class="form-check-label" for="size_{{ $sz }}">{{ $sz }}</label>
 									</div>
 									@endforeach
@@ -135,7 +136,8 @@
 						<div class="col-md-3">
 							<div class="form-group">
 								<label>MRP</label>
-								<input type="number" step="0.01" name="price" value="{{ old('price', 0) }}" class="form-control">
+								<input type="number" step="0.01" name="price" value="{{ old('price', 0) }}" class="form-control @error('price') is-invalid @enderror">
+								@error('price')<div class="invalid-feedback">{{ $message }}</div>@enderror
 							</div>
 						</div>
 						<div class="col-md-3">
@@ -145,10 +147,31 @@
 							</div>
 						</div>
 
-						<div class="col-md-6">
+						{{-- ✅ MULTIPLE IMAGES: up to 5, jpg/png only, max 2 MB each --}}
+						<div class="col-md-12">
 							<div class="form-group">
-								<label>Image</label>
-								<input type="file" name="image" class="form-control-file">
+								<label>
+									Images
+									<small class="text-muted">(Max 5 images &bull; JPG / PNG only &bull; Max 2 MB each)</small>
+								</label>
+								<div class="custom-file">
+									<input type="file"
+										   id="itemImages"
+										   name="images[]"
+										   class="custom-file-input @error('images') is-invalid @enderror @error('images.*') is-invalid @enderror"
+										   multiple
+										   accept=".jpg,.jpeg,.png">
+									<label class="custom-file-label" for="itemImages">Choose images&hellip;</label>
+								</div>
+								@error('images')
+									<div class="text-danger small mt-1">{{ $message }}</div>
+								@enderror
+								@error('images.*')
+									<div class="text-danger small mt-1">{{ $message }}</div>
+								@enderror
+								{{-- Live preview --}}
+								<div id="imagePreviewContainer" class="d-flex flex-wrap mt-2" style="gap:8px;"></div>
+								<div id="imageError" class="text-danger small mt-1" style="display:none;"></div>
 							</div>
 						</div>
 
@@ -165,20 +188,13 @@
 							<div class="form-group">
 								<input type="hidden" name="show_item_on_web" value="0">
 								<div class="custom-control custom-switch">
-									<input
-										type="checkbox"
-										class="custom-control-input"
-										id="show_item_on_web"
-										name="show_item_on_web"
-										value="1"
-										{{ old('show_item_on_web', 1) ? 'checked' : '' }}>
-									<label class="custom-control-label" for="show_item_on_web">
-										Show Item on Web
-									</label>
+									<input type="checkbox" class="custom-control-input" id="show_item_on_web"
+										   name="show_item_on_web" value="1"
+										   {{ old('show_item_on_web', 1) ? 'checked' : '' }}>
+									<label class="custom-control-label" for="show_item_on_web">Show Item on Web</label>
 								</div>
 							</div>
 						</div>
-
 					</div>
 
 					<div class="mt-3 mb-3 text-right">
@@ -190,5 +206,100 @@
 		</div>
 	</div>
 </section>
-
 @endsection
+
+@push('pageScript')
+<script>
+(function () {
+    const input     = document.getElementById('itemImages');
+    const preview   = document.getElementById('imagePreviewContainer');
+    const errorBox  = document.getElementById('imageError');
+    const MAX_FILES = 5;
+    const MAX_MB    = 2;
+    let   accepted  = [];   // DataTransfer-backed file list
+
+    input.addEventListener('change', function () {
+        errorBox.style.display = 'none';
+        errorBox.textContent   = '';
+
+        const newFiles   = Array.from(this.files);
+        const errors     = [];
+
+        newFiles.forEach(function (file) {
+            const ext = file.name.split('.').pop().toLowerCase();
+
+            if (!['jpg', 'jpeg', 'png'].includes(ext)) {
+                errors.push(file.name + ': only JPG / PNG allowed.');
+                return;
+            }
+            if (file.size > MAX_MB * 1024 * 1024) {
+                errors.push(file.name + ': exceeds ' + MAX_MB + ' MB limit.');
+                return;
+            }
+            if (accepted.length >= MAX_FILES) {
+                errors.push('Maximum ' + MAX_FILES + ' images allowed. "' + file.name + '" skipped.');
+                return;
+            }
+            accepted.push(file);
+        });
+
+        if (errors.length) {
+            errorBox.textContent   = errors.join(' ');
+            errorBox.style.display = 'block';
+        }
+
+        syncInput();
+        renderPreviews();
+    });
+
+    function syncInput() {
+        // Rebuild the FileList from accepted[] using DataTransfer
+        const dt = new DataTransfer();
+        accepted.forEach(function (f) { dt.items.add(f); });
+        input.files = dt.files;
+
+        // Update custom-file label
+        const label = input.nextElementSibling;
+        if (label && label.classList.contains('custom-file-label')) {
+            label.textContent = accepted.length
+                ? accepted.length + ' file(s) selected'
+                : 'Choose images\u2026';
+        }
+    }
+
+    function renderPreviews() {
+        preview.innerHTML = '';
+        accepted.forEach(function (file, idx) {
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                const wrapper = document.createElement('div');
+                wrapper.style.cssText = 'position:relative;display:inline-block;';
+
+                const img = document.createElement('img');
+                img.src   = e.target.result;
+                img.style.cssText = 'width:90px;height:90px;object-fit:cover;border-radius:6px;border:1px solid #ddd;';
+
+                const btn = document.createElement('button');
+                btn.type        = 'button';
+                btn.innerHTML   = '&times;';
+                btn.title       = 'Remove';
+                btn.style.cssText =
+                    'position:absolute;top:2px;right:2px;width:20px;height:20px;line-height:18px;' +
+                    'text-align:center;border-radius:50%;border:none;background:rgba(220,53,69,.85);' +
+                    'color:#fff;font-size:14px;cursor:pointer;padding:0;';
+                btn.addEventListener('click', function () {
+                    accepted.splice(idx, 1);
+                    syncInput();
+                    renderPreviews();
+                });
+
+                wrapper.appendChild(img);
+                wrapper.appendChild(btn);
+                preview.appendChild(wrapper);
+            };
+            reader.readAsDataURL(file);
+        });
+    }
+})();
+</script>
+@endpush

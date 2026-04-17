@@ -21,12 +21,12 @@
 <section class="content">
   <div class="container-fluid">
 
-    @if(session('success'))
+    <!-- @if(session('success'))
       <div class="alert alert-success alert-dismissible fade show">
         <i class="fas fa-check-circle mr-1"></i>{{ session('success') }}
         <button type="button" class="close" data-dismiss="alert"><span>&times;</span></button>
       </div>
-    @endif
+    @endif -->
 
     <div class="card card-outline card-primary">
       <div class="card-header">
@@ -42,19 +42,18 @@
           <table id="itemTable" class="table table-hover table-bordered mb-0" style="width:100%">
             <thead class="thead-light">
               <tr>
-                <th>ID</th>
+                <th>#</th>
                 <th>Name</th>
                 <th>Article Number</th>
                 <th>Category</th>
                 <th>Group</th>
-                <th>Sizes</th>
+                <th>Sizes</th>  
                 <th>Price</th>
                 <th>Status</th>
                 <th width="140">Action</th>
               </tr>
             </thead>
-            <tbody>
-            </tbody>
+            <tbody></tbody>
           </table>
         </div>
       </div>

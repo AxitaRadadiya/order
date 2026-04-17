@@ -188,31 +188,30 @@ $(document).ready(function () {
     }
     load_customer();
 
-    function load_item() {
-        $('#itemTable').DataTable({
-            paging: true, lengthChange: false, searching: true, ordering: true, info: true,
-            autoWidth: false, responsive: true, processing: true, serverSide: true,
-            order: [0, 'desc'],
-            ajax: {
-                url: '{{ route('items.list') }}',
-                dataType: 'json',
-                type: 'GET',
-                data: { _token: '{{csrf_token()}}' }
-            },
-            columns: [
+       $('#itemTable').DataTable({
+        processing:  true,
+        serverSide:  true,
+        responsive:  true,
+        order:       [[0, 'desc']],
+        ajax: {
+            url:      '{{ route("items.list") }}',
+            dataType: 'json',
+            type:     'GET',
+            data:     { _token: '{{ csrf_token() }}' }
+        },
+        columns: [
             { data: 'id' },
             { data: 'name' },
             { data: 'article_number' },
-            { data: 'category' },
-            { data: 'group' },
-            { data: 'color' },
+            { data: 'category' },    
+            { data: 'group' },       
+            { data: 'sizes' },      
             { data: 'price' },
             { data: 'status' },
-            { data: 'action' }
+            { data: 'action', orderable: false, searchable: false }
         ]
-            , aoColumnDefs: [{ bSortable: false, aTargets: [-1] }]
-        });
-    }
+    });
+
 
     // Initialize users table if present on the page
     if ($('#userTable').length) {
