@@ -115,7 +115,7 @@ $(document).ready(function () {
         }).then((result) => { if (result.isConfirmed) form.submit(); });
     });
 
-    // Roles table
+   
     $('#roleTable').DataTable({
         paging: true, lengthChange: false, searching: true, ordering: true, info: true,
         autoWidth: false, responsive: true, processing: true, serverSide: true,
@@ -279,12 +279,12 @@ $(document).ready(function () {
                 { data: 'name',   orderable: true  },
                 { data: 'action', orderable: false }
             ],
-            language: {
+           /* language: {
                 paginate: {
                     previous: "<i class='mdi mdi-chevron-left'>",
                     next:     "<i class='mdi mdi-chevron-right'>"
                 }
-            },
+            },*/
             drawCallback: function () {
                 $('.dataTables_paginate > .pagination').addClass('pagination-rounded');
             }
@@ -382,12 +382,12 @@ $(document).ready(function () {
                 { data: 'name',    orderable: true  },
                 { data: 'action',  orderable: false }
             ],
-            language: {
+            /*language: {
                 paginate: {
                     previous: "<i class='mdi mdi-chevron-left'>",
                     next:     "<i class='mdi mdi-chevron-right'>"
                 }
-            },
+            },*/
             drawCallback: function () {
                 $('.dataTables_paginate > .pagination').addClass('pagination-rounded');
             }
@@ -495,12 +495,12 @@ $(document).ready(function () {
                 { data: 'name',    orderable: true  },
                 { data: 'action',  orderable: false }
             ],
-            language: {
+            /*language: {
                 paginate: {
                     previous: "<i class='mdi mdi-chevron-left'>",
                     next:     "<i class='mdi mdi-chevron-right'>"
                 }
-            },
+            },*/
             drawCallback: function () {
                 $('.dataTables_paginate > .pagination').addClass('pagination-rounded');
             }
@@ -1056,12 +1056,12 @@ $(document).ready(function () {
                     { data: 'name',   orderable: true  },
                     { data: 'action', orderable: false }
                 ],
-                language: {
+                /*language: {
                     paginate: {
                         previous: "<i class='mdi mdi-chevron-left'>",
                         next:     "<i class='mdi mdi-chevron-right'>"
                     }
-                },
+                },*/
                 drawCallback: function () {
                     $('.dataTables_paginate > .pagination').addClass('pagination-rounded');
                 }

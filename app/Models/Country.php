@@ -10,7 +10,6 @@ class Country extends Model
    use LogsActivity;
    protected $fillable =
     [
-        'name',
-        'code'
+        'name'
     ];
 }
