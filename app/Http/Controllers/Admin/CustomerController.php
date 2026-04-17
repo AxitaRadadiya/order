@@ -282,13 +282,22 @@ class CustomerController extends Controller
 
         $data = [];
         foreach ($customers as $customer) {
+            $statusBadge = '';
+            if ($customer->status === null) {
+                $statusBadge = '';
+            } else {
+                $statusBadge = $customer->status
+                    ? '<span class="badge badge-success">Active</span>'
+                    : '<span class="badge badge-danger">Inactive</span>';
+            }
+
             $data[] = [
                 'id' => $customer->id,
                 'name' => $customer->name,
                 'email' => $customer->email,
                 'phone' => $customer->phone,
                 'company_name' => $customer->company_name,
-                'status' => $customer->status ?? '',
+                'status' => $statusBadge,
                 'action' => view('admin.customer.partials.actions', compact('customer'))->render(),
             ];
         }
