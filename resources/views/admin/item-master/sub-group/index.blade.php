@@ -5,12 +5,12 @@
             <div class="card-header d-flex align-items-center">
                 <h5 class="mb-0">sub-Group</h5>
                 <div class="ml-auto">
-                    <a href="#" class="btn btn-success btn-sm waves-effect waves-light sub-group-date-modal">
+                    <a href="#" class="btn btn-create btn-sm waves-effect waves-light sub-group-date-modal">
                         <i class="fa fa-plus"></i> Add sub-Group
                     </a>
                 </div>
             </div>
-            <div class="card-body">
+            <div class="card-body" style="padding: 0px !important;">
                 <table id="SubGTable" class="table dt-responsive nowrap w-100">
                     <thead>
                         <tr>
@@ -73,7 +73,7 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary waves-effect waves-light" data-dismiss="modal">Close</button>
-                <button type="button" class="btn btn-primary waves-effect waves-light" id="saveSubGroup">Save</button>
+                <button type="button" class="btn btn-create waves-effect waves-light" id="saveSubGroup">Save</button>
             </div>
         </div>
     </div>

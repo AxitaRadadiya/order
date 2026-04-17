@@ -27,7 +27,7 @@
   <div class="container-fluid">
 
     {{-- ── Log Summary Card ── --}}
-    <div class="card card-outline card-teal shadow-sm mb-3">
+    <div class="card ">
       <div class="card-header">
         <h3 class="card-title">
           <i class="fas fa-info-circle mr-2"></i>Log Summary
@@ -127,7 +127,7 @@
 
     {{-- ── Data Changes Card (old vs new) ── --}}
     @if($log->old_values || $log->new_values)
-    <div class="card card-outline card-teal shadow-sm">
+    <div class="card">
       <div class="card-header">
         <h3 class="card-title">
           <i class="fas fa-exchange-alt mr-2"></i>Data Changes
@@ -139,7 +139,7 @@
           {{-- Before --}}
           @if($log->old_values)
           <div class="col-md-6 mb-3">
-            <div class="card card-danger card-outline shadow-none mb-0">
+            <div class="card  mb-0">
               <div class="card-header p-2">
                 <h3 class="card-title" style="font-size:.82rem;">
                   <i class="fas fa-minus-circle mr-1 text-danger"></i>Before
@@ -162,7 +162,7 @@
           {{-- After --}}
           @if($log->new_values)
           <div class="col-md-6 mb-3">
-            <div class="card card-success card-outline shadow-none mb-0">
+            <div class="card  mb-0">
               <div class="card-header p-2">
                 <h3 class="card-title" style="font-size:.82rem;">
                   <i class="fas fa-plus-circle mr-1 text-success"></i>After

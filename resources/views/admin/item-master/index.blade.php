@@ -5,7 +5,7 @@
 <div class="row">
     <div class="col-12">
         <div class="page-title-box d-flex align-items-center justify-content-between">
-            <h4 class="mb-0 font-size-18">Item Master</h4>
+            <h4 class="m-0">Item Master</h4>
             <div class="page-title-right">
                 <ol class="breadcrumb m-0">
                     <li class="breadcrumb-item"><a href="{{ route('dashboard') }}">Dashboard</a></li>
@@ -18,12 +18,7 @@
 
 <div class="row">
     <div class="col-xl-12">
-        <div class="card">
-            <div class="card-body">
-
-                <h4 class="card-title">Item Master</h4>
-
-                @php
+         @php
                     // Allowed tabs — default to 'category'
                     $allowedTabs = ['category', 'sub-category', 'group', 'sub-group', 'size', 'color'];
                     $activeTab   = in_array(request()->get('tab'), $allowedTabs)
@@ -80,6 +75,11 @@
                     </li>
 
                 </ul>
+        <div class="card">
+            <div class="card-body" style="padding: 0px !important;">
+
+
+               
 
                 <div class="tab-content">
 

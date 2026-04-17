@@ -222,25 +222,33 @@ class ItemController extends Controller
                 $sizesDisplay = implode(', ', array_map('trim', $arr));
             }
 
-            $actionHtml  = '<a href="' . $viewUrl . '" class="btn btn-sm btn-info" title="View"><i class="fas fa-eye"></i></a> ';
-            $actionHtml .= '<a href="' . $editUrl . '" class="btn btn-sm btn-primary" title="Edit"><i class="fas fa-edit"></i></a> ';
-            $actionHtml .= '<form method="POST" action="' . $deleteUrl . '" style="display:inline-block;margin:0;padding:0;">';
-            $actionHtml .= '<input type="hidden" name="_token" value="' . csrf_token() . '">';
-            $actionHtml .= '<input type="hidden" name="_method" value="DELETE">';
-            $actionHtml .= '<button type="submit" class="btn btn-sm btn-danger deleteButton" title="Delete"><i class="fas fa-trash"></i></button>';
-            $actionHtml .= '</form>';
+            $actions = '<div class="btn-group" style="position: relative; left: 10px;">
+                <button type="button" class="btn btn-sm btn-info " data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" title="Actions">
+                    <i class="fas fa-ellipsis-v"></i>
+                </button>
+                <div class="dropdown-menu action-dropdown" role="menu">';
+
+            $actions .= '<a class="dropdown-item" href="' . $viewUrl . '">View</a>';
+            $actions .= '<a class="dropdown-item" href="' . $editUrl . '">Edit</a>';
+            $actions .= '
+                <form method="POST" action="' . $deleteUrl . '" style="display:inline;">
+                    <input type="hidden" name="_token" value="' . csrf_token() . '">
+                    <input type="hidden" name="_method" value="DELETE">
+                    <button type="submit" class="dropdown-item deleteButton">Delete</button>
+                </form>
+            ';
+            $actions .= '</div></div>';
 
             $data[] = [
                 'id'             => $start + $idx + 1,
                 'name'           => $item->name,
                 'article_number' => $item->article_number ?? '-',
-                // ✅ FIX: use relationship ->name, not raw column value
                 'category'       => optional($item->category)->name ?? '-',
                 'group'          => optional($item->group)->name   ?? '-',
-                'sizes'          => $sizesDisplay ?: '-',          // ✅ now shows sizes
+                'sizes'          => $sizesDisplay ?: '-',
                 'price'          => number_format((float) $item->price, 2),
                 'status'         => $statusBadge,
-                'action'         => $actionHtml,
+                'action'         => $actions,
             ];
         }
 

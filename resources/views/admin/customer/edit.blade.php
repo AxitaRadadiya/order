@@ -41,12 +41,12 @@
       @csrf @method('PUT')
 
       {{-- 1. Basic Info --}}
-      <div class="card card-outline card-primary">
+      <div class="card" style="padding:10px;">
         <div class="card-header">
           <h3 class="card-title"><i class="fas fa-user mr-1"></i>Basic Information</h3>
           <div class="card-tools"><button type="button" class="btn btn-tool" data-card-widget="collapse"><i class="fas fa-minus"></i></button></div>
         </div>
-        <div class="card-body">
+        <div class="card-body" style="padding:10px;">
           <div class="row">
             <div class="col-md-4">
               <div class="form-group">
@@ -97,7 +97,7 @@
                 <div class="input-group">
                   <input type="password" class="form-control @error('password') is-invalid @enderror" id="password" name="password" placeholder="New password">
                   <div class="input-group-append">
-                    <button class="btn btn-outline-secondary toggle-password" type="button" data-target="password"><i class="fas fa-eye"></i></button>
+                    <button class="btn toggle-password" type="button" data-target="password"><i class="fas fa-eye"></i></button>
                   </div>
                   @error('password')<div class="invalid-feedback">{{ $message }}</div>@enderror
                 </div>
@@ -119,12 +119,12 @@
       </div>
 
       {{-- 2. Tax & Financial --}}
-      <div class="card card-outline card-success">
+      <div class="card " style="padding:10px;">
         <div class="card-header">
           <h3 class="card-title"><i class="fas fa-rupee-sign mr-1"></i>Tax & Financial Details</h3>
           <div class="card-tools"><button type="button" class="btn btn-tool" data-card-widget="collapse"><i class="fas fa-minus"></i></button></div>
         </div>
-        <div class="card-body">
+        <div class="card-body" >
           <div class="row">
             <div class="col-md-3">
               <div class="form-group">
@@ -173,7 +173,7 @@
       </div>
 
       {{-- 3. Billing Address (from customer_addresses table) --}}
-      <div class="card card-outline card-warning">
+      <div class="card "style="padding:10px;"> >
         <div class="card-header">
           <h3 class="card-title"><i class="fas fa-map-marker-alt mr-1"></i>Billing Address</h3>
           <div class="card-tools"><button type="button" class="btn btn-tool" data-card-widget="collapse"><i class="fas fa-minus"></i></button></div>
@@ -208,7 +208,7 @@
       </div>
 
       {{-- 4. Shipping Address (from customer_addresses table) --}}
-      <div class="card card-outline card-info">
+      <div class="card " style="padding:10px;">
         <div class="card-header">
           <h3 class="card-title"><i class="fas fa-shipping-fast mr-1"></i>Shipping Address</h3>
           <div class="card-tools d-flex align-items-center">
@@ -250,7 +250,7 @@
       </div>
 
       {{-- 5. Bank Details (from customer_bank_details table) --}}
-      <div class="card card-outline card-secondary">
+      <div class="card " style="padding:10px;">
         <div class="card-header">
           <h3 class="card-title"><i class="fas fa-university mr-1"></i>Bank Details</h3>
           <div class="card-tools"><button type="button" class="btn btn-tool" data-card-widget="collapse"><i class="fas fa-minus"></i></button></div>
@@ -269,11 +269,11 @@
         </div>
       </div>
 
-      <div class="card">
-        <div class="card-body text-right">
-          <a href="{{ route('customers.show', $customer) }}" class="btn btn-info mr-2"><i class="fas fa-eye mr-1"></i>View</a>
-          <a href="{{ route('customers.index') }}" class="btn btn-secondary mr-2"><i class="fas fa-times mr-1"></i>Cancel</a>
-          <button type="submit" class="btn btn-primary"><i class="fas fa-save mr-1"></i>Update Customer</button>
+      <div class="cards">
+        <div class="card-body text-right" style="padding:10px;">
+          <a href="{{ route('customers.show', $customer) }}" class="btn btn-view mr-2"><i class="fas fa-eye mr-1"></i>View</a>
+          <a href="{{ route('customers.index') }}" class="btn btn-cancel mr-2"><i class="fas fa-times mr-1"></i>Cancel</a>
+          <button type="submit" class="btn btn-create"><i class="fas fa-save mr-1"></i>Update Customer</button>
         </div>
       </div>
     </form>

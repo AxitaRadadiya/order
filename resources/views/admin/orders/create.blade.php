@@ -34,7 +34,7 @@
     <form action="{{ route('orders.store') }}" method="POST">
       @csrf
 
-      <div class="card card-outline card-light">
+      <div class="card"style="padding:10px;">
         <div class="card-body">
 
           {{-- ── Client / Dates ────────────────────────────────────────── --}}
@@ -138,7 +138,7 @@
                   <th width="70">Tax %</th>
                   <th width="100">Unit Price</th>
                   <th width="100">Total</th>
-                  <th width="40"></th>
+                  <th width="40">Action</th>
                 </tr>
               </thead>
               <tbody>
@@ -202,7 +202,7 @@
               </tbody>
             </table>
             <div class="text-right mb-3">
-              <button type="button" id="addItem" class="btn btn-sm btn-success">
+              <button type="button" id="addItem" class="btn btn-sm btn-create">
                 <i class="fas fa-plus"></i> Add Row
               </button>
             </div>
@@ -299,7 +299,7 @@
           <div class="row">
             <div class="col-md-8"></div>
             <div class="col-md-4">
-              <div class="card card-outline card-light">
+              <div class="card" style="padding:10px;">
                 <div class="card-body p-2">
                   <div class="d-flex justify-content-between py-1">
                     <strong>Sub Total</strong>
@@ -353,7 +353,7 @@
         </div>
       </div>
 
-      <div class="mt-3 mb-3 text-right">
+      <div class="mt-2 mb-2 text-right">
         <a href="{{ route('orders.index') }}" class="btn-cancel mr-2"><i class="fas fa-times mr-1"></i>Cancel</a>
         <button type="submit" class="btn-submit"><i class="fas fa-save mr-1"></i>Save Order</button>
       </div>

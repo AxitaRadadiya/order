@@ -57,7 +57,7 @@ class RoleController extends Controller
             // Action buttons
             $actions = '';
             if (auth()->user()) {
-                $actions .= '<a href="' . route('roles.edit', $role->id) . '" class="btn btn-xs btn-primary mr-1"><i class="fas fa-pen"></i> Edit</a>';
+                $actions .= '<a href="' . route('roles.edit', $role->id) . '" class="btn btn-sm btn-info mr-1"><i class="fa fa-edit"></i></a>';
             }
 
             $data[] = [

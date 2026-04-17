@@ -28,7 +28,7 @@
       </div>
     @endif
 
-    <div class="card card-outline card-primary">
+    <div class="card">
       <div class="card-header">
         <h3 class="card-title">Customer List</h3>
         <div class="card-tools d-flex align-items-center">
@@ -39,7 +39,7 @@
       </div>
       <div class="card-body">
         <div class="table-responsive">
-          <table id="customerTable" class="table table-hover table-bordered mb-0" style="width:100%">
+          <table id="customerTable" class="table mb-0" style="width:100%">
             <thead class="thead-light">
               <tr>
                 <th>ID</th>

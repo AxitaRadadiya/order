@@ -21,7 +21,7 @@
 	<div class="container-fluid">
 		<div class="main-card mt-4">
 			<div class="main-card-head">
-				<div class="main-card-title"><i class="fas fa-edit"></i> Edit Item</div>
+				<div class="main-card-title"></div>
 			</div>
 			<div class="main-card-body">
 				<form action="{{ route('items.update', $item->id) }}" method="POST" enctype="multipart/form-data">
@@ -222,8 +222,8 @@
 					</div>
 
 					<div class="mt-3 text-right">
-						<a href="{{ route('items.index') }}" class="btn btn-secondary mr-2"><i class="fas fa-times mr-1"></i>Cancel</a>
-						<button type="submit" class="btn btn-primary"><i class="fas fa-save mr-1"></i>Update Item</button>
+						<a href="{{ route('items.index') }}" class="btn btn-cancel mr-2"><i class="fas fa-times mr-1"></i>Cancel</a>
+						<button type="submit" class="btn btn-create"><i class="fas fa-save mr-1"></i>Update Item</button>
 					</div>
 				</form>
 			</div>
