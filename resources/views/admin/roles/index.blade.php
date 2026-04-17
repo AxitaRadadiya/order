@@ -1,66 +1,78 @@
 @extends('admin.layouts.app')
 @section('title', 'Roles')
-@section('style')
-<link rel="stylesheet" href="{{ asset('admin/dist/css/custom/user-role/roles-index.css') }}">
-@endsection
 
 @section('content')
 
-{{-- HERO --}}
-<div class="page-hero">
-  <div class="orb"></div>
-  <div class="container-fluid" style="position:relative;z-index:2;">
-    <div class="section-tabs">
-      <a href="{{ route('users.index') }}" class="section-tab">
-        <i class="fas fa-users"></i>
-        <span>User</span>
-      </a>
-      <a href="{{ route('roles.index') }}" class="section-tab active">
-        <i class="fas fa-user-tag"></i>
-        <span>Role</span>
-      </a>
+<div class="content-header">
+  <div class="container-fluid">
+    <div class="row mb-2">
+      <div class="col-sm-6">
+        <h1 class="m-0">Role Management</h1>
+      </div>
+      <div class="col-sm-6">
+        <ol class="breadcrumb float-sm-right">
+            <li class="breadcrumb-item"><a href="{{ route('dashboard') }}">Dashboard</a></li>
+            <li class="breadcrumb-item active">Roles</li>
+        </ol>
+      </div>
     </div>
-   
   </div>
 </div>
 
-{{-- CARD --}}
-<div class="pull-card">
-  <div class="container-fluid" style="padding:0;">
+<div class="row">
+  <div class="col-xl-12">
 
-    @if(session('success'))
-    <div class="alert-success-custom mt-3">
-      <i class="fas fa-check-circle"></i> {{ session('success') }}
-    </div>
-    @endif
+    {{-- Tabs (Same as Master Style) --}}
+    <ul class="nav nav-tabs mb-3" style="border-bottom: none;">
+        <li class="nav-item">
+            <a href="{{ route('users.index') }}" class="nav-link">
+                <span class="font-weight-bold">User</span>
+            </a>
+        </li>
 
-    <div class="main-card">
-      <div class="main-card-head">
-        <!-- <div class="main-card-title">
-          <i class="fas fa-list"></i> All Roles
-          <span class="count-badge">{{ $roles->count() }}</span>
-        </div> -->
-        <a href="{{ route('roles.create') }}" class="btn-create">
+        <li class="nav-item">
+            <a href="{{ route('roles.index') }}" class="nav-link active">
+                <span class="font-weight-bold">Role</span>
+            </a>
+        </li>
+    </ul>
+
+    {{-- Card --}}
+    <div class="card" style="box-shadow: none;">
+        <div class="card-body">
+
+            {{-- Success Message --}}
+            @if(session('success'))
+                <div class="alert alert-success">
+                    {{ session('success') }}
+                </div>
+            @endif
+
+            {{-- Header --}}
+          <div class="card-header d-flex align-items-center">
+                <h5 class="mb-0">All Roles</h5>
+                <div class="ml-auto">
+                    <a href="{{ route('roles.create') }}" class="btn-create">
           <i class="fas fa-plus"></i> New Role
         </a>
-      </div>
-      <div class="main-card-body">
-        <div class="table-responsive">
-        <table id="roleTable" class="table table-hover w-100">
-          <thead>
-            <tr>
-              <th>#</th>
-              <th>Role Name</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody></tbody>
-        </table>
         </div>
       </div>
+            {{-- Table --}}
+            <div class="table-responsive">
+                <table id="roleTable" class="table table-hover">
+                    <thead class="bg-light">
+                        <tr>
+                            <th>#</th>
+                            <th>Role Name</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
     </div>
 
   </div>
 </div>
-<div style="height:2rem;"></div>
+
 @endsection
