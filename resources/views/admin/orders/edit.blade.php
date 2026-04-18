@@ -130,12 +130,12 @@
               <thead class="thead-light">
                 <tr>
                   <th style="min-width:160px">Item</th>
+                  <th width="120">Color</th>
+                  <th width="160">Size(s)</th>
                   <th>Description</th>
-                  <th width="70">Unit</th>
                   <th width="80">Qty</th>
                   <th width="90">Rate</th>
                   <th width="70">Tax %</th>
-                  <th width="100">Unit Price</th>
                   <th width="100">Total</th>
                   <th width="40"></th>
                 </tr>
@@ -151,11 +151,9 @@
                     $itemId     = $isArr ? ($it['item_id']     ?? '') : ($it->item_id     ?? '');
                     $itemName   = $isArr ? ($it['item_name']   ?? '') : ($it->item_name   ?? '');
                     $desc       = $isArr ? ($it['description'] ?? '') : ($it->description ?? '');
-                    $unit       = $isArr ? ($it['unit']        ?? '') : ($it->unit        ?? '');
                     $qty        = $isArr ? ($it['quantity']    ?? 1)  : ($it->quantity    ?? 1);
                     $rate       = $isArr ? ($it['rate']        ?? 0)  : ($it->rate        ?? 0);
                     $taxRate    = $isArr ? ($it['tax_rate']    ?? 0)  : ($it->tax_rate    ?? 0);
-                    $finalPrice = $isArr ? ($it['final_price'] ?? 0)  : ($it->final_price ?? 0);
                     $total      = $isArr ? ($it['total']       ?? 0)  : ($it->total       ?? 0);
                   @endphp
                   <tr>
@@ -165,7 +163,6 @@
                         @foreach($items as $itm)
                           <option value="{{ $itm->id }}"
                             data-rate="{{ $itm->price }}"
-                            data-unit="{{ $itm->unit ?? '' }}"
                             data-tax="{{ $itm->tax_percent ?? 0 }}"
                             data-desc="{{ $itm->description ?? '' }}"
                             {{ $itemId == $itm->id ? 'selected' : '' }}>
@@ -176,12 +173,34 @@
                       <input type="hidden" name="items[{{ $i }}][item_name]"
                              class="item-name-hidden" value="{{ $itemName }}">
                     </td>
+                    <td>
+                      {{-- Color select --}}
+                      <select name="items[{{ $i }}][color]" class="form-control color-select">
+                        <option value="">--</option>
+                        @foreach($colors as $col)
+                          <option value="{{ $col->id }}" {{ (isset($it['color']) && $it['color'] == $col->id) || (isset($it['color_id']) && $it['color_id'] == $col->id) ? 'selected' : '' }}>{{ $col->name }}</option>
+                        @endforeach
+                      </select>
+                    </td>
+                    <td>
+                      {{-- Size multi-select --}}
+                      @php
+                        $selectedSizes = [];
+                        if (!empty($it['sizes'])) {
+                          $selectedSizes = is_array($it['sizes']) ? $it['sizes'] : explode(',', $it['sizes']);
+                          $selectedSizes = array_map('trim', $selectedSizes);
+                        }
+                      @endphp
+                      <select name="items[{{ $i }}][sizes][]" class="form-control size-select select2" multiple>
+                        @foreach($sizesJson as $sz)
+                          <option value="{{ $sz }}" {{ in_array($sz, $selectedSizes) ? 'selected' : '' }}>{{ $sz }}</option>
+                        @endforeach
+                      </select>
+                    </td>
                     <td><input type="text"   name="items[{{ $i }}][description]" class="form-control desc"        value="{{ $desc }}"></td>
-                    <td><input type="text"   name="items[{{ $i }}][unit]"        class="form-control unit"        value="{{ $unit }}"></td>
                     <td><input type="number" step="0.01" name="items[{{ $i }}][quantity]"    class="form-control qty"         value="{{ $qty }}"></td>
                     <td><input type="number" step="0.01" name="items[{{ $i }}][rate]"        class="form-control rate"        value="{{ $rate }}"></td>
                     <td><input type="number" step="0.01" name="items[{{ $i }}][tax_rate]"    class="form-control tax"         value="{{ $taxRate }}"></td>
-                    <td><input type="number" step="0.01" name="items[{{ $i }}][final_price]" class="form-control final_price" value="{{ $finalPrice }}" readonly></td>
                     <td><input type="number" step="0.01" name="items[{{ $i }}][total]"       class="form-control total"       value="{{ $total }}" readonly></td>
                     <td><button type="button" class="btn btn-sm btn-danger remove-item">&times;</button></td>
                   </tr>
@@ -195,7 +214,6 @@
                         @foreach($items as $itm)
                           <option value="{{ $itm->id }}"
                             data-rate="{{ $itm->price }}"
-                            data-unit="{{ $itm->unit ?? '' }}"
                             data-tax="{{ $itm->tax_percent ?? 0 }}"
                             data-desc="{{ $itm->description ?? '' }}">
                             {{ $itm->name }}
@@ -204,12 +222,25 @@
                       </select>
                       <input type="hidden" name="items[0][item_name]" class="item-name-hidden" value="">
                     </td>
+                    <td>
+                      <select name="items[0][color]" class="form-control color-select">
+                        <option value="">--</option>
+                        @foreach($colors as $col)
+                          <option value="{{ $col->id }}">{{ $col->name }}</option>
+                        @endforeach
+                      </select>
+                    </td>
+                    <td>
+                      <select name="items[0][sizes][]" class="form-control size-select select2" multiple>
+                        @foreach($sizesJson as $sz)
+                          <option value="{{ $sz }}">{{ $sz }}</option>
+                        @endforeach
+                      </select>
+                    </td>
                     <td><input type="text"   name="items[0][description]" class="form-control desc"></td>
-                    <td><input type="text"   name="items[0][unit]"        class="form-control unit"></td>
                     <td><input type="number" step="0.01" name="items[0][quantity]"    class="form-control qty"         value="1"></td>
                     <td><input type="number" step="0.01" name="items[0][rate]"        class="form-control rate"        value="0"></td>
                     <td><input type="number" step="0.01" name="items[0][tax_rate]"    class="form-control tax"         value="0"></td>
-                    <td><input type="number" step="0.01" name="items[0][final_price]" class="form-control final_price" value="0" readonly></td>
                     <td><input type="number" step="0.01" name="items[0][total]"       class="form-control total"       value="0" readonly></td>
                     <td><button type="button" class="btn btn-sm btn-danger remove-item">&times;</button></td>
                   </tr>
@@ -243,7 +274,6 @@
                         @foreach($items as $itm)
                           <option value="{{ $itm->id }}"
                             data-rate="{{ $itm->price }}"
-                            data-unit="{{ $itm->unit ?? '' }}"
                             data-tax="{{ $itm->tax_percent ?? 0 }}">
                             {{ $itm->name }}
                           </option>
@@ -392,6 +422,7 @@ $(function () {
   var ALL_SIZES = @json($sizesJson);
 
   var ITEMS = @json($itemsJson);
+  var COLORS = @json($colors);
 
   function itemById(id) {
     return ITEMS.find(function(i) { return i.id == id; });
@@ -406,7 +437,6 @@ $(function () {
       var tax  = parseFloat($(this).find('.tax').val())  || 0;
       var fp   = rate + (rate * tax / 100);
       var tot  = fp * qty;
-      $(this).find('.final_price').val(fp.toFixed(2));
       $(this).find('.total').val(tot.toFixed(2));
       subtotal += tot;
     });
@@ -432,7 +462,6 @@ $(function () {
       found = {
         id:   id,
         name: $opt.text().trim(),
-        unit: $opt.data('unit') || '',
         rate: parseFloat($opt.data('rate')) || 0,
         tax:  parseFloat($opt.data('tax'))  || 0,
         desc: $opt.data('desc') || ''
@@ -440,12 +469,26 @@ $(function () {
     }
 
     $row.find('.item-name-hidden').val(found.name || '');
-    $row.find('.unit').val(found.unit || '');
     $row.find('.rate').val(found.rate || 0);
     $row.find('.tax').val(found.tax  || 0);
     if (!$row.find('.desc').val()) {
       $row.find('.desc').val(found.desc || '');
     }
+    // populate color select (all colors, preselect item's color if present)
+    var colorOpts = '<option value="">--</option>' + COLORS.map(function(c){
+      return '<option value="' + c.id + '"' + (found.color_id && found.color_id == c.id ? ' selected' : '') + '>' + c.name + '</option>';
+    }).join('');
+    $row.find('.color-select').html(colorOpts);
+
+    // populate size select (use item's sizes if present else ALL_SIZES)
+    var sizeChoices = (found.sizes && found.sizes.length) ? found.sizes : ALL_SIZES;
+    var sizeOpts = sizeChoices.map(function(s){
+      return '<option value="' + s + '">' + s + '</option>';
+    }).join('');
+    var $size = $row.find('.size-select');
+    if ($size.hasClass('select2-hidden-accessible')) { $size.select2('destroy'); }
+    $size.html(sizeOpts);
+    $size.select2({ placeholder: 'Sizes', width: '100%' });
     recalc();
   });
 
@@ -455,25 +498,32 @@ $(function () {
     var opts = '<option value="">--</option>' + ITEMS.map(function(m) {
       return '<option value="' + m.id + '"' +
         ' data-rate="' + (m.rate || 0) + '"' +
-        ' data-unit="' + (m.unit || '') + '"' +
         ' data-tax="'  + (m.tax  || 0) + '"' +
         ' data-desc="' + ((m.desc || '').replace(/"/g, '&quot;')) + '"' +
         (it.item_id == m.id ? ' selected' : '') +
         '>' + m.name + '</option>';
     }).join('');
 
+    // color select options (global COLORS)
+    var colorOpts = '<option value="">--</option>' + COLORS.map(function(c){
+      return '<option value="' + c.id + '">' + c.name + '</option>';
+    }).join('');
+
+    // size options (leave empty; will be populated on item-select change)
+    var sizeOpts = (it.sizes && it.sizes.length) ? it.sizes.map(function(s){ return '<option value="' + s + '" selected>' + s + '</option>'; }).join('') : '';
+
     return '<tr>' +
       '<td>' +
         '<select name="items[' + idx + '][item_id]" class="form-control item-select">' + opts + '</select>' +
         '<input type="hidden" name="items[' + idx + '][item_name]" class="item-name-hidden" value="' + (it.item_name || '') + '">' +
       '</td>' +
+      '<td><select name="items[' + idx + '][color]" class="form-control color-select">' + colorOpts + '</select></td>' +
+      '<td><select name="items[' + idx + '][sizes][]" class="form-control size-select" multiple>' + sizeOpts + '</select></td>' +
       '<td><input type="text"   name="items[' + idx + '][description]" class="form-control desc"        value="' + (it.description || '') + '"></td>' +
-      '<td><input type="text"   name="items[' + idx + '][unit]"        class="form-control unit"        value="' + (it.unit        || '') + '"></td>' +
-      '<td><input type="number" step="0.01" name="items[' + idx + '][quantity]"    class="form-control qty"         value="' + (it.quantity    || 1)   + '"></td>' +
-      '<td><input type="number" step="0.01" name="items[' + idx + '][rate]"        class="form-control rate"        value="' + (it.rate        || 0)   + '"></td>' +
-      '<td><input type="number" step="0.01" name="items[' + idx + '][tax_rate]"    class="form-control tax"         value="' + (it.tax_rate    || 0)   + '"></td>' +
-      '<td><input type="number" step="0.01" name="items[' + idx + '][final_price]" class="form-control final_price" value="' + (it.final_price || 0)   + '" readonly></td>' +
-      '<td><input type="number" step="0.01" name="items[' + idx + '][total]"       class="form-control total"       value="' + (it.total       || 0)   + '" readonly></td>' +
+      '<td><input type="number" step="0.01" name="items[' + idx + '][quantity]"    class="form-control qty"         value="' + (it.quantity || 1) + '"></td>' +
+      '<td><input type="number" step="0.01" name="items[' + idx + '][rate]"        class="form-control rate"        value="' + (it.rate || 0) + '"></td>' +
+      '<td><input type="number" step="0.01" name="items[' + idx + '][tax_rate]"    class="form-control tax"         value="' + (it.tax_rate || 0) + '"></td>' +
+      '<td><input type="number" step="0.01" name="items[' + idx + '][total]"       class="form-control total"       value="' + (it.total || 0) + '" readonly></td>' +
       '<td><button type="button" class="btn btn-sm btn-danger remove-item">&times;</button></td>' +
     '</tr>';
   }
@@ -482,6 +532,9 @@ $(function () {
 
   $('#addItem').on('click', function () {
     $('#itemsTable tbody').append(buildRow(rowCounter));
+    // initialize Select2 on newly appended row
+    var $new = $('#itemsTable tbody tr:last');
+    $new.find('.size-select').select2({ placeholder: 'Sizes', width: '100%' });
     rowCounter++;
     recalc();
   });
@@ -574,7 +627,6 @@ $(function () {
     var sets     = parseInt($('#sr_sets').val())    || 1;
     var rate     = parseFloat($('#sr_rate').val())  || 0;
     var taxRate  = parseFloat($opt.data('tax'))     || 0;
-    var unit     = $opt.data('unit') || 'pc';
     var sizes    = sizesInRange(from, to);
 
     if (!sizes.length) { alert('No valid sizes in that range. Please check Size From / Size To.'); return; }
@@ -590,7 +642,6 @@ $(function () {
       item_id:     itemId,
       item_name:   itemName,
       description: desc,
-      unit:        unit,
       quantity:    totalPcs,
       rate:        rate,
       tax_rate:    taxRate,
@@ -609,6 +660,9 @@ $(function () {
   // Init
   recalc();
   srRecalc();
+
+  // initialize Select2 on existing size-selects
+  if ($.fn.select2) { $('.size-select').select2({ placeholder: 'Sizes', width: '100%' }); }
 });
 </script>
 @endpush
