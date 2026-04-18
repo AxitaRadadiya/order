@@ -24,7 +24,6 @@ class AdminPermissionsSeeder extends Seeder
             'role_id' => 1,
             'password' => Hash::make('12345678'),
             'status' => 1,
-            'customer_type_id' => 1,
         ];
 
         $user = User::updateOrCreate(

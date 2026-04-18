@@ -20,7 +20,6 @@ use App\Http\Controllers\Admin\ColorController;
 use App\Http\Controllers\Admin\ItemMasterController;
 use App\Http\Controllers\Admin\ItemController;
 use App\Http\Controllers\Admin\OrderMasterController;
-use App\Http\Controllers\Admin\CustomerTypeController;
 use App\Http\Controllers\Admin\SubGroupController;
 use App\Http\Controllers\Admin\SubCategoryController;
 use Illuminate\Support\Facades\Artisan;
@@ -81,8 +80,7 @@ Route::group(['middleware' => ['auth']], function () {
     Route::resource('orders', OrderMasterController::class);
     Route::get('color-list', [ColorController::class,'list'])->name('color.list');
     Route::resource('color', ColorController::class);
-    Route::get('customer-type-list', [CustomerTypeController::class,'list'])->name('customer-type.list');
-    Route::resource('customer-type', CustomerTypeController::class);
+    // CustomerType routes removed (replaced by roles)
     Route::get('sub-category-list', [SubCategoryController::class,'list'])->name('sub-category.list');
     Route::resource('sub-category', SubCategoryController::class);
     Route::get('sub-group-list', [SubGroupController::class,'list'])->name('sub-group.list');

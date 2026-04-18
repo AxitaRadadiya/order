@@ -63,11 +63,11 @@
             </div>
             <div class="col-md-4">
               <div class="form-group">
-                <label>Customer Type</label>
-                <select name="customer_type_id" class="form-control">
+                <label>Role</label>
+                <select name="role_id" class="form-control">
                   <option value="">-- Default (retailer) --</option>
-                  @foreach($customerTypes as $ct)
-                    <option value="{{ $ct->id }}" {{ (old('customer_type_id', $customer->customer_type_id) == $ct->id) ? 'selected' : '' }}>{{ $ct->name }}</option>
+                  @foreach($roles as $r)
+                    <option value="{{ $r->id }}" {{ (old('role_id', $customer->role_id) == $r->id) ? 'selected' : '' }}>{{ $r->name }}</option>
                   @endforeach
                 </select>
               </div>

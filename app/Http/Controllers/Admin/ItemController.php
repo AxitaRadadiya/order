@@ -49,7 +49,8 @@ class ItemController extends Controller
             'item_code'        => 'nullable|string|max:100|unique:items,item_code',
             'sub_category'     => 'nullable|exists:sub_categories,id',
             'sub_group'        => 'nullable|exists:sub_groups,id',
-            'color'            => 'nullable|exists:colors,id',
+            'colors'           => 'nullable|array',
+            'colors.*'         => 'nullable|exists:colors,id',
             'sizes'            => 'nullable|array',
             'description'      => 'nullable|string',
             'category_id'      => 'nullable|exists:categories,id',
@@ -88,7 +89,15 @@ class ItemController extends Controller
         $validated['status']           = (int) ($validated['status'] ?? 1);
         $validated['show_item_on_web'] = (int) ($validated['show_item_on_web'] ?? 1);
 
-        Item::create($validated);
+        // Extract colors (pivot) before creating — no `colors` column on items table
+        $colors = $validated['colors'] ?? null;
+        unset($validated['colors']);
+
+        $item = Item::create($validated);
+
+        if (!empty($colors)) {
+            $item->colors()->sync($colors);
+        }
 
         return redirect()->route('items.index')->withSuccess('Item created successfully.');
     }
@@ -120,7 +129,8 @@ class ItemController extends Controller
             'item_code'        => 'nullable|string|max:100|unique:items,item_code,' . $item->id,
             'sub_category'     => 'nullable|exists:sub_categories,id',
             'sub_group'        => 'nullable|exists:sub_groups,id',
-            'color'            => 'nullable|exists:colors,id',
+            'colors'           => 'nullable|array',
+            'colors.*'         => 'nullable|exists:colors,id',
             'sizes'            => 'nullable|array',
             'description'      => 'nullable|string',
             'category_id'      => 'nullable|exists:categories,id',
@@ -153,10 +163,18 @@ class ItemController extends Controller
             }
         }
 
+        // Extract colors (pivot) before updating — no `colors` column on items table
+        $colors = $validated['colors'] ?? null;
+        unset($validated['colors']);
+
         $validated['status']           = (int) ($validated['status'] ?? 1);
         $validated['show_item_on_web'] = (int) ($validated['show_item_on_web'] ?? 1);
 
         $item->update($validated);
+
+        if (is_array($colors)) {
+            $item->colors()->sync($colors);
+        }
 
         return redirect()->route('items.index')->withSuccess('Item updated successfully.');
     }
@@ -180,7 +198,7 @@ class ItemController extends Controller
     public function itemList(Request $request)
     {
         // Eager-load relationships so ->category->name etc. always resolves
-        $query = Item::with(['category', 'group', 'color']);
+        $query = Item::with(['category', 'group', 'colors']);
 
         $totalData = $query->count();
         $totalFiltered = $totalData;
@@ -258,7 +276,7 @@ class ItemController extends Controller
      */
     public function activeItemList(Request $request)
     {
-        $query = Item::with(['category', 'group', 'color'])
+        $query = Item::with(['category', 'group', 'colors'])
                      ->where('status', 1);          // ✅ inactive items excluded
 
         $items = $query->orderBy('name')->get()->map(function ($item) {
@@ -275,7 +293,7 @@ class ItemController extends Controller
                 'item_code'      => $item->item_code,
                 'category'       => optional($item->category)->name,
                 'group'          => optional($item->group)->name,
-                'color'          => optional($item->color)->name,
+                'colors'         => $item->colors->pluck('name')->toArray(),
                 'sizes'          => $sizes,
                 'price'          => (float) $item->price,
                 'tax_percent'    => (float) $item->tax_percent,

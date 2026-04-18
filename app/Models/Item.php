@@ -17,7 +17,6 @@ class Item extends Model
         'name',
         'article_number',
         'item_code',
-        'color',
         'sizes',
         'images',           // ✅ NEW: JSON array of up to 5 image paths
         'image',            // legacy single-image column (kept for backward compatibility)
@@ -56,31 +55,18 @@ class Item extends Model
         return $this->belongsTo(Group::class);
     }
 
-    public function color()
+    public function colors()
     {
-        return $this->belongsTo(Color::class);
+        return $this->belongsToMany(Color::class)->withTimestamps();
     }
 
-    // -------------------------------------------------------------------------
-    // Scopes
-    // -------------------------------------------------------------------------
-
-    /**
-     * Only active items — use in any public / external-system query.
-     * Example: Item::active()->get()
-     */
+    
     public function scopeActive($query)
     {
         return $query->where('status', 1);
     }
 
-    // -------------------------------------------------------------------------
-    // Accessors
-    // -------------------------------------------------------------------------
-
-    /**
-     * Returns the URL of the first (primary) image, or null.
-     */
+    
     public function getImageUrlAttribute(): ?string
     {
         // Prefer the images[] array, fall back to legacy single `image` column
@@ -95,9 +81,7 @@ class Item extends Model
         return $path ? asset('storage/' . $path) : null;
     }
 
-    /**
-     * Returns an array of all image URLs (up to 5).
-     */
+    
     public function getImageUrlsAttribute(): array
     {
         $paths = [];
@@ -110,10 +94,6 @@ class Item extends Model
 
         return array_map(fn($p) => asset('storage/' . $p), $paths);
     }
-
-    // -------------------------------------------------------------------------
-    // Static helpers
-    // -------------------------------------------------------------------------
 
     public static function generateItemCode(?string $name = null): string
     {
@@ -131,12 +111,6 @@ class Item extends Model
         return $code;
     }
 
-    /**
-     * Generate a simple sequential item code starting from 0001.
-     * Uses the current max `id` as a basis so codes are predictable.
-     *
-     * @param int $digits Number of digits, default 4 -> 0001
-     */
     public static function generateSequentialCode(int $digits = 4): string
     {
         $maxId = (int) self::max('id');

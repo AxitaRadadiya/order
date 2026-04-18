@@ -15,7 +15,7 @@ class DatabaseSeeder extends Seeder
         $this->call(PermissionsSeeder::class);
         $this->call(RolesSeeder::class);
         $this->call(AdminPermissionsSeeder::class);
-        $this->call(CustomerTypesSeeder::class);
+        // CustomerType seeder removed; roles/seeds handle required types
 
         if (class_exists(MessageTemplateSeeder::class)) {
             $this->call(MessageTemplateSeeder::class);

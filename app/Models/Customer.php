@@ -22,12 +22,12 @@ class Customer extends Model
         'place_of_supply',
         'pan_number',
         'credit_limit',
-        'customer_type_id',
+        'role_id',
     ];
 
-    public function customerType()
+    public function role()
     {
-        return $this->belongsTo(CustomerType::class);
+        return $this->belongsTo(\App\Models\Role::class);
     }
 
     public function addresses()

@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Models\Role;
 use App\Models\User;
-use App\Models\CustomerType;
 use Auth;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -22,11 +21,11 @@ class UserController extends Controller
 
     public function index(): View
     {
-        $adminType = CustomerType::firstOrCreate(['name' => 'admin']);
+        $adminRole = Role::firstOrCreate(['name' => 'admin']);
 
         return view('admin.users.index', [
             'users' => User::with(['role'])
-                ->where('customer_type_id', $adminType->id)
+                ->where('role_id', $adminRole->id)
                 ->orderBy('id')
                 ->paginate(15),
         ]);
@@ -35,7 +34,7 @@ class UserController extends Controller
     public function create(): View
     {
         return view('admin.users.create', [
-            'roles' => Role::orderBy('name')->get(),
+            'roles' => Role::whereNotIn('name', ['retailer', 'distributor'])->orderBy('name')->get(),
         ]);
     }
 
@@ -43,13 +42,7 @@ class UserController extends Controller
     {
         $validated = $request->validate($this->storeRules());
 
-        // ensure admin customer type exists and default new users to admin type
-        $adminType = CustomerType::firstOrCreate(['name' => 'admin']);
-
         $payload = $this->userPayload($request, $validated);
-        if (! isset($payload['customer_type_id'])) {
-            $payload['customer_type_id'] = $adminType->id;
-        }
 
         $user = User::create($payload);
 
@@ -150,8 +143,8 @@ class UserController extends Controller
 
     public function userList(Request $request)
     {
-        $adminType = CustomerType::firstOrCreate(['name' => 'admin']);
-        $query = User::with(['role'])->where('customer_type_id', $adminType->id);
+        $adminRole = Role::firstOrCreate(['name' => 'admin']);
+        $query = User::with(['role'])->where('role_id', $adminRole->id);
 
         $totalData = $query->count();
         $totalFiltered = $totalData;
@@ -217,7 +210,7 @@ class UserController extends Controller
     protected function formData(?User $user = null): array
     {
         return [
-            'roles' => Role::orderBy('name')->get(),
+            'roles' => Role::whereNotIn('name', ['retailer', 'distributor'])->orderBy('name')->get(),
         ];
     }
 
@@ -256,7 +249,7 @@ class UserController extends Controller
             'status' => (int) ($validated['status'] ?? 1),
             'note' => $validated['note'] ?? null,
             'is_active' => $request->boolean('is_active', (int) ($validated['status'] ?? 1) === 1),
-            'customer_type_id' => $request->input('customer_type_id') ?? null,
+            // legacy customer_type removed; keep database role_id
         ];
 
         if (! $user || $request->filled('password')) {

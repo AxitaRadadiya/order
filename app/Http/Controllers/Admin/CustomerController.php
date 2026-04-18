@@ -9,7 +9,7 @@ use App\Models\BankDetail;
 use App\Models\Country;
 use App\Models\State;
 use App\Models\City;
-use App\Models\CustomerType;
+use App\Models\Role;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -27,8 +27,9 @@ class CustomerController extends Controller
         $countries = Country::orderBy('name')->get();
         $states = State::orderBy('name')->get();
         $cities = City::orderBy('name')->get();
-        $customerTypes = CustomerType::orderBy('name')->get();
-        return view('admin.customer.create', compact('countries', 'states', 'cities', 'customerTypes'));
+        // Only allow selecting retail/distributor roles in customer creation
+        $roles = Role::whereIn('name', ['retailer', 'distributor'])->orderBy('name')->get();
+        return view('admin.customer.create', compact('countries', 'states', 'cities', 'roles'));
     }
 
     public function store(Request $request)
@@ -40,7 +41,7 @@ class CustomerController extends Controller
             'company_name' => 'nullable|string|max:255',
             'website'      => 'nullable|url|max:255',
             'password'     => 'required|min:6',
-            'customer_type_id' => 'nullable|exists:customer_types,id',
+            'role_id' => 'nullable|exists:roles,id',
             'gst_number'   => 'nullable|string|max:20',
             'pan_number'   => 'nullable|string|max:15',
             'credit_limit' => 'nullable|numeric|min:0',
@@ -49,15 +50,7 @@ class CustomerController extends Controller
 
         DB::beginTransaction();
         try {
-            // 1. Create Customer
-            $customerType = null;
-            if ($request->filled('customer_type_id')) {
-                $customerType = CustomerType::find($request->customer_type_id);
-            }
-            if (! $customerType) {
-                $customerType = CustomerType::firstOrCreate(['name' => 'retailer']);
-            }
-
+            // 1. Create Customer and assign role
             $customer = Customer::create([
                 'name'            => $request->name,
                 'company_name'    => $request->company_name,
@@ -65,7 +58,7 @@ class CustomerController extends Controller
                 'phone'           => $request->phone,
                 'website'         => $request->website,
                 'password'        => Hash::make($request->password),
-                'customer_type_id'=> $customerType->id,
+                'role_id'         => $request->input('role_id') ?? null,
                 'payment_terms'   => $request->payment_terms,
                 'gst_treatment'   => $request->gst_treatment,
                 'gst_number'      => $request->gst_number,
@@ -74,6 +67,11 @@ class CustomerController extends Controller
                 'discount'        => $request->discount ?? 0,
                 'credit_limit'    => $request->credit_limit ?? 0,
             ]);
+
+            // If a role was provided, ensure it's assigned via helper
+            if ($request->filled('role_id')) {
+                $customer->assignRole((int) $request->input('role_id'));
+            }
 
             // 2. Resolve shipping fields
             $isSameAs     = $request->boolean('same_as');
@@ -140,8 +138,8 @@ class CustomerController extends Controller
         $countries = Country::orderBy('name')->get();
         $states = State::orderBy('name')->get();
         $cities = City::orderBy('name')->get();
-        $customerTypes = CustomerType::orderBy('name')->get();
-        return view('admin.customer.edit', compact('customer', 'countries', 'states', 'cities', 'customerTypes'));
+        $roles = Role::whereIn('name', ['retailer', 'distributor'])->orderBy('name')->get();
+        return view('admin.customer.edit', compact('customer', 'countries', 'states', 'cities', 'roles'));
     }
 
     public function update(Request $request, Customer $customer)
@@ -153,6 +151,7 @@ class CustomerController extends Controller
             'company_name' => 'nullable|string|max:255',
             'website'      => 'nullable|url|max:255',
             'password'     => 'nullable|min:6',
+            'role_id'      => 'nullable|exists:roles,id',
             'gst_number'   => 'nullable|string|max:20',
             'pan_number'   => 'nullable|string|max:15',
             'credit_limit' => 'nullable|numeric|min:0',
@@ -168,7 +167,7 @@ class CustomerController extends Controller
                 'email'           => $request->email,
                 'phone'           => $request->phone,
                 'website'         => $request->website,
-                'customer_type_id'=> $request->filled('customer_type_id') ? $request->customer_type_id : ($customer->customer_type_id ?? CustomerType::firstOrCreate(['name' => 'retailer'])->id),
+                'role_id'         => $request->filled('role_id') ? $request->role_id : ($customer->role_id ?? null),
                 'payment_terms'   => $request->payment_terms,
                 'gst_treatment'   => $request->gst_treatment,
                 'gst_number'      => $request->gst_number,

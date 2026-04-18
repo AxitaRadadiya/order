@@ -103,11 +103,10 @@
 						</div>
 						<div class="col-md-4">
 							<div class="form-group">
-								<label>Color</label>
-								<select name="color" class="form-control">
-									<option value="">-- Select --</option>
+								<label>Colors</label>
+								<select name="colors[]" class="form-control" multiple>
 									@foreach($colors as $color)
-									<option value="{{ $color->id }}" {{ (old('color', $item->color) == $color->id) ? 'selected' : '' }}>{{ $color->name }}</option>
+									<option value="{{ $color->id }}" {{ in_array($color->id, (array) old('colors', $item->colors->pluck('id')->toArray())) ? 'selected' : '' }}>{{ $color->name }}</option>
 									@endforeach
 								</select>
 							</div>

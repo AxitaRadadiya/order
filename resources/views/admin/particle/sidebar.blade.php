@@ -18,7 +18,9 @@
         </a>
       </li>
 
-      @if(auth()->user() && auth()->user()->hasRole('super-admin'))
+      @php $user = auth()->user(); $allowed = session('allowed_modules'); @endphp
+
+      @if($user && $user->hasRole('super-admin'))
       <li class="nav-header">System</li>
 
       <li class="nav-item">
@@ -78,6 +80,41 @@
           <p> 🕒 Activity Logs</p>
         </a>
       </li>
+
+      @elseif($user)
+      @php
+        if (!empty($allowed)) {
+          $showItems = in_array('items', $allowed, true);
+          $showOrders = in_array('orders', $allowed, true);
+        } else {
+          // Fallback: derive from role permissions
+          $role = $user->role;
+          $perms = $role ? $role->permissions()->pluck('name')->toArray() : [];
+          $showItems = collect($perms)->contains(fn($p) => str_starts_with($p, 'item-'));
+          $showOrders = collect($perms)->contains(fn($p) => str_starts_with($p, 'order-'));
+        }
+      @endphp
+
+      @if($showItems || $showOrders)
+      <li class="nav-header">Sell</li>
+        @if($showItems)
+        <li class="nav-item">
+          <a href="{{ route('items.index') }}" class="nav-link {{ Request::routeIs('items.*') ? 'active' : '' }}">
+            <i class="nav-icon"></i>
+            <p>🗂️ Items</p>
+          </a>
+        </li>
+        @endif
+
+        @if($showOrders)
+        <li class="nav-item">
+          <a href="{{ route('orders.index') }}" class="nav-link {{ Request::routeIs('orders.*') ? 'active' : '' }}">
+            <i class="nav-icon"></i>
+            <p>📦 Orders</p>
+          </a>
+        </li>
+        @endif
+      @endif
       @endif
     </ul>
   </nav>

@@ -37,18 +37,51 @@ class AuthenticatedSessionController extends Controller
         // Store the token in the current session so middleware can verify it
         $request->session()->put('session_token', $newToken);
 
-        // Set allowed modules in session based on role / customer type.
-        // Admins get full access (no restriction). Retailer customer type gets items and orders only.
+        // Set allowed modules in session derived from role permissions.
         try {
-            if ($user->hasRole('admin')) {
+            $role = $user->role;
+
+            // Super-admin / admin: no restriction
+            if ($user->hasRole(['super-admin', 'admin'])) {
                 $request->session()->forget('allowed_modules');
-            } elseif ($user->customerType && strcasecmp($user->customerType->name, 'retailer') === 0) {
-                $request->session()->put('allowed_modules', ['items', 'orders']);
+            } elseif ($role) {
+                $permissionNames = $role->permissions()->pluck('name')->toArray();
+
+                $modules = [];
+
+                foreach ($permissionNames as $perm) {
+                    if (str_starts_with($perm, 'item-')) {
+                        $modules[] = 'items';
+                    }
+
+                    if (str_starts_with($perm, 'order-')) {
+                        $modules[] = 'orders';
+                    }
+
+                    if (str_starts_with($perm, 'dashboard-')) {
+                        $modules[] = 'dashboard';
+                    }
+
+                    if (str_starts_with($perm, 'user-')) {
+                        $modules[] = 'users';
+                    }
+
+                    if (str_starts_with($perm, 'role-') || str_starts_with($perm, 'permission-')) {
+                        $modules[] = 'settings';
+                    }
+                }
+
+                $modules = array_values(array_unique($modules));
+
+                if (empty($modules)) {
+                    $request->session()->forget('allowed_modules');
+                } else {
+                    $request->session()->put('allowed_modules', $modules);
+                }
             } else {
                 $request->session()->forget('allowed_modules');
             }
         } catch (\Throwable $e) {
-            // Don't let session-setting failures block login; fall back to no restrictions.
             $request->session()->forget('allowed_modules');
         }
 
