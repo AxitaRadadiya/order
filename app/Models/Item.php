@@ -18,8 +18,7 @@ class Item extends Model
         'article_number',
         'item_code',
         'sizes',
-        'images',           // ✅ NEW: JSON array of up to 5 image paths
-        'image',            // legacy single-image column (kept for backward compatibility)
+        'images',          
         'description',
         'category_id',
         'group_id',
@@ -37,13 +36,9 @@ class Item extends Model
         'tax_percent'      => 'decimal:2',
         'status'           => 'boolean',
         'show_item_on_web' => 'boolean',
-        'sizes'            => 'array',   // stored as JSON in DB
-        'images'           => 'array',   // ✅ stored as JSON array in DB
+        'sizes'            => 'array',   
+        'images'           => 'array',   
     ];
-
-    // -------------------------------------------------------------------------
-    // Relationships
-    // -------------------------------------------------------------------------
 
     public function category()
     {

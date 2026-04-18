@@ -49,6 +49,10 @@
                                           ($c->address->billing_city    ?? '').' '.
                                           ($c->address->billing_state   ?? '').' '.
                                           ($c->address->billing_country ?? '')) }}"
+                      data-shipping="{{ trim(($c->address->shipping_street  ?? $c->address->billing_street  ?? '').' '.
+                                           ($c->address->shipping_city    ?? $c->address->billing_city    ?? '').' '.
+                                           ($c->address->shipping_state   ?? $c->address->billing_state   ?? '').' '.
+                                           ($c->address->shipping_country ?? $c->address->billing_country ?? '')) }}"
                       {{ old('customer_id', $order->customer_id) == $c->id ? 'selected' : '' }}>
                       {{ $c->name }}
                     </option>
@@ -546,9 +550,11 @@ $(function () {
 
   // ── Customer → address auto-fill ─────────────────────────────────────────
   $('#customer_id').on('change', function () {
-    var billing = $(this).find('option:selected').data('billing') || '';
+    var $opt = $(this).find('option:selected');
+    var billing = $opt.data('billing') || '';
+    var shipping = $opt.data('shipping') || billing;
     $('#billing_address').val(billing);
-    $('#shipping_address').val(billing);
+    $('#shipping_address').val(shipping);
   });
 
   // ── Mode toggle ──────────────────────────────────────────────────────────

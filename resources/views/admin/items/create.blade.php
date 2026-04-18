@@ -168,6 +168,7 @@
 								@error('images.*')
 									<div class="text-danger small mt-1">{{ $message }}</div>
 								@enderror
+								<input type="hidden" name="primary_image" id="primary_image" value="">
 								{{-- Live preview --}}
 								<div id="imagePreviewContainer" class="d-flex flex-wrap mt-2" style="gap:8px;"></div>
 								<div id="imageError" class="text-danger small mt-1" style="display:none;"></div>
@@ -266,39 +267,52 @@
         }
     }
 
-    function renderPreviews() {
-        preview.innerHTML = '';
-        accepted.forEach(function (file, idx) {
-            const reader = new FileReader();
-            reader.onload = function (e) {
-                const wrapper = document.createElement('div');
-                wrapper.style.cssText = 'position:relative;display:inline-block;';
+	function renderPreviews() {
+		preview.innerHTML = '';
+		accepted.forEach(function (file, idx) {
+			const reader = new FileReader();
+			reader.onload = function (e) {
+				const wrapper = document.createElement('div');
+				wrapper.style.cssText = 'position:relative;display:inline-block;margin-right:8px;';
 
-                const img = document.createElement('img');
-                img.src   = e.target.result;
-                img.style.cssText = 'width:90px;height:90px;object-fit:cover;border-radius:6px;border:1px solid #ddd;';
+				const img = document.createElement('img');
+				img.src   = e.target.result;
+				img.style.cssText = 'width:90px;height:90px;object-fit:cover;border-radius:6px;border:1px solid #ddd;cursor:pointer;';
 
-                const btn = document.createElement('button');
-                btn.type        = 'button';
-                btn.innerHTML   = '&times;';
-                btn.title       = 'Remove';
-                btn.style.cssText =
-                    'position:absolute;top:2px;right:2px;width:20px;height:20px;line-height:18px;' +
-                    'text-align:center;border-radius:50%;border:none;background:rgba(220,53,69,.85);' +
-                    'color:#fff;font-size:14px;cursor:pointer;padding:0;';
-                btn.addEventListener('click', function () {
-                    accepted.splice(idx, 1);
-                    syncInput();
-                    renderPreviews();
-                });
+				// primary marker
+				const radio = document.createElement('input');
+				radio.type = 'radio';
+				radio.name = 'primary_select_new';
+				radio.style.cssText = 'position:absolute;bottom:4px;left:6px;z-index:2;';
+				radio.addEventListener('change', function () {
+					document.getElementById('primary_image').value = 'new-' + idx;
+					// clear existing-image radios if any (edit view compatibility)
+					const exist = document.getElementsByName('primary_exist');
+					exist.forEach ? exist.forEach(function (e) { e.checked = false; }) : Array.from(exist).forEach(function (e) { e.checked = false; });
+				});
 
-                wrapper.appendChild(img);
-                wrapper.appendChild(btn);
-                preview.appendChild(wrapper);
-            };
-            reader.readAsDataURL(file);
-        });
-    }
+				const btn = document.createElement('button');
+				btn.type        = 'button';
+				btn.innerHTML   = '&times;';
+				btn.title       = 'Remove';
+				btn.style.cssText =
+					'position:absolute;top:2px;right:2px;width:20px;height:20px;line-height:18px;' +
+					'text-align:center;border-radius:50%;border:none;background:rgba(220,53,69,.85);' +
+					'color:#fff;font-size:14px;cursor:pointer;padding:0;';
+				btn.addEventListener('click', function () {
+					accepted.splice(idx, 1);
+					syncInput();
+					renderPreviews();
+				});
+
+				wrapper.appendChild(img);
+				wrapper.appendChild(radio);
+				wrapper.appendChild(btn);
+				preview.appendChild(wrapper);
+			};
+			reader.readAsDataURL(file);
+		});
+	}
 })();
 </script>
 @endpush

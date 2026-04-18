@@ -74,7 +74,21 @@ class ItemController extends Controller
         }
         if (!empty($imagePaths)) {
             // Store as JSON array; keep first image in legacy `image` column too
-            $validated['image'] = $imagePaths[0];
+            // determine primary image requested by client
+            $primary = $request->input('primary_image');
+            $primaryPath = null;
+
+            if ($primary && str_starts_with($primary, 'new-')) {
+                $idx = (int) str_after($primary, 'new-');
+                if (isset($imagePaths[$idx])) {
+                    $primaryPath = $imagePaths[$idx];
+                }
+            }
+
+            // fallback to first uploaded image
+            $primaryPath = $primaryPath ?? $imagePaths[0];
+
+            $validated['image'] = $primaryPath;
             // Only include `images` if the column exists (migration may not have run)
             if (Schema::hasColumn('items', 'images')) {
                 $validated['images'] = $imagePaths;   // cast to array in model
@@ -146,20 +160,42 @@ class ItemController extends Controller
         ]);
 
         // Handle new image uploads
+        $imagePaths = [];
         if ($request->hasFile('images')) {
-            // Delete old images
+            // Delete old images only if user uploaded new ones and intends to replace
             $oldImages = is_array($item->images) ? $item->images : ($item->image ? [$item->image] : []);
             foreach ($oldImages as $old) {
                 Storage::disk('public')->delete($old);
             }
 
-            $imagePaths = [];
             foreach ($request->file('images') as $file) {
                 $imagePaths[] = $file->store('items', 'public');
             }
-            $validated['image'] = $imagePaths[0];
+
+            // determine primary image
+            $primary = $request->input('primary_image');
+            $primaryPath = null;
+            if ($primary && str_starts_with($primary, 'new-')) {
+                $idx = (int) str_after($primary, 'new-');
+                if (isset($imagePaths[$idx])) {
+                    $primaryPath = $imagePaths[$idx];
+                }
+            }
+
+            $primaryPath = $primaryPath ?? ($imagePaths[0] ?? null);
+
+            if ($primaryPath) {
+                $validated['image'] = $primaryPath;
+            }
+
             if (Schema::hasColumn('items', 'images')) {
                 $validated['images'] = $imagePaths;
+            }
+        } else {
+            // no new uploads — allow selecting primary among existing images
+            $primary = $request->input('primary_image');
+            if ($primary && !str_starts_with($primary, 'new-')) {
+                $validated['image'] = $primary;
             }
         }
 

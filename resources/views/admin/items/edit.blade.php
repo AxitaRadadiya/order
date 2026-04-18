@@ -171,9 +171,13 @@
 								@endphp
 								@if(!empty($existingImages))
 								<div class="d-flex flex-wrap mb-2" style="gap:8px;">
-									@foreach($existingImages as $img)
-									<img src="{{ asset('storage/' . $img) }}" alt=""
+									@foreach($existingImages as $ei => $img)
+									<div style="position:relative;display:inline-block;">
+										<input type="radio" name="primary_exist" value="{{ $img }}" id="primary_exist_{{ $ei }}"
+											{{ ($item->image == $img) ? 'checked' : '' }} style="position:absolute;bottom:4px;left:6px;z-index:2;">
+										<img src="{{ asset('storage/' . $img) }}" alt=""
 										 style="width:90px;height:90px;object-fit:cover;border-radius:6px;border:1px solid #ddd;">
+									</div>
 									@endforeach
 								</div>
 								@endif
@@ -193,6 +197,7 @@
 								@error('images.*')
 									<div class="text-danger small mt-1">{{ $message }}</div>
 								@enderror
+								<input type="hidden" name="primary_image" id="primary_image" value="{{ old('primary_image', $item->image ?? '') }}">
 								<div id="imagePreviewContainer" class="d-flex flex-wrap mt-2" style="gap:8px;"></div>
 								<div id="imageError" class="text-danger small mt-1" style="display:none;"></div>
 							</div>
@@ -288,39 +293,66 @@
         }
     }
 
-    function renderPreviews() {
-        preview.innerHTML = '';
-        accepted.forEach(function (file, idx) {
-            const reader = new FileReader();
-            reader.onload = function (e) {
-                const wrapper = document.createElement('div');
-                wrapper.style.cssText = 'position:relative;display:inline-block;';
+	function renderPreviews() {
+		preview.innerHTML = '';
+		accepted.forEach(function (file, idx) {
+			const reader = new FileReader();
+			reader.onload = function (e) {
+				const wrapper = document.createElement('div');
+				wrapper.style.cssText = 'position:relative;display:inline-block;margin-right:8px;';
 
-                const img = document.createElement('img');
-                img.src   = e.target.result;
-                img.style.cssText = 'width:90px;height:90px;object-fit:cover;border-radius:6px;border:1px solid #ddd;';
+				const img = document.createElement('img');
+				img.src   = e.target.result;
+				img.style.cssText = 'width:90px;height:90px;object-fit:cover;border-radius:6px;border:1px solid #ddd;cursor:pointer;';
 
-                const btn = document.createElement('button');
-                btn.type        = 'button';
-                btn.innerHTML   = '&times;';
-                btn.title       = 'Remove';
-                btn.style.cssText =
-                    'position:absolute;top:2px;right:2px;width:20px;height:20px;line-height:18px;' +
-                    'text-align:center;border-radius:50%;border:none;background:rgba(220,53,69,.85);' +
-                    'color:#fff;font-size:14px;cursor:pointer;padding:0;';
-                btn.addEventListener('click', function () {
-                    accepted.splice(idx, 1);
-                    syncInput();
-                    renderPreviews();
-                });
+				// primary marker for new uploads
+				const radio = document.createElement('input');
+				radio.type = 'radio';
+				radio.name = 'primary_select_new';
+				radio.style.cssText = 'position:absolute;bottom:4px;left:6px;z-index:2;';
+				radio.addEventListener('change', function () {
+					document.getElementById('primary_image').value = 'new-' + idx;
+					// clear any existing-image radios
+					const exist = document.getElementsByName('primary_exist');
+					exist.forEach ? exist.forEach(function (e) { e.checked = false; }) : Array.from(exist).forEach(function (e) { e.checked = false; });
+				});
 
-                wrapper.appendChild(img);
-                wrapper.appendChild(btn);
-                preview.appendChild(wrapper);
-            };
-            reader.readAsDataURL(file);
-        });
-    }
+				const btn = document.createElement('button');
+				btn.type        = 'button';
+				btn.innerHTML   = '&times;';
+				btn.title       = 'Remove';
+				btn.style.cssText =
+					'position:absolute;top:2px;right:2px;width:20px;height:20px;line-height:18px;' +
+					'text-align:center;border-radius:50%;border:none;background:rgba(220,53,69,.85);' +
+					'color:#fff;font-size:14px;cursor:pointer;padding:0;';
+				btn.addEventListener('click', function () {
+					accepted.splice(idx, 1);
+					syncInput();
+					renderPreviews();
+				});
+
+				wrapper.appendChild(img);
+				wrapper.appendChild(radio);
+				wrapper.appendChild(btn);
+				preview.appendChild(wrapper);
+			};
+			reader.readAsDataURL(file);
+		});
+	}
+
+	// Sync existing-image radios into the hidden `primary_image` field
+	const existingRadios = document.querySelectorAll('input[name="primary_exist"]');
+	existingRadios.forEach(function (r) {
+		r.addEventListener('change', function () {
+			if (this.checked) {
+				// set hidden primary value to existing path
+				document.getElementById('primary_image').value = this.value;
+				// clear any new-upload radios
+				const newRadios = document.getElementsByName('primary_select_new');
+				newRadios.forEach ? newRadios.forEach(function (nr) { nr.checked = false; }) : Array.from(newRadios).forEach(function (nr) { nr.checked = false; });
+			}
+		});
+	});
 })();
 </script>
 @endpush
