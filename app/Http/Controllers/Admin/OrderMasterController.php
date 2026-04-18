@@ -10,6 +10,7 @@ use App\Models\OrderItem;
 use App\Models\User;
 use App\Models\Item;
 use App\Models\Size;
+use App\Models\Color;
 
 class OrderMasterController extends Controller
 {
@@ -25,8 +26,9 @@ class OrderMasterController extends Controller
         $items     = Item::orderBy('name')->get();
         $itemsJson = $this->buildItemsJson($items);
         $sizesJson = Size::activeLabels(); // dynamic from DB
+        $colors    = Color::orderBy('name')->get();
 
-        return view('admin.orders.create', compact('customers', 'items', 'itemsJson', 'sizesJson'));
+        return view('admin.orders.create', compact('customers', 'items', 'itemsJson', 'sizesJson', 'colors'));
     }
 
     public function store(Request $request)
@@ -53,7 +55,14 @@ class OrderMasterController extends Controller
             return redirect()->route('orders.index')->with('success', 'Order created successfully.');
         } catch (\Exception $e) {
             DB::rollBack();
-            return back()->withInput()->with('error', $e->getMessage());
+            // Re-pass all view variables so the create blade never gets undefined variable errors
+            $customers = User::with('address')->orderBy('name')->get();
+            $items     = Item::orderBy('name')->get();
+            $itemsJson = $this->buildItemsJson($items);
+            $sizesJson = Size::activeLabels();
+            $colors    = Color::orderBy('name')->get();
+            return back()->withInput()->with('error', $e->getMessage())
+                ->with(compact('customers', 'items', 'itemsJson', 'sizesJson', 'colors'));
         }
     }
 
@@ -69,9 +78,10 @@ class OrderMasterController extends Controller
         $items     = Item::orderBy('name')->get();
         $itemsJson = $this->buildItemsJson($items);
         $sizesJson = Size::activeLabels(); // dynamic from DB
+        $colors    = Color::orderBy('name')->get();
         $order->load('items');
 
-        return view('admin.orders.edit', compact('order', 'customers', 'items', 'itemsJson', 'sizesJson'));
+        return view('admin.orders.edit', compact('order', 'customers', 'items', 'itemsJson', 'sizesJson', 'colors'));
     }
 
     public function update(Request $request, OrderMaster $order)
@@ -99,7 +109,15 @@ class OrderMasterController extends Controller
             return redirect()->route('orders.index')->with('success', 'Order updated successfully.');
         } catch (\Exception $e) {
             DB::rollBack();
-            return back()->withInput()->with('error', $e->getMessage());
+            // Re-pass all view variables so the edit blade never gets undefined variable errors
+            $customers = User::with('address')->orderBy('name')->get();
+            $items     = Item::orderBy('name')->get();
+            $itemsJson = $this->buildItemsJson($items);
+            $sizesJson = Size::activeLabels();
+            $colors    = Color::orderBy('name')->get();
+            $order->load('items');
+            return back()->withInput()->with('error', $e->getMessage())
+                ->with(compact('customers', 'items', 'itemsJson', 'sizesJson', 'colors'));
         }
     }
 
@@ -116,13 +134,23 @@ class OrderMasterController extends Controller
     private function buildItemsJson($items): \Illuminate\Support\Collection
     {
         return $items->map(function ($i) {
+            $sizes = [];
+            if (!empty($i->sizes)) {
+                $sizes = is_array($i->sizes) ? $i->sizes : explode(',', $i->sizes);
+                $sizes = array_map('trim', $sizes);
+            }
+
             return [
-                'id'   => $i->id,
-                'name' => $i->name,
-                'unit' => $i->unit ?? '',
-                'rate' => $i->price,
-                'tax'  => $i->tax_percent ?? 0,
-                'desc' => $i->description ?? '',
+                'id'             => $i->id,
+                'article_number' => $i->article_number ?? '',
+                'name'           => $i->name,
+                'unit'           => $i->unit ?? '',
+                'rate'           => $i->price,
+                'tax'            => $i->tax_percent ?? 0,
+                'desc'           => $i->description ?? '',
+                'color_id'       => optional($i->color)->id,
+                'color'          => optional($i->color)->name,
+                'sizes'          => $sizes,
             ];
         })->values();
     }
@@ -142,15 +170,23 @@ class OrderMasterController extends Controller
                 continue;
             }
 
+            // store color and size (sizes can be array -> store as comma separated)
+            $sizeVal = null;
+            if (!empty($it['sizes'])) {
+                $sizeVal = is_array($it['sizes']) ? implode(',', $it['sizes']) : $it['sizes'];
+            } elseif (!empty($it['size_from']) || !empty($it['size_to'])) {
+                $sizeVal = trim(($it['size_from'] ?? '') . '-' . ($it['size_to'] ?? ''), '-');
+            }
+
             $order->items()->create([
                 'item_id'     => $itemId ?: null,
                 'item_name'   => $itemName,
                 'description' => $it['description'] ?? null,
-                'unit'        => $it['unit']        ?? null,
+                'color'       => $it['color'] ?? $it['color_id'] ?? null,
+                'size'        => $sizeVal,
                 'quantity'    => $it['quantity']    ?? 0,
                 'rate'        => $it['rate']        ?? 0,
                 'tax_rate'    => $it['tax_rate']    ?? 0,
-                'final_price' => $it['final_price'] ?? 0,
                 'total'       => $it['total']       ?? 0,
                 'size_from'   => $it['size_from']   ?? null,
                 'size_to'     => $it['size_to']     ?? null,
