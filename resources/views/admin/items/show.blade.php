@@ -32,8 +32,41 @@
       <div class="main-card-body">
         <div class="row">
           <div class="col-md-4">
-            @if($item->image)
-              <img src="{{ asset('storage/' . $item->image) }}" alt="" class="img-fluid rounded">
+            @php
+              // Support both single and multiple images (array or JSON column)
+              $images = [];
+              if (!empty($item->images) && is_array($item->images)) {
+                $images = $item->images;
+              } elseif (!empty($item->images) && is_string($item->images)) {
+                $decoded = json_decode($item->images, true);
+                if (is_array($decoded)) $images = $decoded;
+              } elseif (!empty($item->image)) {
+                $images = [$item->image];
+              }
+              // Filter out non-existing images
+              $images = array_values(array_filter($images, function($img) {
+                return $img && file_exists(public_path('storage/' . $img));
+              }));
+            @endphp
+            @if(!empty($images))
+              <div class="mb-3 text-center">
+                <img id="mainProductImage" src="{{ asset('storage/' . $images[0]) }}" alt="Main Image" class="img-fluid rounded border" style="max-width: 100%; max-height: 250px;">
+              </div>
+              <div class="d-flex flex-wrap gap-2 justify-content-center">
+                @foreach($images as $idx => $img)
+                  <img src="{{ asset('storage/' . $img) }}" alt="Thumbnail {{ $idx+1 }}" class="img-thumbnail m-1 product-thumb" style="width: 60px; height: 60px; object-fit: cover; cursor: pointer; border:2px solid #eee;" onclick="setMainImage('{{ asset('storage/' . $img) }}', this)">
+                @endforeach
+              </div>
+              <script>
+                function setMainImage(src, thumb) {
+                  document.getElementById('mainProductImage').src = src;
+                  // Optional: highlight selected thumbnail
+                  document.querySelectorAll('.product-thumb').forEach(function(img) {
+                    img.style.border = '2px solid #eee';
+                  });
+                  thumb.style.border = '2px solid #dcdfe1';
+                }
+              </script>
             @else
               <div class="border rounded p-5 text-center text-muted">No image</div>
             @endif

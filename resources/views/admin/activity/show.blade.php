@@ -138,7 +138,7 @@
 
           {{-- Before --}}
           @if($log->old_values)
-          <div class="col-md-6 mb-3">
+          <div class="col-md-6 mb-4">
             <div class="card card-danger card-outline shadow-none mb-0">
               <div class="card-header p-2">
                 <h3 class="card-title" style="font-size:.82rem;">
@@ -161,7 +161,7 @@
 
           {{-- After --}}
           @if($log->new_values)
-          <div class="col-md-6 mb-3">
+          <div class="col-md-6 mb-2">
             <div class="card card-success card-outline shadow-none mb-0">
               <div class="card-header p-2">
                 <h3 class="card-title" style="font-size:.82rem;">

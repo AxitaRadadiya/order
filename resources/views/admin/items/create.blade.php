@@ -1,3 +1,45 @@
+<style>
+	.upload-box {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.preview-item {
+    width: 120px;
+    height: 120px;
+    position: relative;
+}
+
+.preview-item img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.remove-btn {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    background: red;
+    color: #fff;
+    border: none;
+    border-radius: 50%;
+    width: 25px;
+    height: 25px;
+    cursor: pointer;
+}
+
+.upload-placeholder {
+    width: 120px;
+    height: 120px;
+    border: 2px dashed #7F53AC;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+</style>
 @extends('admin.layouts.app')
 @section('title', 'Create Item')
 
@@ -147,34 +189,23 @@
 						</div>
 
 						{{-- ✅ MULTIPLE IMAGES: up to 5, jpg/png only, max 2 MB each --}}
-						<div class="col-md-12">
-							<div class="form-group">
-								<label>
-									Images
-									<small class="text-muted">(Max 5 images &bull; JPG / PNG only &bull; Max 2 MB each)</small>
-								</label>
-								<div class="custom-file">
-									<input type="file"
-										   id="itemImages"
-										   name="images[]"
-										   class="custom-file-input @error('images') is-invalid @enderror @error('images.*') is-invalid @enderror"
-										   multiple
-										   accept=".jpg,.jpeg,.png">
-									<label class="custom-file-label" for="itemImages">Choose images&hellip;</label>
-								</div>
-								@error('images')
-									<div class="text-danger small mt-1">{{ $message }}</div>
-								@enderror
-								@error('images.*')
-									<div class="text-danger small mt-1">{{ $message }}</div>
-								@enderror
-								<input type="hidden" name="primary_image" id="primary_image" value="">
-								{{-- Live preview --}}
-								<div id="imagePreviewContainer" class="d-flex flex-wrap mt-2" style="gap:8px;"></div>
-								<div id="imageError" class="text-danger small mt-1" style="display:none;"></div>
-							</div>
-						</div>
+		<div class="col-md-12">
+    <div class="form-group">
+        <label>Upload Images (Max 5 • JPG/PNG • 2MB)</label>
 
+        <!-- Preview Box -->
+        <div id="uploadBox" class="upload-box"></div>
+
+        <!-- Hidden Input -->
+        <input type="file" id="itemImages" accept="image/*" multiple hidden>
+
+        <!-- Laravel Real Inputs -->
+        <div id="realInputs"></div>
+
+        <!-- Error -->
+        <div id="imageError" class="text-danger small"></div>
+    </div>
+</div>
 						<div class="col-md-6">
 							<div class="form-group">
 								<label>Status</label>
@@ -210,109 +241,154 @@
 
 @push('pageScript')
 <script>
-(function () {
-    const input     = document.getElementById('itemImages');
-    const preview   = document.getElementById('imagePreviewContainer');
-    const errorBox  = document.getElementById('imageError');
+document.addEventListener("DOMContentLoaded", function () {
+
+    const fileInput   = document.getElementById('itemImages');
+    const uploadBox   = document.getElementById('uploadBox');
+    const errorBox    = document.getElementById('imageError');
+    const realInputs  = document.getElementById('realInputs');
+
     const MAX_FILES = 5;
-    const MAX_MB    = 2;
-    let   accepted  = [];   // DataTransfer-backed file list
+    const MAX_SIZE = 2 * 1024 * 1024; // 2MB
+    const ALLOWED_TYPES = ['image/jpeg', 'image/png'];
 
-    input.addEventListener('change', function () {
-        errorBox.style.display = 'none';
-        errorBox.textContent   = '';
+    let filesList = [];
 
-        const newFiles   = Array.from(this.files);
-        const errors     = [];
+    /* =============================
+       Render UI
+    ============================= */
+    function renderPreview() {
+        uploadBox.innerHTML = '';
 
-        newFiles.forEach(function (file) {
-            const ext = file.name.split('.').pop().toLowerCase();
+        filesList.forEach((file, index) => {
+            const reader = new FileReader();
 
-            if (!['jpg', 'jpeg', 'png'].includes(ext)) {
-                errors.push(file.name + ': only JPG / PNG allowed.');
-                return;
-            }
-            if (file.size > MAX_MB * 1024 * 1024) {
-                errors.push(file.name + ': exceeds ' + MAX_MB + ' MB limit.');
-                return;
-            }
-            if (accepted.length >= MAX_FILES) {
-                errors.push('Maximum ' + MAX_FILES + ' images allowed. "' + file.name + '" skipped.');
-                return;
-            }
-            accepted.push(file);
+            reader.onload = function (e) {
+                const preview = document.createElement('div');
+                preview.className = 'preview-item';
+
+                preview.innerHTML = `
+                    <img src="${e.target.result}" alt="${file.name}">
+                    <button type="button" class="remove-btn">&times;</button>
+                `;
+
+                preview.querySelector('.remove-btn').addEventListener('click', () => {
+                    removeFile(index);
+                });
+
+                uploadBox.appendChild(preview);
+            };
+
+            reader.readAsDataURL(file);
         });
 
-        if (errors.length) {
-            errorBox.textContent   = errors.join(' ');
-            errorBox.style.display = 'block';
-        }
-
-        syncInput();
-        renderPreviews();
-    });
-
-    function syncInput() {
-        // Rebuild the FileList from accepted[] using DataTransfer
-        const dt = new DataTransfer();
-        accepted.forEach(function (f) { dt.items.add(f); });
-        input.files = dt.files;
-
-        // Update custom-file label
-        const label = input.nextElementSibling;
-        if (label && label.classList.contains('custom-file-label')) {
-            label.textContent = accepted.length
-                ? accepted.length + ' file(s) selected'
-                : 'Choose images\u2026';
-        }
+        renderUploadPlaceholder();
     }
 
-	function renderPreviews() {
-		preview.innerHTML = '';
-		accepted.forEach(function (file, idx) {
-			const reader = new FileReader();
-			reader.onload = function (e) {
-				const wrapper = document.createElement('div');
-				wrapper.style.cssText = 'position:relative;display:inline-block;margin-right:8px;';
+    /* =============================
+       Upload Placeholder
+    ============================= */
+    function renderUploadPlaceholder() {
+    if (filesList.length >= MAX_FILES) return;
 
-				const img = document.createElement('img');
-				img.src   = e.target.result;
-				img.style.cssText = 'width:90px;height:90px;object-fit:cover;border-radius:6px;border:1px solid #ddd;cursor:pointer;';
+    const placeholder = document.createElement('div');
+    placeholder.className = 'upload-placeholder';
 
-				// primary marker
-				const radio = document.createElement('input');
-				radio.type = 'radio';
-				radio.name = 'primary_select_new';
-				radio.style.cssText = 'position:absolute;bottom:4px;left:6px;z-index:2;';
-				radio.addEventListener('change', function () {
-					document.getElementById('primary_image').value = 'new-' + idx;
-					// clear existing-image radios if any (edit view compatibility)
-					const exist = document.getElementsByName('primary_exist');
-					exist.forEach ? exist.forEach(function (e) { e.checked = false; }) : Array.from(exist).forEach(function (e) { e.checked = false; });
-				});
+    placeholder.innerHTML = `
+        <div>Click to Upload</div>
+    `;
 
-				const btn = document.createElement('button');
-				btn.type        = 'button';
-				btn.innerHTML   = '&times;';
-				btn.title       = 'Remove';
-				btn.style.cssText =
-					'position:absolute;top:2px;right:2px;width:20px;height:20px;line-height:18px;' +
-					'text-align:center;border-radius:50%;border:none;background:rgba(220,53,69,.85);' +
-					'color:#fff;font-size:14px;cursor:pointer;padding:0;';
-				btn.addEventListener('click', function () {
-					accepted.splice(idx, 1);
-					syncInput();
-					renderPreviews();
-				});
+    placeholder.addEventListener('click', () => fileInput.click());
 
-				wrapper.appendChild(img);
-				wrapper.appendChild(radio);
-				wrapper.appendChild(btn);
-				preview.appendChild(wrapper);
-			};
-			reader.readAsDataURL(file);
-		});
-	}
-})();
+    uploadBox.appendChild(placeholder);
+}
+
+    /* =============================
+       Handle File Selection
+    ============================= */
+    fileInput.addEventListener('change', function () {
+        handleFiles(this.files);
+        fileInput.value = '';
+    });
+
+    function handleFiles(selectedFiles) {
+        hideError();
+
+        Array.from(selectedFiles).forEach(file => {
+
+            if (!ALLOWED_TYPES.includes(file.type)) {
+                return showError('Only JPG & PNG allowed');
+            }
+
+            if (file.size > MAX_SIZE) {
+                return showError('Max file size is 2MB');
+            }
+
+            if (filesList.length >= MAX_FILES) {
+                return showError('Maximum 5 images allowed');
+            }
+
+            if (filesList.some(f => f.name === file.name && f.size === file.size)) {
+                return showError('Duplicate image not allowed');
+            }
+
+            filesList.push(file);
+        });
+
+        syncInputs();
+        renderPreview();
+    }
+
+    /* =============================
+       Remove File
+    ============================= */
+    function removeFile(index) {
+        filesList.splice(index, 1);
+        syncInputs();
+        renderPreview();
+    }
+
+    /* =============================
+       Sync with Laravel Input
+    ============================= */
+    function syncInputs() {
+        realInputs.innerHTML = '';
+
+        const dataTransfer = new DataTransfer();
+
+        filesList.forEach(file => {
+            dataTransfer.items.add(file);
+
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.name = 'images[]';
+
+            const dt = new DataTransfer();
+            dt.items.add(file);
+            input.files = dt.files;
+
+            realInputs.appendChild(input);
+        });
+
+        fileInput.files = dataTransfer.files;
+    }
+
+    /* =============================
+       Error Handling
+    ============================= */
+    function showError(message) {
+        errorBox.textContent = message;
+        errorBox.style.display = 'block';
+    }
+
+    function hideError() {
+        errorBox.style.display = 'none';
+    }
+
+    /* =============================
+       Init
+    ============================= */
+    renderPreview();
+
+});
 </script>
-@endpush
