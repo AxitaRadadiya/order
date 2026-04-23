@@ -1,14 +1,22 @@
 <style>
-	.upload-box {
+.upload-box {
     display: flex;
-    gap: 10px;
+    gap: 12px;
     flex-wrap: wrap;
+    padding: 10px;
+    border: 1px solid #eee;
+    border-radius: 10px;
+    background: #fafafa;
+	min-height: 140px;
 }
 
 .preview-item {
     width: 120px;
     height: 120px;
     position: relative;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
 }
 
 .preview-item img {
@@ -19,25 +27,50 @@
 
 .remove-btn {
     position: absolute;
-    top: 5px;
-    right: 5px;
-    background: red;
+    top: 6px;
+    right: 6px;
+    background: #ff4d4f;
     color: #fff;
     border: none;
     border-radius: 50%;
-    width: 25px;
-    height: 25px;
+    width: 26px;
+    height: 26px;
     cursor: pointer;
+    font-size: 16px;
 }
 
 .upload-placeholder {
     width: 120px;
     height: 120px;
     border: 2px dashed #7F53AC;
+    border-radius: 10px;
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
+    color: #7F53AC;
+    font-weight: 600;
+    transition: 0.3s;
+}
+
+.upload-placeholder:hover {
+    background: #f3efff;
+}
+
+/* Buttons */
+.btn-submit {
+    background: linear-gradient(90deg, #7F53AC, #647DEE);
+    color: #fff;
+    border: none;
+    padding: 8px 20px;
+    border-radius: 6px;
+}
+
+.btn-cancel {
+    background: #ddd;
+    padding: 8px 20px;
+    border-radius: 6px;
+    color: #333;
 }
 </style>
 @extends('admin.layouts.app')
@@ -62,13 +95,15 @@
 </div>
 <section class="content">
 	<div class="container-fluid">
-		<div class="card card-outline card-primary h-100">
+		
+		<div class="card card-outline card-primary">
 			<div class="card-header">
 				<h3 class="card-title"><i class="fas fa-box mr-1"></i>Create Item</h3>
 			</div>
 			<div class="main-card-body">
 				<form action="{{ route('items.store') }}" method="POST" enctype="multipart/form-data">
 					@csrf
+
 
 					<div class="row">
 						<div class="col-md-4">
@@ -189,23 +224,20 @@
 						</div>
 
 						{{-- ✅ MULTIPLE IMAGES: up to 5, jpg/png only, max 2 MB each --}}
-		<div class="col-md-12">
-    <div class="form-group">
-        <label>Upload Images (Max 5 • JPG/PNG • 2MB)</label>
+						<div class="col-md-12">
+    						<div class="form-group">
+        						<label class="font-weight-bold">
+           						 	Upload Images 
+           							 <small class="text-muted">(Max 5 • JPG/PNG • 2MB)</small>
+        						</label>
 
-        <!-- Preview Box -->
-        <div id="uploadBox" class="upload-box"></div>
+        						<div id="uploadBox" class="upload-box"></div>
+									<input type="file" id="itemImages" name="images[]" accept="image/jpeg,image/png" multiple hidden>
+									<small id="imageError" class="text-danger d-block mt-2"></small>
+    							</div>
+							</div>
+						</div>
 
-        <!-- Hidden Input -->
-        <input type="file" id="itemImages" accept="image/*" multiple hidden>
-
-        <!-- Laravel Real Inputs -->
-        <div id="realInputs"></div>
-
-        <!-- Error -->
-        <div id="imageError" class="text-danger small"></div>
-    </div>
-</div>
 						<div class="col-md-6">
 							<div class="form-group">
 								<label>Status</label>
@@ -215,7 +247,7 @@
 								</select>
 							</div>
 						</div>
-						<div class="col-md-6 p-4">
+						<div class="col-md-6 d-flex align-items-end">
 							<div class="form-group">
 								<input type="hidden" name="show_item_on_web" value="0">
 								<div class="custom-control custom-switch">
@@ -228,9 +260,11 @@
 						</div>
 					</div>
 
-					<div class="mt-3 mb-3 text-right">
-						<a href="{{ route('items.index') }}" class="btn-cancel mr-2"><i class="fas fa-times mr-1"></i>Cancel</a>
-						<button type="submit" class="btn-submit"><i class="fas fa-save mr-1"></i>Save Item</button>
+					<div class="row">
+						<div class="col-12 mt-3 mb-1 text-right">
+							<a href="{{ route('items.index') }}" class="btn-cancel mr-2"><i class="fas fa-times mr-1"></i>Cancel</a>
+							<button type="submit" class="btn-submit"><i class="fas fa-save mr-1"></i>Save Item</button>
+						</div>
 					</div>
 				</form>
 			</div>
@@ -238,25 +272,21 @@
 	</div>
 </section>
 @endsection
-
+	
 @push('pageScript')
 <script>
 document.addEventListener("DOMContentLoaded", function () {
 
-    const fileInput   = document.getElementById('itemImages');
-    const uploadBox   = document.getElementById('uploadBox');
-    const errorBox    = document.getElementById('imageError');
-    const realInputs  = document.getElementById('realInputs');
+	const fileInput  = document.getElementById('itemImages');
+	const uploadBox  = document.getElementById('uploadBox');
+	const errorBox   = document.getElementById('imageError');
 
     const MAX_FILES = 5;
-    const MAX_SIZE = 2 * 1024 * 1024; // 2MB
+    const MAX_SIZE  = 2 * 1024 * 1024;
     const ALLOWED_TYPES = ['image/jpeg', 'image/png'];
 
     let filesList = [];
 
-    /* =============================
-       Render UI
-    ============================= */
     function renderPreview() {
         uploadBox.innerHTML = '';
 
@@ -264,72 +294,63 @@ document.addEventListener("DOMContentLoaded", function () {
             const reader = new FileReader();
 
             reader.onload = function (e) {
-                const preview = document.createElement('div');
-                preview.className = 'preview-item';
+                const div = document.createElement('div');
+                div.className = 'preview-item';
 
-                preview.innerHTML = `
-                    <img src="${e.target.result}" alt="${file.name}">
+                div.innerHTML = `
+                    <img src="${e.target.result}">
                     <button type="button" class="remove-btn">&times;</button>
                 `;
 
-                preview.querySelector('.remove-btn').addEventListener('click', () => {
-                    removeFile(index);
-                });
+                div.querySelector('.remove-btn').onclick = () => removeFile(index);
 
-                uploadBox.appendChild(preview);
+                uploadBox.appendChild(div);
             };
 
             reader.readAsDataURL(file);
         });
 
-        renderUploadPlaceholder();
+        renderPlaceholder();
     }
 
-    /* =============================
-       Upload Placeholder
-    ============================= */
-    function renderUploadPlaceholder() {
-    if (filesList.length >= MAX_FILES) return;
+    function renderPlaceholder() {
+        if (filesList.length >= MAX_FILES) return;
 
-    const placeholder = document.createElement('div');
-    placeholder.className = 'upload-placeholder';
+        const div = document.createElement('div');
+        div.className = 'upload-placeholder';
+        div.innerHTML = '+ Upload';
 
-    placeholder.innerHTML = `
-        <div>Click to Upload</div>
-    `;
+		div.onclick = () => {
+			fileInput.value = '';
+			fileInput.click();
+		};
 
-    placeholder.addEventListener('click', () => fileInput.click());
+        uploadBox.appendChild(div);
+    }
 
-    uploadBox.appendChild(placeholder);
-}
+	fileInput.addEventListener('change', function () {
+		handleFiles(this.files);
+	});
 
-    /* =============================
-       Handle File Selection
-    ============================= */
-    fileInput.addEventListener('change', function () {
-        handleFiles(this.files);
-        fileInput.value = '';
-    });
-
-    function handleFiles(selectedFiles) {
+    function handleFiles(files) {
         hideError();
 
-        Array.from(selectedFiles).forEach(file => {
+        Array.from(files).forEach(file => {
 
             if (!ALLOWED_TYPES.includes(file.type)) {
                 return showError('Only JPG & PNG allowed');
             }
 
             if (file.size > MAX_SIZE) {
-                return showError('Max file size is 2MB');
+                return showError('Max size 2MB');
             }
 
             if (filesList.length >= MAX_FILES) {
-                return showError('Maximum 5 images allowed');
+                return showError('Max 5 images allowed');
             }
 
             if (filesList.some(f => f.name === file.name && f.size === file.size)) {
-                return showError('Duplicate image not allowed');
+                return showError('Duplicate image');
             }
 
             filesList.push(file);
@@ -339,56 +360,28 @@ document.addEventListener("DOMContentLoaded", function () {
         renderPreview();
     }
 
-    /* =============================
-       Remove File
-    ============================= */
     function removeFile(index) {
         filesList.splice(index, 1);
         syncInputs();
         renderPreview();
     }
 
-    /* =============================
-       Sync with Laravel Input
-    ============================= */
-    function syncInputs() {
-        realInputs.innerHTML = '';
+	function syncInputs() {
+		const dt = new DataTransfer();
+		filesList.forEach(file => {
+			dt.items.add(file);
+		});
+		fileInput.files = dt.files;
+	}
 
-        const dataTransfer = new DataTransfer();
-
-        filesList.forEach(file => {
-            dataTransfer.items.add(file);
-
-            const input = document.createElement('input');
-            input.type = 'file';
-            input.name = 'images[]';
-
-            const dt = new DataTransfer();
-            dt.items.add(file);
-            input.files = dt.files;
-
-            realInputs.appendChild(input);
-        });
-
-        fileInput.files = dataTransfer.files;
-    }
-
-    /* =============================
-       Error Handling
-    ============================= */
-    function showError(message) {
-        errorBox.textContent = message;
-        errorBox.style.display = 'block';
+    function showError(msg) {
+        errorBox.textContent = msg;
     }
 
     function hideError() {
-        errorBox.style.display = 'none';
+        errorBox.textContent = '';
     }
 
-    /* =============================
-       Init
-    ============================= */
     renderPreview();
-
 });
 </script>

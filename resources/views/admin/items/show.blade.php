@@ -43,9 +43,9 @@
               } elseif (!empty($item->image)) {
                 $images = [$item->image];
               }
-              // Filter out non-existing images
+              // Filter out non-existing images using Laravel public disk
               $images = array_values(array_filter($images, function($img) {
-                return $img && file_exists(public_path('storage/' . $img));
+                return $img && \Illuminate\Support\Facades\Storage::disk('public')->exists($img);
               }));
             @endphp
             @if(!empty($images))
