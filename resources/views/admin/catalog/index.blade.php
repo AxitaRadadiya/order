@@ -1,74 +1,133 @@
 @extends('admin.layouts.app')
+
 @section('title', 'Catalog')
+
 @section('content')
+
+<style>
+.product-card {
+    border-radius: 12px;
+    overflow: hidden;
+    transition: 0.3s;
+    cursor: pointer;
+}
+
+.product-card:hover {
+    transform: translateY(-5px);
+}
+
+.product-img {
+    height: 220px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #f8f9fa;
+}
+
+.product-img img {
+    max-height: 180px;
+    object-fit: contain;
+}
+
+.product-title {
+    font-size: 14px;
+    height: 40px;
+    overflow: hidden;
+}
+
+.product-link {
+    text-decoration: none;
+    color: inherit;
+}
+</style>
+
 <div class="content-header">
     <div class="container-fluid">
-        <div class="row mb-2">
-        <div class="col-sm-6">
-            <h1 class="m-0"><i class="mr-2 text-teal"></i>Catalog</h1>
-        </div>
-        <div class="col-sm-6">
-            <ol class="breadcrumb float-sm-right">
-            <li class="breadcrumb-item"><a href="{{ route('dashboard') }}">Home</a
-                ></li>
-            <li class="breadcrumb-item active">Catalog</li>
-            </ol>
-        </div>
-        </div>
+        <h1 class="m-0">Product Catalog</h1>
     </div>
 </div>
+
 <section class="content">
-    <div class="container-fluid">
-        <div class="card card-outline card-primary">
-            <div class="card-header">
-                <h3 class="card-title
-                "><i class="fas fa-th-large mr-1 text-teal"></i>Product Catalog</h3>
-            </div>
-            <div class="card-body">
-                <div class="row">
-                    @forelse($items as $item)
-                    <div class="col-md-3 mb-4">
-                        <div class="card h-100 shadow-sm catalog-card">
-                            {{-- IMAGE --}}
-                            <div class="catalog-img">
-                                <img src="{{ $item->image_url }}" alt="">
-                            </div>
-                            {{-- BODY --}}
-                            <div class="card-body">
-                                <h6 class="mb-1">{{ $item->name }}</h6>
-                                <small class="text-muted
-                                ">{{ $item->category->name ?? '-' }}</small>
-                                {{-- COLORS --}}
-                                <div class="mt-2">
-                                    @foreach($item->colors as $color)
-                                        <span class="badge badge-light border">{{
-                                            $color->name
-                                        }}</span>
-                                    @endforeach
-                                </div>
-                                {{-- SIZES --}}
-                                <div class="mt-2">
-                                    @foreach($item->sizes ?? [] as $size)
-                                        <span class="badge badge-secondary">{{
-                                            $size
-                                        }}</span>
-                                    @endforeach
-                                </div>
-                            </div>
-                            {{-- FOOTER --}}
-                            <div class="card-footer bg-white">
-                                <strong>₹{{ number_format($item->price, 2) }}</strong>
-                            </div>
-                        </div>
+<div class="container-fluid">
+
+    <div class="row">
+
+        @forelse($items as $item)
+        <div class="col-md-3 mb-4">
+
+            {{-- CLICKABLE CARD --}}
+            <a href="{{ route('catalog.show', $item->id) }}" class="product-link">
+
+                <div class="card product-card shadow-sm">
+
+                    {{-- IMAGE --}}
+                    <div class="product-img">
+                        @if(!empty($item->image_urls))
+                            <img src="{{ $item->image_urls[0] }}" alt="product">
+                        @else
+                            <img src="{{ asset('no-image.png') }}" alt="no-image">
+                        @endif
                     </div>
-                    @empty
-                        <div class="col-12 text-center">
-                            <p>No items found</p>
+
+                    {{-- BODY --}}
+                    <div class="card-body text-center">
+
+                        <small class="text-muted d-block">
+                            {{ $item->category->name ?? 'Common Good' }}
+                        </small>
+
+                        <h6 class="product-title">
+                            {{ $item->name }}
+                        </h6>
+
+                        {{-- COLORS --}}
+                     <!--   <div class="mb-2">
+                            @foreach($item->colors as $color)
+                                <span class="badge badge-light border">
+                                    {{ $color->name }}
+                                </span>
+                            @endforeach
                         </div>
-                    @endforelse
+
+                        {{-- SIZES --}}
+                        <div class="mb-2">
+                            @foreach($item->sizes ?? [] as $size)
+                                <span class="badge badge-secondary">
+                                    {{ $size }}
+                                </span>
+                            @endforeach
+                        </div>-->   
+
+
+                        {{-- PRICE --}}
+                        <div>
+                            <span class="text-danger font-weight-bold">
+                                ₹{{ number_format($item->price, 2) }}
+                            </span>
+                        </div>
+
+                    </div>
+
                 </div>
-            </div>
+
+            </a>
+
         </div>
+
+        @empty
+        <div class="col-12 text-center">
+            <p>No items found</p>
+        </div>
+        @endforelse
+
     </div>
+
+    {{-- PAGINATION --}}
+    <div class="mt-3">
+        {{ $items->links() }}
+    </div>
+
+</div>
 </section>
+
 @endsection

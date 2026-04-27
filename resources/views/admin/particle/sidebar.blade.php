@@ -70,7 +70,7 @@
               <p>🧩 Item Master</p>
             </a>
           </li>
-         
+                
         </ul>
       </li>
 
@@ -116,6 +116,12 @@
         @endif
       @endif
       @endif
+       <li class="nav-item">
+            <a href="{{ route('catalog') }}" class="nav-link {{ Request::routeIs('catalog') ? 'active' : '' }}">
+              <i class="nav-icon"></i>
+              <p>🛍️ Catalog</p>
+            </a>
+          </li> 
     </ul>
   </nav>
 </div>

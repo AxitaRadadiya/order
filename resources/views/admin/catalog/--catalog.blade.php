@@ -13,7 +13,8 @@
 
                 {{-- IMAGE --}}
                 <div class="catalog-img">
-                    <img src="{{ $item->image_url }}" alt="">
+                    <!--<img src="{{ $item->image_url }}" alt="">-->
+                    <img src="{{ $item->image_urls[0] ?? asset('no-image.png') }}" alt="">
                 </div>
 
                 {{-- BODY --}}
