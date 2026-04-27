@@ -35,66 +35,41 @@
     </div>
 
     <div class="row">
-      {{-- Basic Info --}}
-      <div class="col-md-6">
-        <div class="card card-outline card-primary">
+      {{-- Basic Info full width --}}
+      <div class="col-12">
+        <div class="card card-outline card-primary mb-4">
           <div class="card-header"><h3 class="card-title"><i class="fas fa-user mr-1"></i>Basic Information</h3></div>
           <div class="card-body">
-            <table class="table table-sm table-borderless mb-0">
-              <tr><th width="40%" class="pl-3 text-muted">Name</th><td>{{ $customer->name }}</td></tr>
-              <tr class="bg-light"><th class="pl-3 text-muted">Company</th><td>{{ $customer->company_name ?? '-' }}</td></tr>
-              <tr><th class="pl-3 text-muted">Email</th><td><a href="mailto:{{ $customer->email }}">{{ $customer->email }}</a></td></tr>
-              <tr class="bg-light"><th class="pl-3 text-muted">Phone</th><td>{{ $customer->phone ?? '-' }}</td></tr>
-              <tr><th class="pl-3 text-muted">Website</th><td>
-                @if($customer->website)<a href="{{ $customer->website }}" target="_blank">{{ $customer->website }}</a>@else-@endif
-              </td></tr>
-              <tr class="bg-light"><th class="pl-3 text-muted">Payment Terms</th>
-                <td>{{ $customer->payment_terms ? str_replace('_',' ', ucfirst($customer->payment_terms)) : '-' }}</td></tr>
-            </table>
+            <div class="row">
+              <div class="col-md-4 mb-2"><strong class="text-muted">Name:</strong> {{ $customer->name }}</div>
+              <div class="col-md-4 mb-2"><strong class="text-muted">Company Name:</strong> {{ $customer->company_name ?? '-' }}</div>
+              <div class="col-md-4 mb-2"><strong class="text-muted">Email:</strong> <a href="mailto:{{ $customer->email }}">{{ $customer->email }}</a></div>
+              <div class="col-md-4 mb-2"><strong class="text-muted">Mobile Number:</strong> {{ $customer->phone ?? '-' }}</div>
+              <div class="col-md-4 mb-2"><strong class="text-muted">Payment Terms:</strong> {{ $customer->payment_terms ? str_replace('_',' ', ucfirst($customer->payment_terms)) : '-' }}</div>
+              <div class="col-md-4 mb-2"><strong class="text-muted">Place of Supply:</strong> {{ $customer->place_of_supply ?? '-' }}</div>
+            </div>
           </div>
         </div>
       </div>
-
-      {{-- Tax & Financial --}}
+      {{-- Billing & Shipping Address side by side --}}
       <div class="col-md-6">
-        <div class="card card-outline card-success">
-          <div class="card-header"><h3 class="card-title"><i class="fas fa-rupee-sign mr-1"></i>Tax & Financial Details</h3></div>
-          <div class="card-body">
-            <table class="table table-sm table-borderless mb-0">
-              <tr><th width="40%" class="pl-3 text-muted">GST Treatment</th>
-                <td>{{ $customer->gst_treatment ? str_replace('_',' ', ucfirst($customer->gst_treatment)) : '-' }}</td></tr>
-              <tr class="bg-light"><th class="pl-3 text-muted">GST Number</th><td>{{ $customer->gst_number ?? '-' }}</td></tr>
-              <tr><th class="pl-3 text-muted">PAN Number</th><td>{{ $customer->pan_number ?? '-' }}</td></tr>
-              <tr class="bg-light"><th class="pl-3 text-muted">Place of Supply</th><td>{{ $customer->place_of_supply ?? '-' }}</td></tr>
-              <tr><th class="pl-3 text-muted">Discount</th><td>{{ $customer->discount ? $customer->discount.'%' : '-' }}</td></tr>
-              <tr class="bg-light"><th class="pl-3 text-muted">Credit Limit</th>
-                <td>{{ $customer->credit_limit ? '₹'.number_format($customer->credit_limit,2) : '-' }}</td></tr>
-            </table>
-          </div>
-        </div>
-      </div>
-
-      {{-- Billing Address (customer_addresses) --}}
-      <div class="col-md-6">
-        <div class="card card-outline card-warning">
+        <div class="card card-outline card-primary h-100">
           <div class="card-header"><h3 class="card-title"><i class="fas fa-map-marker-alt mr-1"></i>Billing Address</h3></div>
           <div class="card-body">
-            <table class="table table-sm table-borderless mb-0">
-              <tr><th width="40%" class="pl-3 text-muted">Attention</th><td>{{ $addr->billing_attention ?? '-' }}</td></tr>
-              <tr class="bg-light"><th class="pl-3 text-muted">Street</th><td>{{ $addr->billing_street ?? '-' }}</td></tr>
-              <tr><th class="pl-3 text-muted">City</th><td>{{ $addr->billing_city ?? '-' }}</td></tr>
-              <tr class="bg-light"><th class="pl-3 text-muted">State</th><td>{{ $addr->billing_state ?? '-' }}</td></tr>
-              <tr><th class="pl-3 text-muted">PIN Code</th><td>{{ $addr->billing_pin_code ?? '-' }}</td></tr>
-              <tr class="bg-light"><th class="pl-3 text-muted">Country</th><td>{{ $addr->billing_country ?? '-' }}</td></tr>
-              <tr><th class="pl-3 text-muted">GST Number</th><td>{{ $addr->billing_gst_number ?? '-' }}</td></tr>
-            </table>
+            <div class="row">
+              <div class="col-md-6 mb-2"><strong class="text-muted">Attention:</strong> {{ $addr->billing_attention ?? '-' }}</div>
+              <div class="col-md-6 mb-2"><strong class="text-muted">Street:</strong> {{ $addr->billing_street ?? '-' }}</div>
+              <div class="col-md-6 mb-2"><strong class="text-muted">City:</strong> {{ $addr->billing_city ?? '-' }}</div>
+              <div class="col-md-6 mb-2"><strong class="text-muted">State:</strong> {{ $addr->billing_state ?? '-' }}</div>
+              <div class="col-md-6 mb-2"><strong class="text-muted">PIN Code:</strong> {{ $addr->billing_pin_code ?? '-' }}</div>
+              <div class="col-md-6 mb-2"><strong class="text-muted">Country:</strong> {{ $addr->billing_country ?? '-' }}</div>
+              <div class="col-md-12 mb-2"><strong class="text-muted">GST Number:</strong> {{ $addr->billing_gst_number ?? '-' }}</div>
+            </div>
           </div>
         </div>
       </div>
-
-      {{-- Shipping Address (customer_addresses) --}}
       <div class="col-md-6">
-        <div class="card card-outline card-info">
+        <div class="card card-outline card-primary h-100">
           <div class="card-header">
             <h3 class="card-title">
               <i class="fas fa-shipping-fast mr-1"></i>Shipping Address
@@ -104,48 +79,18 @@
             </h3>
           </div>
           <div class="card-body">
-            <table class="table table-sm table-borderless mb-0">
-              <tr><th width="40%" class="pl-3 text-muted">Attention</th><td>{{ $addr->shipping_attention ?? '-' }}</td></tr>
-              <tr class="bg-light"><th class="pl-3 text-muted">Street</th><td>{{ $addr->shipping_street ?? '-' }}</td></tr>
-              <tr><th class="pl-3 text-muted">City</th><td>{{ $addr->shipping_city ?? '-' }}</td></tr>
-              <tr class="bg-light"><th class="pl-3 text-muted">State</th><td>{{ $addr->shipping_state ?? '-' }}</td></tr>
-              <tr><th class="pl-3 text-muted">PIN Code</th><td>{{ $addr->shipping_pin_code ?? '-' }}</td></tr>
-              <tr class="bg-light"><th class="pl-3 text-muted">Country</th><td>{{ $addr->shipping_country ?? '-' }}</td></tr>
-              <tr><th class="pl-3 text-muted">GST Number</th><td>{{ $addr->shipping_gst_number ?? '-' }}</td></tr>
-            </table>
+            <div class="row">
+              <div class="col-md-6 mb-2"><strong class="text-muted">Attention:</strong> {{ $addr->shipping_attention ?? '-' }}</div>
+              <div class="col-md-6 mb-2"><strong class="text-muted">Street:</strong> {{ $addr->shipping_street ?? '-' }}</div>
+              <div class="col-md-6 mb-2"><strong class="text-muted">City:</strong> {{ $addr->shipping_city ?? '-' }}</div>
+              <div class="col-md-6 mb-2"><strong class="text-muted">State:</strong> {{ $addr->shipping_state ?? '-' }}</div>
+              <div class="col-md-6 mb-2"><strong class="text-muted">PIN Code:</strong> {{ $addr->shipping_pin_code ?? '-' }}</div>
+              <div class="col-md-6 mb-2"><strong class="text-muted">Country:</strong> {{ $addr->shipping_country ?? '-' }}</div>
+              <div class="col-md-12 mb-2"><strong class="text-muted">GST Number:</strong> {{ $addr->shipping_gst_number ?? '-' }}</div>
+            </div>
           </div>
         </div>
       </div>
-
-      {{-- Bank Details (customer_bank_details) --}}
-      <div class="col-md-6">
-        <div class="card card-outline card-secondary">
-          <div class="card-header"><h3 class="card-title"><i class="fas fa-university mr-1"></i>Bank Details</h3></div>
-          <div class="card-body">
-            <table class="table table-sm table-borderless mb-0">
-              <tr><th width="40%" class="pl-3 text-muted">Bank Name</th><td>{{ $bank->bank_name ?? '-' }}</td></tr>
-              <tr class="bg-light"><th class="pl-3 text-muted">Account No.</th><td>{{ $bank->account_no ?? '-' }}</td></tr>
-              <tr><th class="pl-3 text-muted">IFSC Code</th><td>{{ $bank->ifsc_code ?? '-' }}</td></tr>
-              <tr class="bg-light"><th class="pl-3 text-muted">Branch Name</th><td>{{ $bank->branch_name ?? '-' }}</td></tr>
-            </table>
-          </div>
-        </div>
-      </div>
-
-      {{-- Record Info --}}
-      <div class="col-md-6">
-        <div class="card card-outline card-dark">
-          <div class="card-header"><h3 class="card-title"><i class="fas fa-clock mr-1"></i>Record Info</h3></div>
-          <div class="card-body">
-            <table class="table table-sm table-borderless mb-0">
-              <tr><th width="40%" class="pl-3 text-muted">Customer ID</th><td>#{{ $customer->id }}</td></tr>
-              <tr class="bg-light"><th class="pl-3 text-muted">Created At</th><td>{{ $customer->created_at->format('d M Y, h:i A') }}</td></tr>
-              <tr><th class="pl-3 text-muted">Updated At</th><td>{{ $customer->updated_at->format('d M Y, h:i A') }}</td></tr>
-            </table>
-          </div>
-        </div>
-      </div>
-
     </div>
   </div>
 </section>

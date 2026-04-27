@@ -261,8 +261,8 @@ class CustomerController extends Controller
             $orderColumn = $columns[$colIndex] ?? 'id';
             $orderDir = $order['dir'] ?? 'desc';
         }
-
-        $query = Customer::whereIn('role_id', [7, 8]);
+$query=Customer::query();
+        //$query = Customer::whereIn('role_id', [7, 8]);
 
         if (!empty($searchValue)) {
             $query->where(function ($q) use ($searchValue) {

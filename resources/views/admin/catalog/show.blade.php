@@ -23,9 +23,8 @@
   <div class="container-fluid">
     <div class="main-card mt-4">
       <div class="main-card-head d-flex justify-content-between align-items-center">
-     <!--   <div class="main-card-title"><i class="fas fa-eye"></i> {{ $item->name }}</div>-->
+        <!--<div class="main-card-title"><i class="fas fa-eye"></i> {{ $item->name }}</div>-->
         <div>
-          <a href="{{ route('items.edit', $item->id) }}" class="btn btn-primary">Edit</a>
           <a href="{{ route('items.index') }}" class="btn btn-secondary">Back</a>
         </div>
       </div>

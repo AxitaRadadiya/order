@@ -1,3 +1,78 @@
+<style>
+.upload-box {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    padding: 10px;
+    border: 1px solid #eee;
+    border-radius: 10px;
+    background: #fafafa;
+	min-height: 140px;
+}
+
+.preview-item {
+    width: 120px;
+    height: 120px;
+    position: relative;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+}
+
+.preview-item img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.remove-btn {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    background: #ff4d4f;
+    color: #fff;
+    border: none;
+    border-radius: 50%;
+    width: 26px;
+    height: 26px;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+.upload-placeholder {
+    width: 120px;
+    height: 120px;
+    border: 2px dashed #7F53AC;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: #7F53AC;
+    font-weight: 600;
+    transition: 0.3s;
+}
+
+.upload-placeholder:hover {
+    background: #f3efff;
+}
+
+/* Buttons */
+.btn-submit {
+    background: linear-gradient(90deg, #7F53AC, #647DEE);
+    color: #fff;
+    border: none;
+    padding: 8px 20px;
+    border-radius: 6px;
+}
+
+.btn-cancel {
+    background: #ddd;
+    padding: 8px 20px;
+    border-radius: 6px;
+    color: #333;
+}
+</style>
 @extends('admin.layouts.app')
 @section('title', 'Create Item')
 
@@ -20,13 +95,15 @@
 </div>
 <section class="content">
 	<div class="container-fluid">
-		<div class="card card-outline card-primary h-100">
+		
+		<div class="card card-outline card-primary">
 			<div class="card-header">
 				<h3 class="card-title"><i class="fas fa-box mr-1"></i>Create Item</h3>
 			</div>
 			<div class="main-card-body">
 				<form action="{{ route('items.store') }}" method="POST" enctype="multipart/form-data">
 					@csrf
+
 
 					<div class="row">
 						<div class="col-md-4">
@@ -148,30 +225,16 @@
 
 						{{-- ✅ MULTIPLE IMAGES: up to 5, jpg/png only, max 2 MB each --}}
 						<div class="col-md-12">
-							<div class="form-group">
-								<label>
-									Images
-									<small class="text-muted">(Max 5 images &bull; JPG / PNG only &bull; Max 2 MB each)</small>
-								</label>
-								<div class="custom-file">
-									<input type="file"
-										   id="itemImages"
-										   name="images[]"
-										   class="custom-file-input @error('images') is-invalid @enderror @error('images.*') is-invalid @enderror"
-										   multiple
-										   accept=".jpg,.jpeg,.png">
-									<label class="custom-file-label" for="itemImages">Choose images&hellip;</label>
-								</div>
-								@error('images')
-									<div class="text-danger small mt-1">{{ $message }}</div>
-								@enderror
-								@error('images.*')
-									<div class="text-danger small mt-1">{{ $message }}</div>
-								@enderror
-								<input type="hidden" name="primary_image" id="primary_image" value="">
-								{{-- Live preview --}}
-								<div id="imagePreviewContainer" class="d-flex flex-wrap mt-2" style="gap:8px;"></div>
-								<div id="imageError" class="text-danger small mt-1" style="display:none;"></div>
+    						<div class="form-group">
+        						<label class="font-weight-bold">
+           						 	Upload Images 
+           							 <small class="text-muted">(Max 5 • JPG/PNG • 2MB)</small>
+        						</label>
+
+        						<div id="uploadBox" class="upload-box"></div>
+									<input type="file" id="itemImages" name="images[]" accept="image/jpeg,image/png" multiple hidden>
+									<small id="imageError" class="text-danger d-block mt-2"></small>
+    							</div>
 							</div>
 						</div>
 
@@ -184,7 +247,7 @@
 								</select>
 							</div>
 						</div>
-						<div class="col-md-6 p-4">
+						<div class="col-md-6 d-flex align-items-end">
 							<div class="form-group">
 								<input type="hidden" name="show_item_on_web" value="0">
 								<div class="custom-control custom-switch">
@@ -197,9 +260,11 @@
 						</div>
 					</div>
 
-					<div class="mt-3 mb-3 text-right">
-						<a href="{{ route('items.index') }}" class="btn-cancel mr-2"><i class="fas fa-times mr-1"></i>Cancel</a>
-						<button type="submit" class="btn-submit"><i class="fas fa-save mr-1"></i>Save Item</button>
+					<div class="row">
+						<div class="col-12 mt-3 mb-1 text-right">
+							<a href="{{ route('items.index') }}" class="btn-cancel mr-2"><i class="fas fa-times mr-1"></i>Cancel</a>
+							<button type="submit" class="btn-submit"><i class="fas fa-save mr-1"></i>Save Item</button>
+						</div>
 					</div>
 				</form>
 			</div>
@@ -207,112 +272,116 @@
 	</div>
 </section>
 @endsection
-
+	
 @push('pageScript')
 <script>
-(function () {
-    const input     = document.getElementById('itemImages');
-    const preview   = document.getElementById('imagePreviewContainer');
-    const errorBox  = document.getElementById('imageError');
+document.addEventListener("DOMContentLoaded", function () {
+
+	const fileInput  = document.getElementById('itemImages');
+	const uploadBox  = document.getElementById('uploadBox');
+	const errorBox   = document.getElementById('imageError');
+
     const MAX_FILES = 5;
-    const MAX_MB    = 2;
-    let   accepted  = [];   // DataTransfer-backed file list
+    const MAX_SIZE  = 2 * 1024 * 1024;
+    const ALLOWED_TYPES = ['image/jpeg', 'image/png'];
 
-    input.addEventListener('change', function () {
-        errorBox.style.display = 'none';
-        errorBox.textContent   = '';
+    let filesList = [];
 
-        const newFiles   = Array.from(this.files);
-        const errors     = [];
+    function renderPreview() {
+        uploadBox.innerHTML = '';
 
-        newFiles.forEach(function (file) {
-            const ext = file.name.split('.').pop().toLowerCase();
+        filesList.forEach((file, index) => {
+            const reader = new FileReader();
 
-            if (!['jpg', 'jpeg', 'png'].includes(ext)) {
-                errors.push(file.name + ': only JPG / PNG allowed.');
-                return;
-            }
-            if (file.size > MAX_MB * 1024 * 1024) {
-                errors.push(file.name + ': exceeds ' + MAX_MB + ' MB limit.');
-                return;
-            }
-            if (accepted.length >= MAX_FILES) {
-                errors.push('Maximum ' + MAX_FILES + ' images allowed. "' + file.name + '" skipped.');
-                return;
-            }
-            accepted.push(file);
+            reader.onload = function (e) {
+                const div = document.createElement('div');
+                div.className = 'preview-item';
+
+                div.innerHTML = `
+                    <img src="${e.target.result}">
+                    <button type="button" class="remove-btn">&times;</button>
+                `;
+
+                div.querySelector('.remove-btn').onclick = () => removeFile(index);
+
+                uploadBox.appendChild(div);
+            };
+
+            reader.readAsDataURL(file);
         });
 
-        if (errors.length) {
-            errorBox.textContent   = errors.join(' ');
-            errorBox.style.display = 'block';
-        }
-
-        syncInput();
-        renderPreviews();
-    });
-
-    function syncInput() {
-        // Rebuild the FileList from accepted[] using DataTransfer
-        const dt = new DataTransfer();
-        accepted.forEach(function (f) { dt.items.add(f); });
-        input.files = dt.files;
-
-        // Update custom-file label
-        const label = input.nextElementSibling;
-        if (label && label.classList.contains('custom-file-label')) {
-            label.textContent = accepted.length
-                ? accepted.length + ' file(s) selected'
-                : 'Choose images\u2026';
-        }
+        renderPlaceholder();
     }
 
-	function renderPreviews() {
-		preview.innerHTML = '';
-		accepted.forEach(function (file, idx) {
-			const reader = new FileReader();
-			reader.onload = function (e) {
-				const wrapper = document.createElement('div');
-				wrapper.style.cssText = 'position:relative;display:inline-block;margin-right:8px;';
+    function renderPlaceholder() {
+        if (filesList.length >= MAX_FILES) return;
 
-				const img = document.createElement('img');
-				img.src   = e.target.result;
-				img.style.cssText = 'width:90px;height:90px;object-fit:cover;border-radius:6px;border:1px solid #ddd;cursor:pointer;';
+        const div = document.createElement('div');
+        div.className = 'upload-placeholder';
+        div.innerHTML = '+ Upload';
 
-				// primary marker
-				const radio = document.createElement('input');
-				radio.type = 'radio';
-				radio.name = 'primary_select_new';
-				radio.style.cssText = 'position:absolute;bottom:4px;left:6px;z-index:2;';
-				radio.addEventListener('change', function () {
-					document.getElementById('primary_image').value = 'new-' + idx;
-					// clear existing-image radios if any (edit view compatibility)
-					const exist = document.getElementsByName('primary_exist');
-					exist.forEach ? exist.forEach(function (e) { e.checked = false; }) : Array.from(exist).forEach(function (e) { e.checked = false; });
-				});
+		div.onclick = () => {
+			fileInput.value = '';
+			fileInput.click();
+		};
 
-				const btn = document.createElement('button');
-				btn.type        = 'button';
-				btn.innerHTML   = '&times;';
-				btn.title       = 'Remove';
-				btn.style.cssText =
-					'position:absolute;top:2px;right:2px;width:20px;height:20px;line-height:18px;' +
-					'text-align:center;border-radius:50%;border:none;background:rgba(220,53,69,.85);' +
-					'color:#fff;font-size:14px;cursor:pointer;padding:0;';
-				btn.addEventListener('click', function () {
-					accepted.splice(idx, 1);
-					syncInput();
-					renderPreviews();
-				});
+        uploadBox.appendChild(div);
+    }
 
-				wrapper.appendChild(img);
-				wrapper.appendChild(radio);
-				wrapper.appendChild(btn);
-				preview.appendChild(wrapper);
-			};
-			reader.readAsDataURL(file);
+	fileInput.addEventListener('change', function () {
+		handleFiles(this.files);
+	});
+
+    function handleFiles(files) {
+        hideError();
+
+        Array.from(files).forEach(file => {
+
+            if (!ALLOWED_TYPES.includes(file.type)) {
+                return showError('Only JPG & PNG allowed');
+            }
+
+            if (file.size > MAX_SIZE) {
+                return showError('Max size 2MB');
+            }
+
+            if (filesList.length >= MAX_FILES) {
+                return showError('Max 5 images allowed');
+            }
+
+            if (filesList.some(f => f.name === file.name && f.size === file.size)) {
+                return showError('Duplicate image');
+            }
+
+            filesList.push(file);
+        });
+
+        syncInputs();
+        renderPreview();
+    }
+
+    function removeFile(index) {
+        filesList.splice(index, 1);
+        syncInputs();
+        renderPreview();
+    }
+
+	function syncInputs() {
+		const dt = new DataTransfer();
+		filesList.forEach(file => {
+			dt.items.add(file);
 		});
+		fileInput.files = dt.files;
 	}
-})();
+
+    function showError(msg) {
+        errorBox.textContent = msg;
+    }
+
+    function hideError() {
+        errorBox.textContent = '';
+    }
+
+    renderPreview();
+});
 </script>
-@endpush

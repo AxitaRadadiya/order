@@ -227,6 +227,16 @@ class ItemController extends Controller
         return redirect()->route('items.index')->withSuccess('Item deleted.');
     }
 
+    public function catalog()
+     {
+         $items = Item::with(['category', 'group', 'colors']) ->where('status', 1) ->latest() ->paginate(12); 
+         return view('admin.catalog.index', compact('items')); 
+    }
+    public function showCatalog(Item $item)
+{
+    return view('admin.catalog.show', compact('item'));
+}   
+
     /**
      * DataTables AJAX endpoint for admin item list.
      * Shows ALL items (active + inactive) in the admin panel.

@@ -22,11 +22,21 @@ use App\Http\Controllers\Admin\ItemController;
 use App\Http\Controllers\Admin\OrderMasterController;
 use App\Http\Controllers\Admin\SubGroupController;
 use App\Http\Controllers\Admin\SubCategoryController;
+use App\Http\Controllers\FrontendController;    
 use Illuminate\Support\Facades\Artisan;
 
-Route::get('/', function () {
-    return view('frontend.home');
-});
+//Route::get('/', function () {
+  //  return view('frontend.home');
+//});
+Route::get('/', [FrontendController::class, 'home'])->name('home');
+
+
+Route::get('/products', [FrontendController::class, 'products'])->name('products');
+Route::get('/products/{item}', [FrontendController::class, 'show'])->name('products.show');
+
+Route::view('/about', 'frontend.about')->name('about');
+Route::view('/contact', 'frontend.contact')->name('contact');
+//Route::get('/catalog', [ItemController::class, 'catalogs'])->name('catalog');
 
 Route::get('/clear-caches', function () {
     Artisan::call('route:clear');
@@ -92,6 +102,12 @@ Route::group(['middleware' => ['auth']], function () {
     Route::get('admin/profile/password', [AdminController::class, 'password'])->name('admin.profile.password');
     Route::patch('admin/profile', [AdminController::class, 'update'])->name('admin.profile.update');
     Route::post('admin/profile/password', [AdminController::class, 'updatePassword'])->name('admin.profile.updatePassword');
+   //catalog routes
+    Route::get('/catalog', [ItemController::class, 'catalog'])->name('catalog');
+    Route::get('/catalog/{item}', [ItemController::class, 'showCatalog'])->name('catalog.show');
+
+ 
+
 });
 
 require __DIR__.'/auth.php';
