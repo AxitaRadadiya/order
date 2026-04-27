@@ -84,7 +84,7 @@ a {
     border-radius: 12px;
         box-shadow: none !important;
     margin-bottom: 0px;
-    margin:20px !important;
+    margin:0px 15px 15px 15px !important;
 }
 .card-primary.card-outline {
     border-top: 3px solid #5E60CE !important;
@@ -97,7 +97,7 @@ a {
     color: #fff !important;
     border: none;
     border-radius: 12px;
-    padding: 10px 20px;
+    padding: 7px 15px;
     margin-bottom: 7px;
 }
 .btn-submit {
@@ -106,11 +106,19 @@ a {
     border: none;
     border-radius: 12px;
     padding: 7px 15px;
+    border: 1px solid transparent;
 }
 .btn-cancel {
     background-color: #fff;
     color: #62748E !important;
     border: 1px solid #62748E;
+    border-radius: 12px;
+    padding: 7px 15px;
+}
+.btn-view {
+    background-color: #fff;
+    color: #5e5825 !important;
+    border: 1px solid #5e5825;
     border-radius: 12px;
     padding: 7px 15px;
 }
@@ -152,4 +160,42 @@ a {
     position: relative;
     border-top-left-radius: .25rem;
     /* border-top-right-radius: .25rem; */
+}
+.btn-info {
+    color: #211D4F !important;
+    background-color: transparent !important;
+    border-color: transparent !important;
+    box-shadow: none !important;
+    transition: background 0.2s, color 0.2s;
+}
+.btn-danger
+{
+    color: #dc1717 !important;
+    background-color: transparent !important;
+    border-color: transparent !important;
+    box-shadow: none !important;
+    transition: background 0.2s, color 0.2s;
+
+}
+.card-body{
+    padding:0px !important;
+}
+.table.table-bordered.dataTable {
+    padding:"0pc 10px" !important;
+}
+.table.dataTable {
+padding:10px !important;
+}
+label:not(.form-check-label):not(.custom-file-label) {
+    /* font-weight: 700; */
+    font-weight: 500;
+}
+div.dataTables_wrapper {
+    position: relative;
+    padding-bottom: 10px;
+}
+.text-sm .card-title {
+    font-size: 20px;
+    /* font-weight: 600; */
+    padding-top: 5px;
 }

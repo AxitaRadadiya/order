@@ -26,7 +26,7 @@
   <div class="container-fluid">
 
     {{-- ── Filter Card ── --}}
-    <div class="card card-outline card-teal shadow-sm mb-3">
+    <div class="card ">
       <div class="card-header">
         <h3 class="card-title"><i class="fas fa-filter mr-2"></i>Filter</h3>
         <div class="card-tools">
@@ -123,7 +123,7 @@
     </div>
 
     {{-- ── Table Card ── --}}
-    <div class="card card-outline card-teal shadow-sm">
+    <div class="card">
       <div class="card-header">
         <h3 class="card-title">
           <i class="fas fa-list-alt mr-2"></i>All Activity
@@ -148,7 +148,8 @@
                 <th>Description</th>
                 <th>Model</th>
                 <th>Date &amp; Time</th>
-                <th width="70"></th>
+                <th width="70">Action</th>
+                
               </tr>
             </thead>
             <tbody>
@@ -201,7 +202,7 @@
                   <td>
                     <a href="{{ route('activity-logs.show', $log->id) }}"
                        class="btn btn-xs btn-outline-teal">
-                      <i class="fas fa-eye mr-1"></i>View
+                      <i class="fas fa-eye mr-1"></i>
                     </a>
                   </td>
                 </tr>

@@ -10,7 +10,7 @@
                     </a>
                 </div>
             </div>
-            <div class="card-body">
+            <div class="card-body" style="padding: 0px !important;">
                 <table id="SizeTable" class="table dt-responsive nowrap w-100">
                     <thead>
                         <tr>

@@ -176,13 +176,27 @@ class UserController extends Controller
             $editUrl = route('users.edit', $u->id);
             $deleteUrl = route('users.destroy', $u->id);
 
-            $actionHtml = '<a href="' . $viewUrl . '" class="btn btn-sm btn-info" title="View"><i class="fas fa-eye"></i></a> ';
-            $actionHtml .= '<a href="' . $editUrl . '" class="btn btn-sm btn-primary" title="Edit"><i class="fas fa-edit"></i></a> ';
-            $actionHtml .= '<form method="POST" action="' . $deleteUrl . '" style="display:inline-block;margin:0;padding:0;">';
-            $actionHtml .= '<input type="hidden" name="_token" value="' . csrf_token() . '">';
-            $actionHtml .= '<input type="hidden" name="_method" value="DELETE">';
-            $actionHtml .= '<button type="submit" class="btn btn-sm btn-danger deleteButton" title="Delete"><i class="fas fa-trash"></i></button>';
-            $actionHtml .= '</form>';
+                $actions = '<div class="btn-group" style="position: relative; left: 10px;">
+                    <button type="button" class="btn btn-sm btn-info " data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" title="Actions">
+                        <i class="fas fa-ellipsis-v"></i>
+                    </button>
+                    <div class="dropdown-menu action-dropdown" role="menu">';
+
+
+                $actions .= '<a class="dropdown-item" href="'.route('users.show',$u->id).'" id="userInfo" data-userid="'.$u->id.'">View</a>';
+
+                $actions .= '<a class="dropdown-item" href="'.route('users.edit', $u->id).'">Edit</a>';
+
+                $actions .= '
+                    <form action="'.route('users.destroy', $u->id).'" method="POST" class="deleteForm" style="display:inline;">
+                        '.csrf_field().'
+                        <input type="hidden" name="_method" value="DELETE">
+                        <button type="submit" class="dropdown-item deleteButton">Delete</button>
+                    </form>
+                ';
+
+                $actions .= '</div></div>';
+                $actionHtml = $actions;
 
             $avatarHtml = '<div class="user-name-cell">'
                 . '<span>' . e($u->name) . '</span>'

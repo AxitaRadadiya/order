@@ -289,6 +289,26 @@ class CustomerController extends Controller
                     ? '<span class="badge badge-success">Active</span>'
                     : '<span class="badge badge-danger">Inactive</span>';
             }
+            $viewUrl = route('customers.show', $customer->id);
+            $editUrl = route('customers.edit', $customer->id);
+            $deleteUrl = route('customers.destroy', $customer->id);
+
+            $actions = '<div class="btn-group" style="position: relative; left: 10px;">
+                <button type="button" class="btn btn-sm btn-info" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" title="Actions">
+                    <i class="fas fa-ellipsis-v"></i>
+                </button>
+                <div class="dropdown-menu action-dropdown" role="menu">';
+
+            $actions .= '<a class="dropdown-item" href="' . $viewUrl . '">View</a>';
+            $actions .= '<a class="dropdown-item" href="' . $editUrl . '">Edit</a>';
+            $actions .= '
+                <form method="POST" action="' . $deleteUrl . '" style="display:inline;">
+                    <input type="hidden" name="_token" value="' . csrf_token() . '">
+                    <input type="hidden" name="_method" value="DELETE">
+                    <button type="submit" class="dropdown-item deleteButton">Delete</button>
+                </form>
+            ';
+            $actions .= '</div></div>';
 
             $data[] = [
                 'id' => $customer->id,
@@ -297,7 +317,7 @@ class CustomerController extends Controller
                 'phone' => $customer->phone,
                 'company_name' => $customer->company_name,
                 'status' => $statusBadge,
-                'action' => view('admin.customer.partials.actions', compact('customer'))->render(),
+                'action' => $actions,
             ];
         }
 
