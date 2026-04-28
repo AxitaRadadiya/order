@@ -6,23 +6,6 @@
 @endsection
 @section('content')
 
-<div class="page-hero">
-  <div class="orb"></div>
-  <div class="container-fluid" style="position:relative;z-index:2;">
-    <div class="section-tabs">
-      <a href="{{ route('users.index') }}" class="section-tab active">
-        <i class="fas fa-users"></i>
-        <span>User</span>
-      </a>
-      <a href="{{ route('roles.index') }}" class="section-tab">
-        <i class="fas fa-user-tag"></i>
-        <span>Role</span>
-      </a>
-    </div>
-    
-  </div>
-</div>
-
 <div class="pull-card">
   <div class="container-fluid" style="padding:0;">
 

@@ -6,7 +6,7 @@
   <div class="container-fluid">
     <div class="row mb-2">
       <div class="col-sm-6">
-        <h1 class="m-0"><i class="fas fa-user mr-2 text-teal"></i>Customer Details</h1>
+        <h1 class="m-0">Customer Details</h1>
       </div>
       <div class="col-sm-6">
         <ol class="breadcrumb float-sm-right">
@@ -24,14 +24,9 @@
 
     @php $addr = $customer->address; $bank = $customer->bankDetail; @endphp
 
-    <div class="mb-3 d-flex justify-content-between">
-      <a href="{{ route('customers.index') }}" class="btn btn-secondary btn-sm"><i class="fas fa-arrow-left mr-1"></i>Back</a>
-      <div>
-        <a href="{{ route('customers.edit', $customer) }}" class="btn btn-warning btn-sm mr-1"><i class="fas fa-edit mr-1"></i>Edit</a>
-        <button class="btn btn-danger btn-sm btn-delete" data-id="{{ $customer->id }}" data-name="{{ $customer->name }}">
-          <i class="fas fa-trash mr-1"></i>Delete
-        </button>
-      </div>
+    <div class="mb-3 mr-3 d-flex justify-content-end">
+      <a href="{{ route('customers.index') }}" class="btn-cancel mr-1"><i class="fas fa-arrow-left mr-1"></i>Back</a>
+      <a href="{{ route('customers.edit', $customer) }}" class="btn-submit"><i class="fas fa-edit mr-1"></i>Edit</a>
     </div>
 
     <div class="row">

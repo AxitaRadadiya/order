@@ -19,12 +19,12 @@
     </div>
 </div>
 
-<div class="row">
+<div class="row mr-0">
 <div class="col-xl-12">
 
 {{-- Tabs (Same as Master Style) --}}
-<ul class="nav nav-tabs mb-3" style="border-bottom: none;">
-<li class="nav-item">
+<ul class="nav nav-tabs mb-3 ml-3" style="border-bottom: none;">
+<li class="nav-item mr-1">
 <a href="{{ route('users.index') }}" class="nav-link">
 <span class="font-weight-bold">User</span>
 </a>
@@ -49,7 +49,7 @@
 @endif
 
 {{-- Header --}}
-<div class="card-header d-flex align-items-center">
+<div class="card-header d-flex align-items-center mb-3">
 <h5 class="mb-0">All Roles</h5>
 <div class="ml-auto">
 <a href="{{ route('roles.create') }}" class="btn-create">

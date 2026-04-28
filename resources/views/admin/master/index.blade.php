@@ -18,7 +18,7 @@
   </div>
 </div>
 
-<div class="row">
+<div class="row mr-0">
     <div class="col-xl-12">
         @php
                     // Allowed tabs — default to 'country'
@@ -28,8 +28,8 @@
                                     : 'country';
                 @endphp
 
-                <ul class="nav nav-tabs mb-3" id="masterTab" role="tablist" style="border-bottom: none;">
-                    <li class="nav-item">
+                <ul class="nav nav-tabs mb-3 ml-3" id="masterTab" role="tablist" style="border-bottom: none;">
+                    <li class="nav-item mr-1">
                         <a href="#country" data-toggle="tab" aria-expanded="false"
                            class="nav-link {{ $activeTab === 'country' ? 'active' : '' }}">
                             <i class="mdi mdi-home-variant d-lg-none d-block"></i>
@@ -37,7 +37,7 @@
                         </a>
                     </li>
 
-                    <li class="nav-item">
+                    <li class="nav-item mr-1">
                         <a href="#state" data-toggle="tab" aria-expanded="false"
                            class="nav-link {{ $activeTab === 'state' ? 'active' : '' }}">
                             <i class="mdi mdi-map d-lg-none d-block"></i>

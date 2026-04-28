@@ -2,7 +2,7 @@
 <div class="row">
     <div class="col-12">
         <div class="card">
-           <div class="card-header d-flex align-items-center">
+           <div class="card-header d-flex align-items-center mb-3">
                 <h5 class="mb-0">Color</h5>
                 <div class="ml-auto">
                     <a href="#" class="btn-create color-date-modal">
@@ -20,13 +20,6 @@
                         </tr>
                     </thead>
                     <tbody></tbody>
-                    <tfoot>
-                        <tr>
-                            <th>Sr No.</th>
-                            <th>Name</th>
-                            <th>Actions</th>
-                        </tr>
-                    </tfoot>
                 </table>
             </div>
         </div>

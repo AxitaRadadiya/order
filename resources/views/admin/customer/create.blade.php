@@ -6,7 +6,7 @@
   <div class="container-fluid">
     <div class="row mb-2">
       <div class="col-sm-6">
-        <h1 class="m-0"><i class="mr-2 text-teal"></i>Create Customer</h1>
+        <h1 class="m-0">Create Customer</h1>
       </div>
       <div class="col-sm-6">
         <ol class="breadcrumb float-sm-right">
@@ -39,7 +39,7 @@
       @csrf
 
       {{-- 1. Basic Info --}}
-      <div class="card " style="padding:10px;">
+      <div class="card card-outline card-primary" style="padding:10px;">
         <div class="card-header">
           <h3 class="card-title"><i class="fas fa-user mr-1"></i>Basic Information</h3>
           <!-- <div class="card-tools"><button type="button" class="btn btn-tool" data-card-widget="collapse"><i class="fas fa-minus"></i></button></div> -->
@@ -62,7 +62,7 @@
             </div>
             <div class="col-md-3">
               <div class="form-group">
-                <label>Role</label>
+                <label>Customer Type</label>
                 <select name="role_id" class="form-control">
                   <option value="">-- Default (retailer) --</option>
                   @foreach($roles as $r)
@@ -139,7 +139,7 @@
       {{-- 3 & 4. Billing + Shipping Address (Side by Side) --}}
       <div class="row">
         <div class="col-lg-6">
-          <div class="card" style="padding:10px;">
+          <div class="card card-outline card-primary" style="padding:10px;">
             <div class="card-header">
               <h3 class="card-title"><i class="fas fa-map-marker-alt mr-1"></i>Billing Address</h3>
             </div>
@@ -191,7 +191,7 @@
         </div>
 
         <div class="col-lg-6">
-          <div class="card" style="padding:10px;">
+          <div class="card card-outline card-primary" style="padding:10px;">
             <div class="card-header">
               <h3 class="card-title"><i class="fas fa-shipping-fast mr-1"></i>Shipping Address</h3>
               <div class="card-tools d-flex align-items-center">
@@ -248,7 +248,7 @@
           </div>
         </div>
       </div>
-      <div class="mt-2 mb-2 text-right">
+      <div class="mt-2 mb-2 mr-3 text-right">
         <a href="{{ route('customers.index') }}" class="btn-cancel mr-2"><i class="fas fa-times mr-1"></i>Cancel</a>
         <button type="submit" class="btn-submit"><i class="fas fa-save mr-1"></i>Save Customer</button>
       </div>

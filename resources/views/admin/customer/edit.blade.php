@@ -6,7 +6,7 @@
   <div class="container-fluid">
     <div class="row mb-2">
       <div class="col-sm-6">
-        <h1 class="m-0"><i class="fas fa-user-edit mr-2 text-teal"></i>Edit Customer</h1>
+        <h1 class="m-0">Edit Customer</h1>
       </div>
       <div class="col-sm-6">
         <ol class="breadcrumb float-sm-right">
@@ -41,7 +41,7 @@
       @csrf @method('PUT')
 
       {{-- 1. Basic Info --}}
-      <div class="card" style="padding:10px;">
+      <div class="card card-outline card-primary" style="padding:10px;">
         <div class="card-header">
           <h3 class="card-title"><i class="fas fa-user mr-1"></i>Basic Information</h3>
           <!-- <div class="card-tools"><button type="button" class="btn btn-tool" data-card-widget="collapse"><i class="fas fa-minus"></i></button></div> -->
@@ -64,7 +64,7 @@
             </div>
             <div class="col-md-3">
               <div class="form-group">
-                <label>Role</label>
+                <label>Customer Type</label>
                 <select name="role_id" class="form-control">
                   <option value="">-- Default (retailer) --</option>
                   @foreach($roles as $r)
@@ -92,7 +92,7 @@
                 <div class="input-group">
                   <input type="password" class="form-control @error('password') is-invalid @enderror" id="password" name="password" placeholder="Password">
                   <div class="input-group-append">
-                    <button class="btn toggle-password" type="button" data-target="password"><i class="fas fa-eye"></i></button>
+                    <button class="btn btn-outline-secondary toggle-password" type="button" data-target="password"><i class="fas fa-eye"></i></button>
                   </div>
                   @error('password')<div class="invalid-feedback">{{ $message }}</div>@enderror
                 </div>
@@ -126,7 +126,7 @@
       </div>
 
       {{-- 2. Tax & Financial --}}
-      <div class="card " style="padding:10px;">
+      <div class="card card-outline card-primary" style="padding:10px;">
         <div class="card-header">
           <h3 class="card-title"><i class="fas fa-rupee-sign mr-1"></i>Tax & Financial Details</h3>
           <div class="card-tools"><button type="button" class="btn btn-tool" data-card-widget="collapse"><i class="fas fa-minus"></i></button></div>
@@ -280,8 +280,7 @@
           </div>
         </div>
       </div>
-      <div class="mt-3 mb-3 text-right">
-        <a href="{{ route('customers.show', $customer) }}" class="btn btn-info mr-2"><i class="fas fa-eye mr-1"></i>View</a>
+      <div class="mt-3 mb-3 mr-3 text-right">
         <a href="{{ route('customers.index') }}" class="btn-cancel mr-2"><i class="fas fa-times mr-1"></i>Cancel</a>
         <button type="submit" class="btn-submit"><i class="fas fa-save mr-1"></i>Update Customer</button>
       </div>

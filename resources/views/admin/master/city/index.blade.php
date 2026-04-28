@@ -22,15 +22,6 @@
                         </tr>
                     </thead>
                     <tbody></tbody>
-                    <tfoot>
-                        <tr>
-                            <th>Sr No.</th>
-                            <th>Country</th>
-                            <th>State</th>
-                            <th>Name</th>
-                            <th>Actions</th>
-                        </tr>
-                    </tfoot>
                 </table>
             </div>
         </div>

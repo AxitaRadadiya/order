@@ -5,22 +5,6 @@
 @endsection
 @section('content')
 
-<div class="page-hero">
-  <div class="orb"></div>
-  <div class="container-fluid" style="position:relative;z-index:2;">
-    <div class="section-tabs">
-      <a href="{{ route('users.index') }}" class="section-tab">
-        <i class="fas fa-users"></i>
-        <span>User</span>
-      </a>
-      <a href="{{ route('roles.index') }}" class="section-tab active">
-        <i class="fas fa-user-tag"></i>
-        <span>Role</span>
-      </a>
-    </div>
-  </div>
-</div>
-
 <div class="pull-card">
   <div class="container-fluid" style="padding:0;">
     <form action="{{ route('roles.update', $role->id) }}" method="POST">
@@ -28,12 +12,12 @@
       @method('PUT')
 
       <div class="main-card mb-4">
-        <div class="main-card-head">
+        <div class="main-card-head" style="justify-content: space-between;">
           <div class="main-card-title">
             <i class="fas fa-tag"></i> Role Info
             <span class="count-badge">{{ $role->name }}</span>
           </div>
-          <a href="{{ route('roles.index') }}" class="btn-theme-outline">
+          <a href="{{ route('roles.index') }}" class="btn-cancel mb-1">
             <i class="fas fa-arrow-left"></i> Back
           </a>
         </div>
@@ -55,17 +39,17 @@
       </div>
 
       <div class="main-card">
-        <div class="main-card-head">
+        <div class="main-card-head" style="justify-content: space-between;">
           <div class="main-card-title">
             <i class="fas fa-key"></i> Permissions
             <span class="count-badge">{{ $permissions->flatten()->count() }} total</span>
             <span class="permission-chip" id="assignedBadge">{{ count($assignedIds) }} assigned</span>
           </div>
           <div>
-            <button type="button" class="btn-theme mr-1" onclick="selectAll(true)">
+            <button type="button" class="btn-submit mr-1 mb-1" onclick="selectAll(true)">
               <i class="fas fa-check-double"></i> Select All
             </button>
-            <button type="button" class="btn-theme-outline" onclick="selectAll(false)">
+            <button type="button" class="btn-cancel" onclick="selectAll(false)">
               <i class="fas fa-times"></i> Clear All
             </button>
           </div>
@@ -87,7 +71,7 @@
                             <span class="permission-chip ml-1">{{ $groupAssigned }} assigned</span>
                           @endif
                         </span>
-                        <button type="button" class="btn-theme-outline group-toggle-btn"
+                        <button type="button" class="btn-outline-primary group-toggle-btn"
                                 onclick="toggleGroup(this)">
                           {{ $groupAssigned === $perms->count() ? 'None' : 'All' }}
                         </button>
@@ -116,11 +100,11 @@
             </div>
           @endif
         </div>
-        <div class="main-card-body pt-0">
-          <button type="submit" class="btn-theme">
+        <div class="mt-2 d-flex justify-content-end">
+          <button type="submit" class="btn-submit">
             <i class="fas fa-save mr-1"></i> Save Changes
           </button>
-          <a href="{{ route('roles.index') }}" class="btn-theme-outline ml-2">
+          <a href="{{ route('roles.index') }}" class="btn-cancel ml-2">
             <i class="fas fa-times mr-1"></i> Cancel
           </a>
         </div>
