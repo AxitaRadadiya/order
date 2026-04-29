@@ -95,7 +95,7 @@ html,body{min-height:100%;font-family:var(--sans);background:var(--bg);color:var
   width:100%;height:44px;
   background:var(--bg3);border:1px solid var(--border2);border-radius:9px;
   padding:0 44px 0 38px;
-  font-size:.88rem;font-family:var(--sans);color:var(--text);
+  font-size:.88rem;font-family:var(--sans);color:black;
   outline:none;transition:border-color .2s,box-shadow .2s;
 }
 .input-wrap input:focus{
@@ -234,7 +234,6 @@ html,body{min-height:100%;font-family:var(--sans);background:var(--bg);color:var
       </p>
     @endif
 
-    <div class="card-foot">Secured by <span>{{ config('app.name') }}</span> · v2.0</div>
   </div>
 </div>
 </body>

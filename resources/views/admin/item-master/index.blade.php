@@ -2,21 +2,23 @@
 @section('title', 'Item Master')
 @section('content')
 
-<div class="row">
-    <div class="col-12">
-        <div class="page-title-box d-flex align-items-center justify-content-between">
-            <h4 class="m-0">Item Master</h4>
-            <div class="page-title-right">
-                <ol class="breadcrumb m-0">
-                    <li class="breadcrumb-item"><a href="{{ route('dashboard') }}">Dashboard</a></li>
-                    <li class="breadcrumb-item active">Item Master</li>
-                </ol>
-            </div>
-        </div>
+<div class="content-header">
+  <div class="container-fluid">
+    <div class="row mb-2">
+      <div class="col-sm-6">
+        <h1 class="m-0">Item Master</h1>
+      </div>
+      <div class="col-sm-6">
+        <ol class="breadcrumb float-sm-right">
+            <li class="breadcrumb-item"><a href="{{ route('dashboard') }}">Dashboard</a></li>
+            <li class="breadcrumb-item active">Item Master</li>
+        </ol>
+      </div>
     </div>
+  </div>
 </div>
 
-<div class="row">
+<div class="row mr-0">
     <div class="col-xl-12">
          @php
                     // Allowed tabs — default to 'category'
@@ -26,16 +28,16 @@
                                     : 'category';
                 @endphp
 
-                <ul class="nav nav-tabs mb-3" id="masterTab" role="tablist">
+                <ul class="nav nav-tabs mb-3 ml-3" id="masterTab" role="tablist" style="border-bottom: none;">
 
-                    <li class="nav-item">
+                    <li class="nav-item mr-1">
                         <a href="#category" data-toggle="tab" aria-expanded="true"
                            class="nav-link {{ $activeTab === 'category' ? 'active' : '' }}">
                             <i class="mdi mdi-home-variant d-lg-none d-block"></i>
                             <span class="d-none d-lg-block">Category</span>
                         </a>
                     </li>
-                     <li class="nav-item">
+                     <li class="nav-item mr-1">
                         <a href="#sub-category" data-toggle="tab" aria-expanded="true"
                            class="nav-link {{ $activeTab === 'sub-category' ? 'active' : '' }}">
                             <i class="mdi mdi-home-variant d-lg-none d-block"></i>
@@ -43,7 +45,7 @@
                         </a>
                     </li>
 
-                    <li class="nav-item">
+                    <li class="nav-item mr-1">
                         <a href="#group" data-toggle="tab" aria-expanded="false"
                            class="nav-link {{ $activeTab === 'group' ? 'active' : '' }}">
                             <i class="mdi mdi-account-group d-lg-none d-block"></i>
@@ -51,7 +53,7 @@
                         </a>
                     </li>
 
-                    <li class="nav-item">
+                    <li class="nav-item mr-1">
                         <a href="#sub-group" data-toggle="tab" aria-expanded="false"
                            class="nav-link {{ $activeTab === 'sub-group' ? 'active' : '' }}">
                             <i class="mdi mdi-account-group d-lg-none d-block"></i>
@@ -59,7 +61,7 @@
                         </a>
                     </li>
 
-                    <li class="nav-item">
+                    <li class="nav-item mr-1">
                         <a href="#size" data-toggle="tab" aria-expanded="false"
                            class="nav-link {{ $activeTab === 'size' ? 'active' : '' }}">
                             <i class="mdi mdi-ruler d-lg-none d-block"></i>

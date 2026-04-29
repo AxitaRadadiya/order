@@ -6,7 +6,7 @@
   <div class="container-fluid">
 	<div class="row mb-2">
 	  <div class="col-sm-6">
-		<h1 class="m-0"><i class="fas fa-box mr-2 text-teal"></i>Item Details</h1>
+		<h1 class="m-0">Item Details</h1>
 	  </div>
 	  <div class="col-sm-6">
 		<ol class="breadcrumb float-sm-right">
@@ -22,12 +22,10 @@
 <div class="pull-card">
   <div class="container-fluid">
     <div class="main-card mt-4">
-      <div class="main-card-head d-flex justify-content-between align-items-center">
+      <div class="main-card-head d-flex justify-content-end align-items-center mb-2">
      <!--   <div class="main-card-title"><i class="fas fa-eye"></i> {{ $item->name }}</div>-->
-        <div>
-          <a href="{{ route('items.edit', $item->id) }}" class="btn btn-primary">Edit</a>
-          <a href="{{ route('items.index') }}" class="btn btn-secondary">Back</a>
-        </div>
+        <a href="{{ route('items.index') }}" class="btn-cancel mr-1"><i class="fas fa-arrow-left"></i> Back</a>
+        <a href="{{ route('items.edit', $item->id) }}" class="btn-submit"><i class="fas fa-edit"></i> Edit</a>
       </div>
       <div class="main-card-body">
         <div class="row">

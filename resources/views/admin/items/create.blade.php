@@ -57,21 +57,6 @@
     background: #f3efff;
 }
 
-/* Buttons */
-.btn-submit {
-    background: linear-gradient(90deg, #7F53AC, #647DEE);
-    color: #fff;
-    border: none;
-    padding: 8px 20px;
-    border-radius: 6px;
-}
-
-.btn-cancel {
-    background: #ddd;
-    padding: 8px 20px;
-    border-radius: 6px;
-    color: #333;
-}
 </style>
 @extends('admin.layouts.app')
 @section('title', 'Create Item')
@@ -81,7 +66,7 @@
 	<div class="container-fluid">
 		<div class="row mb-2">
 			<div class="col-sm-6">
-				<h1 class="m-0"><i class="mr-2 text-teal"></i>Create Item</h1>
+				<h1 class="m-0">Create Item</h1>
 			</div>
 			<div class="col-sm-6">
 				<ol class="breadcrumb float-sm-right">

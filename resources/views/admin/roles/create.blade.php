@@ -7,22 +7,6 @@
 @endsection
 @section('content')
 
-<div class="page-hero">
-  <div class="orb"></div>
-  <div class="container-fluid" style="position:relative;z-index:2;">
-    <div class="section-tabs">
-      <a href="{{ route('users.index') }}" class="section-tab">
-        <i class="fas fa-users"></i>
-        <span>User</span>
-      </a>
-      <a href="{{ route('roles.index') }}" class="section-tab active">
-        <i class="fas fa-user-tag"></i>
-        <span>Role</span>
-      </a>
-    </div>
-  </div>
-</div>
-
 <div class="pull-card">
   <div class="container-fluid" style="padding:0;">
 
@@ -110,7 +94,7 @@
             </div>
           @endif
         </div>
-        <div class="main-card-body pt-0">
+        <div class="mt-2 d-flex justify-content-end">
           <button type="submit" class="btn-submit">
             <i class="fas fa-shield-alt mr-1"></i> Create Role
           </button>

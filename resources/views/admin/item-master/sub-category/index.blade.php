@@ -2,7 +2,7 @@
 <div class="row">
     <div class="col-12">
         <div class="card">
-            <div class="card-header d-flex align-items-center">
+            <div class="card-header d-flex align-items-center mb-3">
                 <h5 class="mb-0">Sub-Category</h5>
                 <div class="ml-auto">
                     <a href="#" class="btn btn-create btn-sm waves-effect waves-light sub-category-date-modal">
@@ -20,13 +20,6 @@
                         </tr>
                     </thead>
                     <tbody></tbody>
-                    <tfoot>
-                        <tr>
-                            <th>Sr No.</th>
-                            <th>Name</th>
-                            <th>Actions</th>
-                        </tr>
-                    </tfoot>
                 </table>
             </div>
         </div>
@@ -72,8 +65,8 @@
                 </form>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary waves-effect waves-light" data-dismiss="modal">Close</button>
-                <button type="button" class="btn btn-create waves-effect waves-light" id="saveSubCategory">Save</button>
+                <button type="button" class="btn btn-cancel waves-effect waves-light" data-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-submit waves-effect waves-light" id="saveSubCategory">Save</button>
             </div>
         </div>
     </div>

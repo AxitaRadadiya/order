@@ -138,7 +138,6 @@
 
           {{-- Before --}}
           @if($log->old_values)
-
           <div class="col-md-6 mb-4">
             <div class="card card-danger card-outline shadow-none mb-0">
               <div class="card-header p-2">
@@ -146,7 +145,7 @@
                   <i class="fas fa-minus-circle mr-1 text-danger"></i>Before
                 </h3>
               </div>
-              <div class="card-body">
+              <div class="card-body p-0">
                 <table class="table table-sm table-bordered mb-0">
                   @foreach($log->old_values as $key => $val)
                   <tr>
@@ -169,7 +168,7 @@
                   <i class="fas fa-plus-circle mr-1 text-success"></i>After
                 </h3>
               </div>
-              <div class="card-body">
+              <div class="card-body p-0">
                 <table class="table table-sm table-bordered mb-0">
                   @foreach($log->new_values as $key => $val)
                   <tr>

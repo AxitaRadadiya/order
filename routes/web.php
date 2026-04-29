@@ -68,6 +68,8 @@ Route::group(['middleware' => ['auth']], function () {
     Route::get('activity-logs/{activityLog}', [ActivityLogController::class, 'show'])->name('activity-logs.show');
     Route::get('customers-list', [CustomerController::class,'list'])->name('customers.list');
     Route::resource('customers', CustomerController::class);
+    // AJAX helper to fetch customer addresses for order form
+    Route::get('/customer/{id}', [CustomerController::class, 'getCustomer'])->name('customer.get');
 
     // Master data consolidated index
     Route::get('master', [MasterController::class, 'index'])->name('master.index');

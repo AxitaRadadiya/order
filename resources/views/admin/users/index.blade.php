@@ -19,12 +19,12 @@
   </div>
 </div>
 
-<div class="row">
+<div class="row mr-0">
   <div class="col-xl-12">
 
     {{-- Tabs (Same as Role Page) --}}
-    <ul class="nav nav-tabs mb-3" style="border-bottom: none;">
-        <li class="nav-item">
+    <ul class="nav nav-tabs mb-3 ml-3 mr-1" style="border-bottom: none;">
+        <li class="nav-item mr-1">
             <a href="{{ route('users.index') }}" class="nav-link active">
                 <span class="font-weight-bold">User</span>
             </a>
@@ -49,11 +49,11 @@
             @endif
 
             {{-- Header --}}
-            <div class="card-header d-flex align-items-center">
+            <div class="card-header d-flex align-items-center mb-3">
                 <h5 class="mb-0">All Users</h5>
                 <div class="ml-auto">
                     <a href="{{ route('users.create') }}" class="btn-create">
-                        + New User
+                        <i class="fas fa-plus"></i> New User
                     </a>
                 </div>
             </div>

@@ -18,6 +18,18 @@
     color: #fff !important;
 }
 
+.nav-link {
+    border-radius: 12px !important;
+}
+.nav-link:hover {
+    background: linear-gradient(135deg, #5E60CE, #7F53AC) !important;
+    color: #fff !important;
+}
+.nav-link.active {
+    background: linear-gradient(135deg, #5E60CE, #7F53AC) !important;
+    color: #fff !important;
+}
+
 /* Nav tabs gradient style for hover and active */
 .nav-tabs .nav-link {
     color: #0f141b !important;
@@ -147,13 +159,13 @@ a {
 .pull-card {
     padding: 10px 20px;
 }
-.mb-3, .my-3 {
+/* .mb-3, .my-3 {
     margin-bottom: 1rem !important;
     background: white;
     margin: 20px;
     border-radius: 20px;
     padding: 6px;
-}
+} */
 .card-header:first-child {
 
     background-color: transparent;
@@ -177,9 +189,9 @@ a {
     transition: background 0.2s, color 0.2s;
 
 }
-.card-body{
-    padding:0px !important;
-}
+/* .card-body{
+    padding:15px !important;
+} */
 .table.table-bordered.dataTable {
     padding:"0pc 10px" !important;
 }
