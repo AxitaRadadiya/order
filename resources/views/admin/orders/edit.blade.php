@@ -1,15 +1,17 @@
 @extends('admin.layouts.app')
-@section('title', 'Edit Order #' . $order->id)
+@section('title', 'Edit Order')
 
 @section('content')
 <div class="content-header">
   <div class="container-fluid">
     <div class="row mb-2">
-      <div class="col-sm-6"><h1 class="m-0">Edit Order #{{ $order->id }}</h1></div>
-      <div class="col-sm-6 text-right">
-        <a href="{{ route('orders.index') }}" class="btn btn-secondary">
-          <i class="fas fa-arrow-left"></i> Back
-        </a>
+      <div class="col-sm-6"><h1 class="m-0">Edit Order</h1></div>
+      <div class="col-sm-6">
+        <ol class="breadcrumb float-sm-right">
+          <li class="breadcrumb-item"><a href="{{ route('dashboard') }}">Home</a></li>
+          <li class="breadcrumb-item"><a href="{{ route('orders.index') }}">Orders</a></li>
+          <li class="breadcrumb-item active">Edit</li>
+        </ol>
       </div>
     </div>
   </div>
@@ -36,13 +38,13 @@
       <div class="card card-outline card-light">
         <div class="card-body">
 
-          {{-- ── Client / Dates ────────────────────────────────────────── --}}
+          {{-- ── Customer / Dates ────────────────────────────────────────── --}}
           <div class="row">
             <div class="col-md-6">
               <div class="form-group">
-                <label>Select Client <span class="text-danger">*</span></label>
+                <label>Customer Name <span class="text-danger">*</span></label>
                 <select name="customer_id" id="customer_id" class="form-control" required>
-                  <option value="">-- Select Client --</option>
+                  <option value="">-- Select Customer --</option>
                   @foreach($customers as $c)
                     <option value="{{ $c->id }}"
                       data-billing="{{ trim(($c->address->billing_street  ?? '').' '.
@@ -53,7 +55,7 @@
                                            ($c->address->shipping_city    ?? $c->address->billing_city    ?? '').' '.
                                            ($c->address->shipping_state   ?? $c->address->billing_state   ?? '').' '.
                                            ($c->address->shipping_country ?? $c->address->billing_country ?? '')) }}"
-                      {{ old('customer_id', $order->customer_id) == $c->id ? 'selected' : '' }}>
+                      {{ old('user_id', $order->user_id) == $c->id ? 'selected' : '' }}>
                       {{ $c->name }}
                     </option>
                   @endforeach
@@ -120,28 +122,29 @@
           </div>
 
           {{-- ── Mode Toggle ───────────────────────────────────────────── --}}
-          <div class="d-flex justify-content-between align-items-center mb-2">
+          <!-- <div class="d-flex justify-content-between align-items-center mb-2">
             <h5 class="m-0">Items</h5>
             <div class="btn-group btn-group-sm">
               <button type="button" id="modeNormal"    class="btn btn-outline-secondary active">Normal</button>
               <button type="button" id="modeSizeRange" class="btn btn-outline-secondary">Size Range</button>
             </div>
-          </div>
+          </div> -->
 
           {{-- ── Normal Items Table ────────────────────────────────────── --}}
           <div id="normalTable">
             <table class="table table-sm table-bordered" id="itemsTable">
               <thead class="thead-light">
                 <tr>
-                  <th style="min-width:160px">Item</th>
-                  <th width="120">Color</th>
+                  <th width="160">Article Number</th>
+                  <th width="160">Item</th>
+                  <th width="160">Color</th>
                   <th width="160">Size(s)</th>
                   <th>Description</th>
                   <th width="80">Qty</th>
-                  <th width="90">Rate</th>
-                  <th width="70">Tax %</th>
-                  <th width="100">Total</th>
-                  <th width="40"></th>
+                  <th width="110">MRP</th>
+                  <th width="80">Tax %</th>
+                  <th width="110">Total</th>
+                  <th width="40">Action</th>
                 </tr>
               </thead>
               <tbody>
@@ -152,8 +155,11 @@
                 @foreach($rowItems as $i => $it)
                   @php
                     $isArr      = is_array($it);
+                    $articleNum = $isArr ? ($it['article_number'] ?? '') : ($it->article_number ?? '');
                     $itemId     = $isArr ? ($it['item_id']     ?? '') : ($it->item_id     ?? '');
                     $itemName   = $isArr ? ($it['item_name']   ?? '') : ($it->item_name   ?? '');
+                    $color      = $isArr ? ($it['color']       ?? '') : ($it->color       ?? '');
+                    $size       = $isArr ? ($it['size']        ?? '') : ($it->size        ?? '');
                     $desc       = $isArr ? ($it['description'] ?? '') : ($it->description ?? '');
                     $qty        = $isArr ? ($it['quantity']    ?? 1)  : ($it->quantity    ?? 1);
                     $rate       = $isArr ? ($it['rate']        ?? 0)  : ($it->rate        ?? 0);
@@ -162,20 +168,23 @@
                   @endphp
                   <tr>
                     <td>
-                      <select name="items[{{ $i }}][item_id]" class="form-control item-select">
+                      <select name="items[{{ $i }}][article_number]" class="form-control article-select">
                         <option value="">--</option>
                         @foreach($items as $itm)
-                          <option value="{{ $itm->id }}"
+                          <option value="{{ $itm->article_number }}"
+                            data-id="{{ $itm->id }}"
                             data-rate="{{ $itm->price }}"
                             data-tax="{{ $itm->tax_percent ?? 0 }}"
                             data-desc="{{ $itm->description ?? '' }}"
-                            {{ $itemId == $itm->id ? 'selected' : '' }}>
-                            {{ $itm->name }}
+                            {{ (isset($it['item_id']) && $it['item_id'] == $itm->id) ? 'selected' : '' }}>
+                            {{ $itm->article_number }}
                           </option>
                         @endforeach
                       </select>
-                      <input type="hidden" name="items[{{ $i }}][item_name]"
-                             class="item-name-hidden" value="{{ $itemName }}">
+                      <input type="hidden" name="items[{{ $i }}][item_id]" class="item-id-hidden" value="{{ $itemId }}">
+                    </td>
+                    <td>
+                      <input type="text" name="items[{{ $i }}][item_name]" class="form-control item-name-input" value="{{ $itemName }}" readonly>
                     </td>
                     <td>
                       {{-- Color select --}}
@@ -201,30 +210,34 @@
                         @endforeach
                       </select>
                     </td>
-                    <td><input type="text"   name="items[{{ $i }}][description]" class="form-control desc"        value="{{ $desc }}"></td>
+                    <td><input type="text"   name="items[{{ $i }}][description]" class="form-control desc" value="{{ $desc }}" readonly></td>
                     <td><input type="number" step="0.01" name="items[{{ $i }}][quantity]"    class="form-control qty"         value="{{ $qty }}"></td>
-                    <td><input type="number" step="0.01" name="items[{{ $i }}][rate]"        class="form-control rate"        value="{{ $rate }}"></td>
-                    <td><input type="number" step="0.01" name="items[{{ $i }}][tax_rate]"    class="form-control tax"         value="{{ $taxRate }}"></td>
+                    <td><input type="number" step="0.01" name="items[{{ $i }}][rate]"        class="form-control rate"        value="{{ $rate }}" readonly></td>
+                    <td><input type="number" step="0.01" name="items[{{ $i }}][tax_rate]"    class="form-control tax"         value="{{ $taxRate }}" readonly></td>
                     <td><input type="number" step="0.01" name="items[{{ $i }}][total]"       class="form-control total"       value="{{ $total }}" readonly></td>
-                    <td><button type="button" class="btn btn-sm btn-danger remove-item">&times;</button></td>
+                    <td><button type="button" class="btn btn-sm btn-danger remove-item"><i class="fas fa-trash"></i></button></td>
                   </tr>
                 @endforeach
 
                 @if($rowItems->isEmpty())
                   <tr>
                     <td>
-                      <select name="items[0][item_id]" class="form-control item-select">
+                      <select name="items[0][article_number]" class="form-control article-select">
                         <option value="">--</option>
                         @foreach($items as $itm)
-                          <option value="{{ $itm->id }}"
+                          <option value="{{ $itm->article_number }}"
+                            data-id="{{ $itm->id }}"
                             data-rate="{{ $itm->price }}"
                             data-tax="{{ $itm->tax_percent ?? 0 }}"
                             data-desc="{{ $itm->description ?? '' }}">
-                            {{ $itm->name }}
+                            {{ $itm->article_number }}
                           </option>
                         @endforeach
                       </select>
-                      <input type="hidden" name="items[0][item_name]" class="item-name-hidden" value="">
+                      <input type="hidden" name="items[0][item_id]" class="item-id-hidden" value="">
+                    </td>
+                    <td>
+                      <input type="text" name="items[0][item_name]" class="form-control item-name-input" value="" readonly>
                     </td>
                     <td>
                       <select name="items[0][color]" class="form-control color-select">
@@ -241,18 +254,18 @@
                         @endforeach
                       </select>
                     </td>
-                    <td><input type="text"   name="items[0][description]" class="form-control desc"></td>
+                    <td><input type="text"   name="items[0][description]" class="form-control desc" readonly></td>
                     <td><input type="number" step="0.01" name="items[0][quantity]"    class="form-control qty"         value="1"></td>
-                    <td><input type="number" step="0.01" name="items[0][rate]"        class="form-control rate"        value="0"></td>
-                    <td><input type="number" step="0.01" name="items[0][tax_rate]"    class="form-control tax"         value="0"></td>
+                    <td><input type="number" step="0.01" name="items[0][rate]"        class="form-control rate"        value="0" readonly></td>
+                    <td><input type="number" step="0.01" name="items[0][tax_rate]"    class="form-control tax"         value="0" readonly></td>
                     <td><input type="number" step="0.01" name="items[0][total]"       class="form-control total"       value="0" readonly></td>
-                    <td><button type="button" class="btn btn-sm btn-danger remove-item">&times;</button></td>
+                    <td><button type="button" class="btn btn-sm btn-danger remove-item"><i class="fas fa-trash"></i></button></td>
                   </tr>
                 @endif
               </tbody>
             </table>
             <div class="text-right mb-3">
-              <button type="button" id="addItem" class="btn btn-sm btn-success">
+              <button type="button" id="addItem" class="btn-create">
                 <i class="fas fa-plus"></i> Add Row
               </button>
             </div>
@@ -313,7 +326,7 @@
                   </div>
                   <div class="col-md-2">
                     <div class="form-group">
-                      <label>Rate (₹/pc)</label>
+                      <label>MRP (₹/pc)</label>
                       <input type="number" id="sr_rate" class="form-control" value="0" step="0.01">
                     </div>
                   </div>
@@ -381,18 +394,19 @@
           </div>
 
           {{-- ── Terms / Notes / Status ───────────────────────────────── --}}
-          <div class="form-group">
+          <div class="row">
+          <div class="form-group col-md-6">
             <label>Terms &amp; Conditions</label>
             <textarea name="terms" class="form-control" rows="2">{{ old('terms', $order->terms) }}</textarea>
           </div>
-          <div class="form-group">
+          <div class="form-group col-md-6">
             <label>Notes</label>
             <textarea name="notes" class="form-control" rows="2">{{ old('notes', $order->notes) }}</textarea>
           </div>
-          <div class="form-group">
+          <div class="form-group col-md-3">
             <label>Status</label>
             <select name="status" class="form-control">
-              @foreach(['draft' => 'Draft', 'confirmed' => 'Confirmed', 'shipped' => 'Shipped', 'delivered' => 'Delivered'] as $val => $label)
+              @foreach(['pending' => 'Pending', 'draft' => 'Draft', 'confirmed' => 'Confirmed', 'shipped' => 'Shipped', 'delivered' => 'Delivered'] as $val => $label)
                 <option value="{{ $val }}"
                   {{ old('status', $order->status) == $val ? 'selected' : '' }}>
                   {{ $label }}
@@ -400,17 +414,15 @@
               @endforeach
             </select>
           </div>
+          </div>
 
         </div>
       </div>
 
-      <div class="card">
-        <div class="card-body text-right">
-          <a href="{{ route('orders.index') }}" class="btn btn-secondary mr-2">Cancel</a>
-          <button class="btn btn-primary">
-            <i class="fas fa-save"></i> Update Order
-          </button>
-        </div>
+      
+      <div class="mt-2 mb-2 mr-3 text-right">
+        <a href="{{ route('orders.index') }}" class="btn-cancel mr-2"><i class="fas fa-times"></i> Cancel</a>
+        <button type="submit" class="btn-submit"><i class="fas fa-save"></i> Update Order</button>
       </div>
 
     </form>
@@ -418,7 +430,7 @@
 </section>
 @endsection
 
-@push('scripts')
+@section('pageScript')
 <script>
 $(function () {
 
@@ -428,8 +440,10 @@ $(function () {
   var ITEMS = @json($itemsJson);
   var COLORS = @json($colors);
 
-  function itemById(id) {
-    return ITEMS.find(function(i) { return i.id == id; });
+  function itemByArticle(val) {
+    return ITEMS.find(function(i) {
+      return i.article_number == val || i.id == val;
+    });
   }
 
   // ── Recalculate totals ───────────────────────────────────────────────────
@@ -460,19 +474,21 @@ $(function () {
     var id    = $(this).val();
     if (!id) return;
 
-    var found = itemById(id);
+    var found = itemByArticle(id);
     if (!found) {
       var $opt = $(this).find('option:selected');
       found = {
-        id:   id,
-        name: $opt.text().trim(),
+        id:   $opt.data('id') || null,
+        article_number: $opt.text().trim(),
+        name: $opt.data('name') || '',
         rate: parseFloat($opt.data('rate')) || 0,
         tax:  parseFloat($opt.data('tax'))  || 0,
         desc: $opt.data('desc') || ''
       };
     }
 
-    $row.find('.item-name-hidden').val(found.name || '');
+    $row.find('.item-id-hidden').val(found.id || '');
+    $row.find('.item-name-input').val(found.name || found.article_number || '');
     $row.find('.rate').val(found.rate || 0);
     $row.find('.tax').val(found.tax  || 0);
     if (!$row.find('.desc').val()) {
@@ -500,12 +516,13 @@ $(function () {
   function buildRow(idx, it) {
     it = it || {};
     var opts = '<option value="">--</option>' + ITEMS.map(function(m) {
-      return '<option value="' + m.id + '"' +
+      return '<option value="' + (m.article_number || '') + '"' +
+        ' data-id="' + (m.id || '') + '"' +
         ' data-rate="' + (m.rate || 0) + '"' +
         ' data-tax="'  + (m.tax  || 0) + '"' +
         ' data-desc="' + ((m.desc || '').replace(/"/g, '&quot;')) + '"' +
         (it.item_id == m.id ? ' selected' : '') +
-        '>' + m.name + '</option>';
+        '>' + (m.article_number || '') + '</option>';
     }).join('');
 
     // color select options (global COLORS)
@@ -518,17 +535,18 @@ $(function () {
 
     return '<tr>' +
       '<td>' +
-        '<select name="items[' + idx + '][item_id]" class="form-control item-select">' + opts + '</select>' +
-        '<input type="hidden" name="items[' + idx + '][item_name]" class="item-name-hidden" value="' + (it.item_name || '') + '">' +
+        '<select name="items[' + idx + '][article_number]" class="form-control article-select">' + opts + '</select>' +
+        '<input type="hidden" name="items[' + idx + '][item_id]" class="item-id-hidden" value="' + (it.item_id || '') + '">' +
       '</td>' +
+      '<td><input type="text" name="items[' + idx + '][item_name]" class="form-control item-name-input" value="' + (it.item_name || '') + '" readonly></td>' +
       '<td><select name="items[' + idx + '][color]" class="form-control color-select">' + colorOpts + '</select></td>' +
       '<td><select name="items[' + idx + '][sizes][]" class="form-control size-select" multiple>' + sizeOpts + '</select></td>' +
-      '<td><input type="text"   name="items[' + idx + '][description]" class="form-control desc"        value="' + (it.description || '') + '"></td>' +
+      '<td><input type="text"   name="items[' + idx + '][description]" class="form-control desc"        value="' + (it.description || '') + '" readonly></td>' +
       '<td><input type="number" step="0.01" name="items[' + idx + '][quantity]"    class="form-control qty"         value="' + (it.quantity || 1) + '"></td>' +
-      '<td><input type="number" step="0.01" name="items[' + idx + '][rate]"        class="form-control rate"        value="' + (it.rate || 0) + '"></td>' +
-      '<td><input type="number" step="0.01" name="items[' + idx + '][tax_rate]"    class="form-control tax"         value="' + (it.tax_rate || 0) + '"></td>' +
+      '<td><input type="number" step="0.01" name="items[' + idx + '][rate]"        class="form-control rate"        value="' + (it.rate || 0) + '" readonly></td>' +
+      '<td><input type="number" step="0.01" name="items[' + idx + '][tax_rate]"    class="form-control tax"         value="' + (it.tax_rate || 0) + '" readonly></td>' +
       '<td><input type="number" step="0.01" name="items[' + idx + '][total]"       class="form-control total"       value="' + (it.total || 0) + '" readonly></td>' +
-      '<td><button type="button" class="btn btn-sm btn-danger remove-item">&times;</button></td>' +
+      '<td><button type="button" class="btn btn-sm btn-danger remove-item"><i class="fas fa-trash"></i></button></td>' +
     '</tr>';
   }
 
@@ -548,30 +566,49 @@ $(function () {
     recalc();
   });
 
-  // ── Customer → address auto-fill ─────────────────────────────────────────
+  // ── Customer → address auto-fill (fetch from server)
   $('#customer_id').on('change', function () {
-    var $opt = $(this).find('option:selected');
-    var billing = $opt.data('billing') || '';
-    var shipping = $opt.data('shipping') || billing;
-    $('#billing_address').val(billing);
-    $('#shipping_address').val(shipping);
+    var id = $(this).val();
+    console.log('[orders.edit] customer changed ->', id);
+    if (!id) {
+      $('#billing_address').val('');
+      $('#shipping_address').val('');
+      return;
+    }
+
+    var customerUrl = "{{ url('customer') }}"; // absolute base url
+
+    fetch(customerUrl + '/' + id)
+    .then(function(res) {
+      if (!res.ok) throw new Error('Network response was not ok (' + res.status + ')');
+      return res.json();
+    })
+    .then(function(data) {
+      $('#billing_address').val(data.billing_address || '');
+      $('#shipping_address').val(data.shipping_address || '');
+    })
+    .catch(function(err) {
+      console.error('Failed to fetch customer addresses', err);
+      $('#billing_address').val('');
+      $('#shipping_address').val('');
+    });
   });
 
   // ── Mode toggle ──────────────────────────────────────────────────────────
-  $('#modeNormal').on('click', function () {
-    $(this).addClass('active');
-    $('#modeSizeRange').removeClass('active');
-    $('#sizeRangePanel').hide();
-    $('#normalTable').show();
-  });
+  // $('#modeNormal').on('click', function () {
+  //   $(this).addClass('active');
+  //   $('#modeSizeRange').removeClass('active');
+  //   $('#sizeRangePanel').hide();
+  //   $('#normalTable').show();
+  // });
 
-  $('#modeSizeRange').on('click', function () {
-    $(this).addClass('active');
-    $('#modeNormal').removeClass('active');
-    $('#sizeRangePanel').show();
-    $('#normalTable').hide();
-    srRecalc();
-  });
+  // $('#modeSizeRange').on('click', function () {
+  //   $(this).addClass('active');
+  //   $('#modeNormal').removeClass('active');
+  //   $('#sizeRangePanel').show();
+  //   $('#normalTable').hide();
+  //   srRecalc();
+  // });
 
   // ── Size Range helpers ───────────────────────────────────────────────────
   // Index-based: works with any label type (XL, 2XL, 32, M …)
@@ -656,6 +693,9 @@ $(function () {
     var $tr = $('#itemsTable tbody tr:last');
     $tr.find('.item-name-hidden').val(itemName);
     $tr.find('.item-select').val(itemId);
+    // set article-select value (find article_number from ITEMS by id)
+    var foundArticle = (function(){ var f = ITEMS.find(function(x){ return x.id == itemId; }); return f ? f.article_number : ''; })();
+    if (foundArticle) { $tr.find('.article-select').val(foundArticle).trigger('change'); }
     $tr.append('<input type="hidden" name="items[' + idx + '][size_from]" value="' + from  + '">');
     $tr.append('<input type="hidden" name="items[' + idx + '][size_to]"   value="' + to    + '">');
     $tr.append('<input type="hidden" name="items[' + idx + '][sets]"      value="' + sets  + '">');
@@ -667,6 +707,9 @@ $(function () {
   srRecalc();
 
   if ($.fn.select2) { $('.size-select').select2({ placeholder: 'Sizes', width: '100%' }); }
+
+  // trigger customer change on load to auto-fill addresses
+    $('#customer_id').trigger('change');
 });
 </script>
-@endpush
+@endsection
