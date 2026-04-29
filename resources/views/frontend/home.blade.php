@@ -5,8 +5,8 @@
 @section('content')
 
 <section class="hero text-center">
-  <div class="container">
-    <h1 class="display-4 font-weight-bold">Welcome to My Store</h1>
+  <div class="container front">
+    <h1 class="display-4 font-weight-bold" >Welcome to My Store</h1>
     <p class="lead">Discover amazing products at the best prices</p>
     <a href="{{ route('products') }}" class="btn-create btn-lg mt-3">
       Shop Now
@@ -15,7 +15,7 @@
 </section>
 
 <section class="py-5">
-  <div class="container">
+  <div class="container front">
 
     <div class="d-flex justify-content-between align-items-center mb-4">
       <h2>Featured Products</h2>
@@ -126,23 +126,4 @@
 @endsection
 
 
-@push('styles')
-<style>
-.hero {
-    padding: 80px 0;
-    background: linear-gradient(to right, #f8f9fa, #e9ecef);
-}
-
-.product-card {
-    border-radius: 12px;
-    transition: 0.3s;
-}
-
-.product-img { height: 220px; display: flex; align-items: center; justify-content: center; background: #f8f9fa; position: relative; overflow: hidden; }
-.product-img img { max-height: 180px; object-fit: contain; transition: opacity .25s ease, transform .25s ease; display:block; margin:auto; }
-
-.product-title { height: 40px; overflow: hidden; }
-
-
-</style>
-@endpush
+<!-- Frontend styles are loaded from public/admin/dist/css/custom.css -->

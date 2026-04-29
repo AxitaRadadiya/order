@@ -1,114 +1,166 @@
 @extends('admin.layouts.app')
 @section('title', 'Edit Role')
+
 @section('style')
 <link rel="stylesheet" href="{{ asset('admin/dist/css/custom/user-role/panel-theme.css') }}">
 @endsection
+
+@section('pageScript')
+<script>
+  function selectAll(state) {
+    const form = document.querySelector('form[action="{{ route('roles.update', $role->id) }}"]') || document.querySelector('form');
+    if (!form) return;
+    const checks = form.querySelectorAll('input.perm-chk:not([disabled])');
+    checks.forEach(c => { c.checked = !!state; const td = c.closest('td'); if (td) td.classList.toggle('checked', c.checked); });
+    document.querySelectorAll('input.perm-all').forEach(a => a.checked = !!state);
+  }
+
+  function toggleRow(checkbox) {
+    const row = checkbox.closest('tr');
+    if (!row) return;
+    const checks = row.querySelectorAll('input.perm-chk:not([disabled])');
+    checks.forEach(c => { c.checked = checkbox.checked; const td = c.closest('td'); if (td) td.classList.toggle('checked', c.checked); });
+  }
+
+  function toggleGroup(btn) {
+    const row = btn ? (btn.closest('tr') || btn.closest('.permission-card')) : null;
+    if (!row) return;
+    const checks = row.querySelectorAll('input.perm-chk:not([disabled])');
+    const anyChecked = Array.from(checks).some(c => c.checked);
+    checks.forEach(c => { c.checked = !anyChecked; const td = c.closest('td'); if (td) td.classList.toggle('checked', c.checked); });
+    const allBox = row.querySelector('input.perm-all'); if (allBox) allBox.checked = !anyChecked;
+  }
+
+  document.addEventListener('change', function(e){
+    if (e.target.matches('input.perm-chk')) {
+      const td = e.target.closest('td'); if (td) td.classList.toggle('checked', e.target.checked);
+      const row = e.target.closest('tr');
+      if (row) {
+        const checks = row.querySelectorAll('input.perm-chk:not([disabled])');
+        const all = checks.length && Array.from(checks).every(c => c.checked);
+        const allBox = row.querySelector('input.perm-all'); if (allBox) allBox.checked = !!all;
+      }
+    }
+  });
+
+  document.addEventListener('DOMContentLoaded', function(){
+    document.querySelectorAll('table tbody tr').forEach(row => {
+      const checks = row.querySelectorAll('input.perm-chk:not([disabled])');
+      if (checks.length) {
+        const all = Array.from(checks).every(c => c.checked);
+        const allBox = row.querySelector('input.perm-all'); if (allBox) allBox.checked = !!all;
+      }
+    });
+  });
+</script>
+@endsection
+
 @section('content')
 
 <div class="pull-card">
-  <div class="container-fluid" style="padding:0;">
+  <div class="container-fluid p-0">
+
     <form action="{{ route('roles.update', $role->id) }}" method="POST">
       @csrf
       @method('PUT')
 
+      <!-- Role Info -->
       <div class="main-card mb-4">
-        <div class="main-card-head" style="justify-content: space-between;">
-          <div class="main-card-title">
-            <i class="fas fa-tag"></i> Role Info
-            <span class="count-badge">{{ $role->name }}</span>
+        <div class="main-card-head d-flex justify-content-between">
+          <div class="main-card-title fs-5 fw-bold" style="font-size:20px;">
+            <i class="fas fa-tag me-2"></i> Role Info
           </div>
-          <a href="{{ route('roles.index') }}" class="btn-cancel mb-1">
-            <i class="fas fa-arrow-left"></i> Back
+          <a href="{{ route('roles.index') }}" class="btn-cancel">
+            <i class="fas fa-arrow-left me-1"></i> Back
           </a>
         </div>
+
         <div class="main-card-body">
-          <div class="row">
-            <div class="col-md-4">
-              <div class="form-group mb-0">
-                <label for="name" class="font-weight-bold">
-                  Role Name <span class="text-danger">*</span>
-                </label>
-                <input id="name" name="name" type="text"
-                       class="form-control @error('name') is-invalid @enderror"
-                       value="{{ old('name', $role->name) }}" required>
-                @error('name')<span class="invalid-feedback">{{ $message }}</span>@enderror
-              </div>
-            </div>
+          <div class="col-md-4">
+            <label class="fw-bold">Role Name <span class="text-danger">*</span></label>
+            <input type="text" name="name"
+                   class="form-control @error('name') is-invalid @enderror"
+                   value="{{ old('name', $role->name) }}"
+                   placeholder="e.g. Manager" required>
+            @error('name')<span class="invalid-feedback">{{ $message }}</span>@enderror
           </div>
         </div>
       </div>
 
+      <!-- Permissions -->
       <div class="main-card">
-        <div class="main-card-head" style="justify-content: space-between;">
-          <div class="main-card-title">
-            <i class="fas fa-key"></i> Permissions
-            <span class="count-badge">{{ $permissions->flatten()->count() }} total</span>
-            <span class="permission-chip" id="assignedBadge">{{ count($assignedIds) }} assigned</span>
+        <div class="main-card-head d-flex justify-content-between">
+          <div class="main-card-title fs-5 fw-bold" style="font-size:20px;">
+            <i class="fas fa-key me-2"></i> Permissions
           </div>
+
           <div>
-            <button type="button" class="btn-submit mr-1 mb-1" onclick="selectAll(true)">
-              <i class="fas fa-check-double"></i> Select All
-            </button>
-            <button type="button" class="btn-cancel" onclick="selectAll(false)">
-              <i class="fas fa-times"></i> Clear All
-            </button>
+            <button type="button" class="btn-submit me-1" onclick="selectAll(true)">Select All</button>
+            <button type="button" class="btn-cancel" onclick="selectAll(false)">Clear</button>
           </div>
         </div>
+
         <div class="main-card-body">
           @if($permissions->isNotEmpty())
-            <div class="row">
-              @foreach($permissions as $group => $perms)
-                @php $groupAssigned = $perms->whereIn('id', $assignedIds)->count(); @endphp
-                <div class="col-md-4 col-sm-6 mb-4">
-                  <div class="permission-card">
-                    <div class="permission-card-head">
-                      <h6 class="mb-0 d-flex align-items-center justify-content-between w-100">
-                        <span>
-                          <i class="fas fa-layer-group mr-1" style="color:#008d8d;"></i>
-                          {{ $group }}
-                          <span class="permission-chip ml-1">{{ $perms->count() }}</span>
-                          @if($groupAssigned > 0)
-                            <span class="permission-chip ml-1">{{ $groupAssigned }} assigned</span>
+
+            <div class="table-responsive">
+              <table class="table table-bordered text-center align-middle">
+                <thead class="bg-light">
+                  <tr>
+                    <th class="text-left">Module</th>
+                    <th>View</th>
+                    <th>Create</th>
+                    <th>Edit</th>
+                    <th>Delete</th>
+                    <th>All</th>
+                  </tr>
+                </thead>
+
+                <tbody>
+                  @foreach($permissions as $group => $perms)
+                    <tr>
+                      <td class="text-left font-weight-bold">{{ $group }}</td>
+                      @php $actions = ['view','create','edit','delete']; @endphp
+                      @foreach($actions as $action)
+                        <td>
+                          @php
+                            $perm = $perms->firstWhere('name', $action . ' ' . strtolower($group));
+                            if (! $perm) {
+                              $perm = $perms->first(function($p) use($action, $group) {
+                                return str_contains(strtolower($p->name), $action) && str_contains(strtolower($p->name), strtolower($group));
+                              });
+                            }
+                          @endphp
+
+                          @if($perm)
+                            <input type="checkbox" class="perm-chk" name="permissions[]" value="{{ $perm->id }}" id="perm_{{ $perm->id }}" {{ in_array($perm->id, old('permissions', $assignedIds)) ? 'checked' : '' }}>
+                          @else
+                            <input type="checkbox" disabled>
                           @endif
-                        </span>
-                        <button type="button" class="btn-outline-primary group-toggle-btn"
-                                onclick="toggleGroup(this)">
-                          {{ $groupAssigned === $perms->count() ? 'None' : 'All' }}
-                        </button>
-                      </h6>
-                    </div>
-                    <div class="permission-card-body">
-                      @foreach($perms as $perm)
-                        <div class="icheck-primary mb-2">
-                          <input class="perm-chk" type="checkbox"
-                                 name="permissions[]" value="{{ $perm->id }}"
-                                 id="perm_{{ $perm->id }}"
-                                 {{ in_array($perm->id, old('permissions', $assignedIds)) ? 'checked' : '' }}>
-                          <label for="perm_{{ $perm->id }}" style="font-size:.85rem;">
-                            {{ $perm->name }}
-                          </label>
-                        </div>
+                        </td>
                       @endforeach
-                    </div>
-                  </div>
-                </div>
-              @endforeach
+                      <td>
+                        <input type="checkbox" class="perm-all" onchange="toggleRow(this)">
+                      </td>
+                    </tr>
+                  @endforeach
+                </tbody>
+              </table>
             </div>
+
           @else
             <div class="text-center text-muted py-4">
               <i class="fas fa-key fa-2x mb-2 d-block"></i>No permissions found.
             </div>
           @endif
         </div>
-        <div class="mt-2 d-flex justify-content-end">
-          <button type="submit" class="btn-submit">
-            <i class="fas fa-save mr-1"></i> Save Changes
-          </button>
-          <a href="{{ route('roles.index') }}" class="btn-cancel ml-2">
-            <i class="fas fa-times mr-1"></i> Cancel
-          </a>
+
+        <div class="d-flex justify-content-end mt-3">
+          <button type="submit" class="btn-submit">Save Changes</button>
+          <a href="{{ route('roles.index') }}" class="btn-cancel ms-2">Cancel</a>
         </div>
       </div>
+
     </form>
   </div>
 </div>

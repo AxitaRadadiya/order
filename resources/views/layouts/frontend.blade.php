@@ -1,29 +1,19 @@
-<style>
-.btn-create {
-    background: linear-gradient(135deg, #5E60CE, #7F53AC) !important;
-    color: #fff !important;
-    border: none;
-    border-radius: 12px;
-    padding: 7px 14px;
-    margin-bottom: 7px;
-}
-.container{
-    background: #F4F7FE !important;
-}
-</style>
+<!-- Styles are centralized in public/admin/dist/css/custom.css -->
 
 <!doctype html>
 <html lang="en">
-<head style="background: #F4F7FE !important;">
+<head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>@yield('title','Home') - My Store</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="" crossorigin="anonymous" />
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css" rel="stylesheet">
-  <style>body{padding-top:70px} .hero{padding:60px 0;background-color:#F4F7FE !important}</style>
+  <link href="{{ asset('admin/dist/css/custom.css') }}" rel="stylesheet">
 </head>
-<body style="background: #F4F7FE !important;">
-  <nav class="navbar navbar-expand-lg navbar-light fixed-top border-bottom" style="background: #F4F7FE !important;" >
+  
+</head>
+<body class="frontend">
+  <nav class="navbar navbar-expand-lg navbar-light fixed-top border-bottom">
     <div class="container">
       <a class="navbar-brand font-weight-bold" href="{{ url('/') }}">My Store</a>
       <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navMain">
