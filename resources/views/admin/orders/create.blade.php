@@ -136,15 +136,15 @@
             <table class="table table-sm table-bordered" id="itemsTable">
               <thead class="thead-light">
                 <tr>
-                  <th style="min-width:160px">Article Number</th>
-                  <th>Item</th>
-                  <th width="120">Color</th>
+                  <th width="160">Article Number</th>
+                  <th width="160">Item</th>
+                  <th width="160">Color</th>
                   <th width="160">Size(s)</th>
                   <th>Description</th>
                   <th width="80">Qty</th>
-                  <th width="90">MRP</th>
-                  <th width="70">Tax %</th>
-                  <th width="100">Total</th>
+                  <th width="110">MRP</th>
+                  <th width="80">Tax %</th>
+                  <th width="110">Total</th>
                   <th width="40">Action</th>
                 </tr>
               </thead>
@@ -169,7 +169,7 @@
                     <input type="hidden" name="items[{{ $i }}][item_id]" class="item-id-hidden" value="{{ $it['item_id'] ?? '' }}">
                   </td>
                   <td>
-                    <input type="text" name="items[{{ $i }}][item_name]" class="form-control item-name-input" value="{{ $it['item_name'] ?? '' }}">
+                    <input type="text" name="items[{{ $i }}][item_name]" class="form-control item-name-input" value="{{ $it['item_name'] ?? '' }}" readonly>
                   </td>
                   <td>
                     {{-- Color select --}}
@@ -195,10 +195,10 @@
                       @endforeach
                     </select>
                   </td>
-                  <td><input type="text" name="items[{{ $i }}][description]" class="form-control desc" value="{{ $it['description'] ?? '' }}"></td>
+                  <td><input type="text" name="items[{{ $i }}][description]" class="form-control desc" value="{{ $it['description'] ?? '' }}" readonly></td>
                   <td><input type="number" step="0.01" name="items[{{ $i }}][quantity]" class="form-control qty" value="{{ $it['quantity'] ?? 1 }}"></td>
-                  <td><input type="number" step="0.01" name="items[{{ $i }}][rate]" class="form-control rate" value="{{ $it['rate'] ?? 0 }}"></td>
-                  <td><input type="number" step="0.01" name="items[{{ $i }}][tax_rate]" class="form-control tax" value="{{ $it['tax_rate'] ?? 0 }}"></td>
+                  <td><input type="number" step="0.01" name="items[{{ $i }}][rate]" class="form-control rate" value="{{ $it['rate'] ?? 0 }}" readonly></td>
+                  <td><input type="number" step="0.01" name="items[{{ $i }}][tax_rate]" class="form-control tax" value="{{ $it['tax_rate'] ?? 0 }}" readonly></td>
                   <td><input type="number" step="0.01" name="items[{{ $i }}][total]" class="form-control total" value="{{ $it['total'] ?? 0 }}" readonly></td>
                   <td><button type="button" class="btn btn-sm btn-danger remove-item">&times;</button></td>
                 </tr>
@@ -221,7 +221,7 @@
                     <input type="hidden" name="items[0][item_id]" class="item-id-hidden" value="">
                   </td>
                   <td>
-                    <input type="text" name="items[0][item_name]" class="form-control item-name-input" value="">
+                    <input type="text" name="items[0][item_name]" class="form-control item-name-input" value="" readonly>
                   </td>
                   <td>
                     <select name="items[0][color]" class="form-control color-select">
@@ -238,10 +238,10 @@
                       @endforeach
                     </select>
                   </td>
-                  <td><input type="text" name="items[0][description]" class="form-control desc"></td>
+                  <td><input type="text" name="items[0][description]" class="form-control desc" readonly></td>
                   <td><input type="number" step="0.01" name="items[0][quantity]" class="form-control qty" value="1"></td>
-                  <td><input type="number" step="0.01" name="items[0][rate]" class="form-control rate" value="0"></td>
-                  <td><input type="number" step="0.01" name="items[0][tax_rate]" class="form-control tax" value="0"></td>
+                  <td><input type="number" step="0.01" name="items[0][rate]" class="form-control rate" value="0" readonly></td>
+                  <td><input type="number" step="0.01" name="items[0][tax_rate]" class="form-control tax" value="0" readonly></td>
                   <td><input type="number" step="0.01" name="items[0][total]" class="form-control total" value="0" readonly></td>
                   <td><button type="button" class="btn btn-sm btn-danger remove-item">&times;</button></td>
                 </tr>
@@ -378,15 +378,17 @@
           </div>
 
           {{-- ── Terms / Notes / Status ───────────────────────────────── --}}
-          <div class="form-group">
+          <div class="row">
+          <div class="form-group col-md-6">
             <label>Terms &amp; Conditions</label>
             <textarea name="terms" class="form-control" rows="2">{{ old('terms') }}</textarea>
           </div>
-          <div class="form-group">
+          <div class="form-group col-md-6">
             <label>Notes</label>
             <textarea name="notes" class="form-control" rows="2">{{ old('notes') }}</textarea>
           </div>
-          <div class="form-group">
+          
+          <div class="form-group col-md-3">
             <label>Status</label>
             <select name="status" class="form-control">
               <option value="pending" {{ old('status','pending') == 'pending' ? 'selected' : '' }}>Pending</option>
@@ -395,6 +397,7 @@
               <option value="shipped" {{ old('status','pending') == 'shipped'   ? 'selected' : '' }}>Shipped</option>
               <option value="delivered" {{ old('status','pending') == 'delivered' ? 'selected' : '' }}>Delivered</option>
             </select>
+          </div>
           </div>
 
         </div>
@@ -521,13 +524,13 @@
         '<select name="items[' + idx + '][article_number]" class="form-control article-select">' + opts + '</select>' +
         '<input type="hidden" name="items[' + idx + '][item_id]" class="item-id-hidden" value="' + (it.item_id || '') + '">' +
         '</td>' +
-        '<td><input type="text" name="items[' + idx + '][item_name]" class="form-control item-name-input" value="' + (it.item_name || '') + '"></td>' +
+        '<td><input type="text" name="items[' + idx + '][item_name]" class="form-control item-name-input" value="' + (it.item_name || '') + '" readonly></td>' +
         '<td><select name="items[' + idx + '][color]" class="form-control color-select">' + colorOpts + '</select></td>' +
         '<td><select name="items[' + idx + '][sizes][]" class="form-control size-select" multiple>' + sizeOpts + '</select></td>' +
-        '<td><input type="text"   name="items[' + idx + '][description]" class="form-control desc"        value="' + (it.description || '') + '"></td>' +
+        '<td><input type="text"   name="items[' + idx + '][description]" class="form-control desc"        value="' + (it.description || '') + '" readonly></td>' +
         '<td><input type="number" step="0.01" name="items[' + idx + '][quantity]"    class="form-control qty"         value="' + (it.quantity || 1) + '"></td>' +
-        '<td><input type="number" step="0.01" name="items[' + idx + '][rate]"        class="form-control rate"        value="' + (it.rate || 0) + '"></td>' +
-        '<td><input type="number" step="0.01" name="items[' + idx + '][tax_rate]"    class="form-control tax"         value="' + (it.tax_rate || 0) + '"></td>' +
+        '<td><input type="number" step="0.01" name="items[' + idx + '][rate]"        class="form-control rate"        value="' + (it.rate || 0) + '" readonly></td>' +
+        '<td><input type="number" step="0.01" name="items[' + idx + '][tax_rate]"    class="form-control tax"         value="' + (it.tax_rate || 0) + '" readonly></td>' +
         '<td><input type="number" step="0.01" name="items[' + idx + '][total]"       class="form-control total"       value="' + (it.total || 0) + '" readonly></td>' +
         '<td><button type="button" class="btn btn-sm btn-danger remove-item">&times;</button></td>' +
         '</tr>';

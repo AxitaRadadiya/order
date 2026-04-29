@@ -4,7 +4,6 @@
 
 @section('content')
 
-{{-- HERO SECTION --}}
 <section class="hero text-center">
   <div class="container">
     <h1 class="display-4 font-weight-bold">Welcome to My Store</h1>
@@ -15,7 +14,6 @@
   </div>
 </section>
 
-{{-- FEATURED PRODUCTS --}}
 <section class="py-5">
   <div class="container">
 
@@ -28,12 +26,33 @@
 
     <div class="row">
       @forelse($items as $item)
+        @if($loop->iteration > 4)
+          @break
+        @endif
       <div class="col-md-3 mb-4">
         <div class="card product-card shadow-sm h-100">
 
-          {{-- IMAGE --}}
           <div class="product-img">
-            <img src="{{ $item->image_urls[0] ?? asset('no-image.png') }}">
+            @php
+              $images = data_get($item, 'image_urls', []);
+              $mainRaw = data_get($images, 0);
+              $secondRaw = data_get($images, 1);
+
+              $toSrc = function ($raw) {
+                  if (!$raw) return null;
+                  if (preg_match('/^https?:\/\//', $raw)) return $raw;
+                  return asset('storage/' . ltrim($raw, '/'));
+              };
+
+              $srcMain = $toSrc($mainRaw) ?? asset('no-image.png');
+              $srcSecond = $toSrc($secondRaw);
+            @endphp
+
+            <img src="{{ $srcMain }}" alt="{{ $item->name }}" class="primary-img">
+            @if($srcSecond)
+              <img src="{{ $srcSecond }}" alt="{{ $item->name }} - alternate" class="secondary-full">
+              <img src="{{ $srcSecond }}" alt="thumb" class="secondary-thumb">
+            @endif
           </div>
 
           {{-- BODY --}}
@@ -119,26 +138,11 @@
     transition: 0.3s;
 }
 
-.product-card:hover {
-    transform: translateY(-5px);
-}
+.product-img { height: 220px; display: flex; align-items: center; justify-content: center; background: #f8f9fa; position: relative; overflow: hidden; }
+.product-img img { max-height: 180px; object-fit: contain; transition: opacity .25s ease, transform .25s ease; display:block; margin:auto; }
 
-.product-img {
-    height: 200px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: #f8f9fa;
-}
+.product-title { height: 40px; overflow: hidden; }
 
-.product-img img {
-    max-height: 170px;
-    object-fit: contain;
-}
 
-.product-title {
-    height: 40px;
-    overflow: hidden;
-}
 </style>
 @endpush

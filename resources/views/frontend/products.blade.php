@@ -16,9 +16,9 @@
       <div class="card shadow-sm h-100">
 
         {{-- IMAGE --}}
-        <div style="height:200px; display:flex; align-items:center; justify-content:center; background:#e1e0f345;">
+        <div style="height:150px; display:flex; align-items:center; justify-content:center; background:#e1e0f345;">
           <img src="{{ $item->image_urls[0] ?? asset('no-image.png') }}"
-               style="max-height:180px; object-fit:contain;">
+               style="max-height:100px; object-fit:contain;">
         </div>
 
         {{-- BODY --}}
