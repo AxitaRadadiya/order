@@ -34,7 +34,7 @@
         <ul class="navbar-nav mr-auto">
           <li class="nav-item"><a class="nav-link" href="{{ url('/') }}">Home</a></li>
           <li class="nav-item"><a class="nav-link" href="{{ route('products') }}">Products</a></li>
-          <li class="nav-item"><a class="nav-link" href="#categories">Categories</a></li>
+          <li class="nav-item"><a class="nav-link" href="{{ route('categories') }}">Categories</a></li>
           <li class="nav-item"><a class="nav-link" href="{{ url('/about') }}">About</a></li>
           <li class="nav-item"><a class="nav-link" href="{{ url('/contact') }}">Contact</a></li>
         </ul>

@@ -233,14 +233,10 @@ class ItemController extends Controller
          return view('admin.catalog.index', compact('items')); 
     }
     public function showCatalog(Item $item)
-{
-    return view('admin.catalog.show', compact('item'));
-}   
+    {
+        return view('admin.catalog.show', compact('item'));
+    }   
 
-    /**
-     * DataTables AJAX endpoint for admin item list.
-     * Shows ALL items (active + inactive) in the admin panel.
-     */
     public function itemList(Request $request)
     {
         // Eager-load relationships so ->category->name etc. always resolves
@@ -324,10 +320,6 @@ class ItemController extends Controller
         ]);
     }
 
-    /**
-     * Public / external-system endpoint — returns ONLY active items.
-     * Use this route in any front-end or API that should not see inactive items.
-     */
     public function activeItemList(Request $request)
     {
         $query = Item::with(['category', 'group', 'colors'])

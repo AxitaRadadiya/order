@@ -1,8 +1,8 @@
 @extends('admin.layouts.app')
 @section('title', 'Orders')
- 
+
 @section('content')
- 
+
 <div class="content-header">
   <div class="container-fluid">
     <div class="row mb-2">
@@ -18,16 +18,8 @@
     </div>
   </div>
 </div>
- 
+
 <div class="container-fluid">
- 
-  <!-- @if(session('success'))
-    <div class="alert alert-success alert-dismissible fade show">
-      {{ session('success') }}
-      <button type="button" class="close" data-dismiss="alert">&times;</button>
-    </div>
-  @endif
-  -->
   <div class="card card-default">
     <div class="card-header">
       <h3 class="card-title">All Orders</h3>
@@ -42,17 +34,19 @@
         <thead>
           <tr>
             <th>#</th>
+            <th>Order No.</th>
             <th>Customer</th>
             <th>Date</th>
-            <th>Expected Date</th>
             <th>Grand Total</th>
             <th>Status</th>
             <th style="width:110px">Actions</th>
           </tr>
         </thead>
+        <tbody></tbody>
       </table>
+
     </div>
   </div>
- 
+
 </div>
 @endsection

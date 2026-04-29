@@ -32,6 +32,9 @@ Route::get('/', [FrontendController::class, 'home'])->name('home');
 
 
 Route::get('/products', [FrontendController::class, 'products'])->name('products');
+Route::get('/category/{category}', [FrontendController::class, 'category'])->name('category.show');
+Route::get('/categories', [FrontendController::class, 'categories'])->name('categories');
+Route::get('/api/category/{category}/items', [FrontendController::class, 'categoryItems'])->name('api.category.items');
 Route::get('/products/{item}', [FrontendController::class, 'show'])->name('products.show');
 
 Route::view('/about', 'frontend.about')->name('about');

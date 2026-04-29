@@ -11,90 +11,110 @@ use App\Models\User;
 use App\Models\Item;
 use App\Models\Size;
 use App\Models\Color;
+use Carbon\Carbon;
 use Yajra\DataTables\Facades\DataTables;
 
 class OrderMasterController extends Controller
 {
     // -----------------------------------------------------------------------
-    // Index  (renders page shell; DataTables loads rows via orderList())
+    // Index
     // -----------------------------------------------------------------------
     public function index()
     {
         return view('admin.orders.index');
     }
 
-    // -----------------------------------------------------------------------
-    // DataTables AJAX endpoint   GET /orders-list
-    // Route name: orders.list   (matches web.php + script.blade.php)
-    //
-    // Column keys MUST match script.blade.php load_order() columns:
-    //   id | order_number | name | date | total | status | action
-    // -----------------------------------------------------------------------
     public function orderList(Request $request)
     {
-        $orders = OrderMaster::query()
-            ->with('customer')
-            ->select('order_masters.*');
+        $query = OrderMaster::with('customer');
 
-        return DataTables::of($orders)
-            ->addColumn('name', function (OrderMaster $order) {
-                return $order->customer->name ?? $order->customer->email ?? '-';
-            })
-            ->addColumn('order_number', function (OrderMaster $order) {
-                return $order->order_number
-                    ?? 'ORD-' . str_pad($order->id, 5, '0', STR_PAD_LEFT);
-            })
-            ->addColumn('total', function (OrderMaster $order) {
-                return '&#8377; ' . number_format($order->grand_total ?? 0, 2);
-            })
-            ->addColumn('status', function (OrderMaster $order) {
-                $map = [
-                    'pending'   => 'warning',
-                    'confirmed' => 'info',
-                    'shipped'   => 'primary',
-                    'delivered' => 'success',
-                ];
-                $color = $map[$order->status] ?? 'secondary';
-                return '<span class="badge badge-' . $color . '">'
-                    . ucfirst($order->status ?? '-') . '</span>';
-            })
-            ->addColumn('action', function (OrderMaster $order) {
-                $show   = route('orders.show',    $order);
-                $edit   = route('orders.edit',    $order);
-                $delete = route('orders.destroy', $order);
-                $csrf   = csrf_field();
-                $method = method_field('DELETE');
+        $totalData = $query->count();
+        $totalFiltered = $totalData;
 
-                return '
-                    <a href="' . $show . '" class="btn btn-xs btn-info" title="View">
-                        <i class="fas fa-eye"></i>
-                    </a>
-                    <a href="' . $edit . '" class="btn btn-xs btn-primary" title="Edit">
-                        <i class="fas fa-edit"></i>
-                    </a>
-                    <form method="POST" action="' . $delete . '" style="display:inline">
-                        ' . $csrf . $method . '
-                        <button type="button" class="btn btn-xs btn-danger deleteButton" title="Delete">
-                            <i class="fas fa-trash"></i>
-                        </button>
-                    </form>
-                ';
-            })
-            ->filterColumn('name', function ($query, $keyword) {
-                $query->whereHas('customer', function ($q) use ($keyword) {
-                    $q->where('name',  'like', "%{$keyword}%")
-                      ->orWhere('email', 'like', "%{$keyword}%");
+        $limit  = (int) $request->input('length', 10);
+        $start  = (int) $request->input('start', 0);
+        $search = $request->input('search.value');
+
+        if (!empty($search)) {
+            $query->where(function ($q) use ($search) {
+                $q->where('order_number', 'like', "%{$search}%")
+                ->orWhere('date', 'like', "%{$search}%")
+                ->orWhereHas('customer', function ($q2) use ($search) {
+                    $q2->where('name', 'like', "%{$search}%")
+                        ->orWhere('email', 'like', "%{$search}%");
                 });
-            })
-            ->rawColumns(['total', 'status', 'action'])
-            ->make(true);
-    }
+            });
 
-    // -----------------------------------------------------------------------
-    // Customer address lookup   GET /customers/{user}/addresses
-    // Route name: customers.addresses
-    // Returns billing + shipping JSON for the create/edit JS address autofill
-    // -----------------------------------------------------------------------
+            $totalFiltered = $query->count();
+        }
+
+        $orders = $query->offset($start)
+            ->limit($limit)
+            ->orderBy('id', 'desc')
+            ->get();
+
+        $data = [];
+
+        foreach ($orders as $idx => $order) {
+
+            $viewUrl   = route('orders.show', $order->id);
+            $editUrl   = route('orders.edit', $order->id);
+            $deleteUrl = route('orders.destroy', $order->id);
+
+            $orderNumber = $order->order_number
+                ?? 'ORD-' . str_pad($order->id, 5, '0', STR_PAD_LEFT);
+
+            $customerName = optional($order->customer)->name
+                ?? optional($order->customer)->email
+                ?? '-';
+
+           
+            $total = '₹ ' . number_format((float) ($order->grand_total ?? 0), 2);
+
+            $statusMap = [
+                'pending'   => 'warning',
+                'confirmed' => 'info',
+                'shipped'   => 'primary',
+                'delivered' => 'success',
+            ];
+            $color = $statusMap[$order->status] ?? 'secondary';
+
+            $status = '<span class="badge badge-' . $color . '">'
+                . ucfirst($order->status ?? 'pending') . '</span>';
+
+            $actions = '<div class="btn-group">
+                <button type="button" class="btn btn-sm" data-toggle="dropdown">
+                    <i class="fas fa-ellipsis-v"></i>
+                </button>
+                <div class="dropdown-menu">
+                    <a class="dropdown-item" href="' . $viewUrl . '">View</a>
+                    <a class="dropdown-item" href="' . $editUrl . '">Edit</a>
+                    <form method="POST" action="' . $deleteUrl . '">
+                        <input type="hidden" name="_token" value="' . csrf_token() . '">
+                        <input type="hidden" name="_method" value="DELETE">
+                        <button type="submit" class="dropdown-item text-danger deleteButton">Delete</button>
+                    </form>
+                </div>
+            </div>';
+
+            $data[] = [
+                'id'            => $start + $idx + 1,
+                'order_number'  => $orderNumber,
+                'name'          => $customerName,
+                'date'          => $order->date ? Carbon::parse($order->date)->format('d/m/y') : '',
+                'total'         => $total,
+                'status'        => $status,
+                'action'        => $actions,
+            ];
+        }
+
+        return response()->json([
+            'draw'            => intval($request->input('draw')),
+            'recordsTotal'    => $totalData,
+            'recordsFiltered' => $totalFiltered,
+            'data'            => $data,
+        ]);
+    }
     public function customerAddresses(User $user)
     {
         $addr     = $user->address ?? null;
@@ -209,7 +229,6 @@ class OrderMasterController extends Controller
         $customers = User::with('address')->orderBy('name')->get();
         $items     = Item::orderBy('name')->get();
 
-        // Address lookup map injected into JS: { "1": {billing, shipping}, ... }
         $customersJson = $customers->mapWithKeys(function (User $u) {
             $addr     = $u->address ?? null;
             $billing  = $addr->billing_address  ?? $addr->address ?? $u->billing_address  ?? $u->address ?? '';
@@ -252,9 +271,6 @@ class OrderMasterController extends Controller
         ]);
     }
 
-    /**
-     * JS keys used: id, article_number, name, desc, rate, tax, sizes, color_id, color
-     */
     private function buildItemsJson($items): \Illuminate\Support\Collection
     {
         return $items->map(function (Item $item) {
