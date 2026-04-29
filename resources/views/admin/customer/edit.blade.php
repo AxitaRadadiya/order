@@ -125,49 +125,7 @@
         </div>
       </div>
 
-      {{-- 2. Tax & Financial --}}
-      <div class="card card-outline card-primary" style="padding:10px;">
-        <div class="card-header">
-          <h3 class="card-title"><i class="fas fa-rupee-sign mr-1"></i>Tax & Financial Details</h3>
-          <div class="card-tools"><button type="button" class="btn btn-tool" data-card-widget="collapse"><i class="fas fa-minus"></i></button></div>
-        </div>
-        <div class="card-body" >
-          <div class="row">
-            <div class="col-md-3">
-              <div class="form-group">
-                <label>GST Treatment</label>
-                <select class="form-control" name="gst_treatment">
-                  <option value="">-- Select --</option>
-                  @foreach(['registered_business_regular'=>'Registered – Regular','registered_business_composition'=>'Registered – Composition','unregistered_business'=>'Unregistered Business','consumer'=>'Consumer','overseas'=>'Overseas','sez'=>'Special Economic Zone'] as $val=>$label)
-                    <option value="{{ $val }}" {{ old('gst_treatment',$customer->gst_treatment)==$val?'selected':'' }}>{{ $label }}</option>
-                  @endforeach
-                </select>
-              </div>
-            </div>
-            <div class="col-md-3">
-              <div class="form-group"><label>GST Number</label>
-                <input type="text" class="form-control upper" name="gst_number" value="{{ old('gst_number',$customer->gst_number) }}" maxlength="15">
-              </div>
-            </div>
-            <div class="col-md-3">
-              <div class="form-group"><label>PAN Number</label>
-                <input type="text" class="form-control upper" name="pan_number" value="{{ old('pan_number',$customer->pan_number) }}" maxlength="10">
-              </div>
-            </div>
-            <div class="col-md-3">
-              <div class="form-group">
-                <label>Place of Supply</label>
-                <select class="form-control" name="place_of_supply">
-                  <option value="">-- Select State --</option>
-                  @foreach($states->pluck('name')->unique()->sort()->values() as $stateName)
-                    <option value="{{ $stateName }}" {{ old('place_of_supply',$customer->place_of_supply)==$stateName?'selected':'' }}>{{ $stateName }}</option>
-                  @endforeach
-                </select>
-              </div>
-            </div>
-            </div>
-          </div>
-        </div>
+
       {{-- 3 & 4. Billing + Shipping Address (Side by Side) --}}
       <div class="row">
         <div class="col-lg-6">
