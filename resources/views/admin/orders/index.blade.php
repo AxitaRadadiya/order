@@ -32,7 +32,7 @@
     <div class="card-header">
       <h3 class="card-title">All Orders</h3>
       <div class="card-tools">
-        <a href="{{ route('orders.create') }}" class="btn btn-sm btn-primary">
+        <a href="{{ route('orders.create') }}" class="btn-create">
           <i class="fas fa-plus"></i> New Order
         </a>
       </div>

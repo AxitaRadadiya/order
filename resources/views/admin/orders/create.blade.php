@@ -39,7 +39,7 @@
       <div class="card"style="padding:10px;">
         <div class="card-body">
 
-          {{-- ── Client / Dates ────────────────────────────────────────── --}}
+          {{-- ── Customer / Dates ────────────────────────────────────────── --}}
           <div class="row">
             <div class="col-md-6">
               <div class="form-group">
@@ -200,7 +200,7 @@
                   <td><input type="number" step="0.01" name="items[{{ $i }}][rate]" class="form-control rate" value="{{ $it['rate'] ?? 0 }}" readonly></td>
                   <td><input type="number" step="0.01" name="items[{{ $i }}][tax_rate]" class="form-control tax" value="{{ $it['tax_rate'] ?? 0 }}" readonly></td>
                   <td><input type="number" step="0.01" name="items[{{ $i }}][total]" class="form-control total" value="{{ $it['total'] ?? 0 }}" readonly></td>
-                  <td><button type="button" class="btn btn-sm btn-danger remove-item">&times;</button></td>
+                  <td><button type="button" class="btn btn-sm btn-danger remove-item"><i class="fas fa-trash"></i></button></td>
                 </tr>
                 @endforeach
                 @else
@@ -243,7 +243,7 @@
                   <td><input type="number" step="0.01" name="items[0][rate]" class="form-control rate" value="0" readonly></td>
                   <td><input type="number" step="0.01" name="items[0][tax_rate]" class="form-control tax" value="0" readonly></td>
                   <td><input type="number" step="0.01" name="items[0][total]" class="form-control total" value="0" readonly></td>
-                  <td><button type="button" class="btn btn-sm btn-danger remove-item">&times;</button></td>
+                  <td><button type="button" class="btn btn-sm btn-danger remove-item"><i class="fas fa-trash"></i></button></td>
                 </tr>
                 @endif
               </tbody>
@@ -532,7 +532,7 @@
         '<td><input type="number" step="0.01" name="items[' + idx + '][rate]"        class="form-control rate"        value="' + (it.rate || 0) + '" readonly></td>' +
         '<td><input type="number" step="0.01" name="items[' + idx + '][tax_rate]"    class="form-control tax"         value="' + (it.tax_rate || 0) + '" readonly></td>' +
         '<td><input type="number" step="0.01" name="items[' + idx + '][total]"       class="form-control total"       value="' + (it.total || 0) + '" readonly></td>' +
-        '<td><button type="button" class="btn btn-sm btn-danger remove-item">&times;</button></td>' +
+        '<td><button type="button" class="btn btn-sm btn-danger remove-item"><i class="fas fa-trash"></i></button></td>' +
         '</tr>';
     }
 
