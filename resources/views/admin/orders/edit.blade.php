@@ -663,11 +663,9 @@ $(function () {
     recalc();
   });
 
-  // Init
   recalc();
   srRecalc();
 
-  // initialize Select2 on existing size-selects
   if ($.fn.select2) { $('.size-select').select2({ placeholder: 'Sizes', width: '100%' }); }
 });
 </script>

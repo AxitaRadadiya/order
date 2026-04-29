@@ -8,10 +8,12 @@
       <div class="col-sm-6">
         <h1 class="m-0">Create Order</h1>
       </div>
-      <div class="col-sm-6 text-right">
-        <a href="{{ route('orders.index') }}" class="btn-cancel">
-          <i class="fas fa-arrow-left"></i> Back
-        </a>
+      <div class="col-sm-6">
+        <ol class="breadcrumb float-sm-right">
+          <li class="breadcrumb-item"><a href="{{ route('dashboard') }}">Home</a></li>
+          <li class="breadcrumb-item"><a href="{{ route('orders.index') }}">Orders</a></li> 
+          <li class="breadcrumb-item active">Create</li>
+        </ol>
       </div>
     </div>
   </div>
@@ -398,7 +400,7 @@
         </div>
       </div>
 
-      <div class="mt-2 mb-2 text-right">
+      <div class="mt-2 mb-2 mr-3 text-right">
         <a href="{{ route('orders.index') }}" class="btn-cancel mr-2"><i class="fas fa-times mr-1"></i>Cancel</a>
         <button type="submit" class="btn-submit"><i class="fas fa-save mr-1"></i>Save Order</button>
       </div>

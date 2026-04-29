@@ -87,10 +87,11 @@ Route::group(['middleware' => ['auth']], function () {
     Route::resource('size', SizeController::class);
     Route::get('items-list', [ItemController::class,'itemList'])->name('items.list');
     Route::resource('items', ItemController::class);
+    Route::get('orders-list', [OrderMasterController::class, 'orderList'])->name('orders.list');
+    Route::get('customers/{user}/addresses', [OrderMasterController::class, 'customerAddresses'])->name('customers.addresses');
     Route::resource('orders', OrderMasterController::class);
     Route::get('color-list', [ColorController::class,'list'])->name('color.list');
     Route::resource('color', ColorController::class);
-    // CustomerType routes removed (replaced by roles)
     Route::get('sub-category-list', [SubCategoryController::class,'list'])->name('sub-category.list');
     Route::resource('sub-category', SubCategoryController::class);
     Route::get('sub-group-list', [SubGroupController::class,'list'])->name('sub-group.list');

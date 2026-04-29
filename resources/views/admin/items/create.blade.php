@@ -95,7 +95,6 @@
 </div>
 <section class="content">
 	<div class="container-fluid">
-		
 		<div class="card card-outline card-primary">
 			<div class="card-header">
 				<h3 class="card-title"><i class="fas fa-box mr-1"></i>Create Item</h3>
@@ -103,8 +102,6 @@
 			<div class="main-card-body">
 				<form action="{{ route('items.store') }}" method="POST" enctype="multipart/form-data">
 					@csrf
-
-
 					<div class="row">
 						<div class="col-md-4">
 							<div class="form-group">
@@ -222,8 +219,6 @@
 								<input type="number" step="0.01" name="tax_percent" value="{{ old('tax_percent', 0) }}" class="form-control">
 							</div>
 						</div>
-
-						{{-- ✅ MULTIPLE IMAGES: up to 5, jpg/png only, max 2 MB each --}}
 						<div class="col-md-12">
     						<div class="form-group">
         						<label class="font-weight-bold">

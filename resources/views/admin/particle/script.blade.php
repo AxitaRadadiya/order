@@ -135,6 +135,7 @@ $(document).ready(function () {
         aoColumnDefs: [{ bSortable: false, aTargets: [-1] }]
     });
 
+
     // Users table loader
     function load_user() {
         $('#userTable').DataTable({
@@ -187,6 +188,35 @@ $(document).ready(function () {
         });
     }
     load_customer();
+
+    function load_order() {
+        if ($.fn.dataTable.isDataTable('#orderTable')) {
+            $('#orderTable').DataTable().clear().destroy();
+            $('#orderTable tbody').empty();
+        }
+        $('#orderTable').DataTable({
+            paging: true, lengthChange: true, searching: true, ordering: true, info: true,
+            autoWidth: false, responsive: true, processing: true, serverSide: true,
+            order: [0, 'desc'],
+            ajax: {
+                url: '{{ route('orders.list') }}',
+                dataType: 'json',
+                type: 'GET',
+                data: { _token: '{{csrf_token()}}' }
+            },
+            columns: [
+            { data: 'id' },
+            { data: 'order_number' },
+            { data: 'name' },
+            { data: 'date' },
+            { data: 'total' },
+            { data: 'status' },
+            { data: 'action' }
+        ]
+            , aoColumnDefs: [{ bSortable: false, aTargets: [-1] }]
+        });
+    }
+    load_order();
 
        $('#itemTable').DataTable({
         processing:  true,

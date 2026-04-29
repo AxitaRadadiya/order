@@ -13,16 +13,6 @@ class PermissionsSeeder extends Seeder
     public function run(): void
     {
         $permissions = [
-            'Dashboard' => [
-                'Dashboard' => [
-                    ['name' => 'dashboard-view'],
-                ],
-            ],
-            'Profile' => [
-                'Profile' => [
-                    ['name' => 'profile-edit'],
-                ],
-            ],
             'User' => [
                 'User' => [
                     
@@ -31,31 +21,14 @@ class PermissionsSeeder extends Seeder
                     ['name' => 'user-edit'],
                     ['name' => 'user-delete'],
                 ],
-                'Role' => [
-                    ['name' => 'role-create'],
-                    ['name' => 'role-view'],
-                    ['name' => 'role-edit'],
-                    ['name' => 'role-delete'],
-                ],
-                'Permission' => [
-                    ['name' => 'permission-view'],
-                    ['name' => 'permission-create'],
-                    ['name' => 'permission-edit'],
-                    ['name' => 'permission-delete'],
-                ],
             ],
-            'General-Setting' => [
-                'Setting' => [
-                    ['name' => 'setting-view'],
-                    ['name' => 'setting-create'],
-                    ['name' => 'setting-edit'],
-                    ['name' => 'setting-delete'],
-                ],
-                'Email' => [
-                    ['name' => 'email-view'],
-                    ['name' => 'email-create'],
-                    ['name' => 'email-edit'],
-                    ['name' => 'email-delete'],
+            'Customer' => [
+                'Customer' => [
+                    
+                    ['name' => 'customer-create'],
+                    ['name' => 'customer-view'],
+                    ['name' => 'customer-edit'],
+                    ['name' => 'customer-delete'],
                 ],
             ],
             'Item' => [
@@ -65,17 +38,29 @@ class PermissionsSeeder extends Seeder
                     ['name' => 'item-edit'],
                     ['name' => 'item-delete'],
                 ],
-                'Group' => [
-                    ['name' => 'group-view'],
-                    ['name' => 'group-create'],
-                    ['name' => 'group-edit'],
-                    ['name' => 'group-delete'],
+            ],
+            'Order' => [
+                'Order' => [
+                    ['name' => 'order-view'],
+                    ['name' => 'order-create'],
+                    ['name' => 'order-edit'],
+                    ['name' => 'order-delete'],
                 ],
-                'Category' => [
-                    ['name' => 'category-view'],
-                    ['name' => 'category-create'],
-                    ['name' => 'category-edit'],
-                    ['name' => 'category-delete'],
+            ],
+            'Setting' => [
+                'Setting' => [
+                    ['name' => 'setting-view'],
+                    ['name' => 'setting-create'],
+                    ['name' => 'setting-edit'],
+                    ['name' => 'setting-delete'],
+                ],
+            ],
+            'Report' => [
+                'Report' => [
+                    ['name' => 'report-view'],
+                    ['name' => 'report-create'],
+                    ['name' => 'report-edit'],
+                    ['name' => 'report-delete'],
                 ],
             ],
         ];
