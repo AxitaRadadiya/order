@@ -310,6 +310,14 @@ class OrderMasterController extends Controller
                 continue;
             }
 
+            // determine article number: prefer submitted value, otherwise pull from Item model
+            $articleNumber = $it['article_number'] ?? null;
+            $itemModel = null;
+            if (empty($articleNumber) && $itemId) {
+                $itemModel = Item::find($itemId);
+                $articleNumber = $itemModel->article_number ?? $itemModel->sku ?? null;
+            }
+
             $sizeVal = null;
             if (!empty($it['sizes'])) {
                 $sizeVal = is_array($it['sizes'])
@@ -320,6 +328,7 @@ class OrderMasterController extends Controller
             }
 
             $order->items()->create([
+                'article_number' => $articleNumber ?? null,
                 'item_id'     => $itemId  ?: null,
                 'item_name'   => $itemName,
                 'description' => $it['description'] ?? null,
