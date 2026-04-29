@@ -412,7 +412,7 @@
 </section>
 @endsection
 
-@push('scripts')
+@section('pageScript')
 <script>
   $(function() {
 
@@ -549,13 +549,31 @@
       recalc();
     });
 
-    // ── Customer → address auto-fill ─────────────────────────────────────────
+    // ── Customer → address auto-fill (fetch from server)
     $('#customer_id').on('change', function() {
-      var $opt     = $(this).find('option:selected');
-      var billing  = $opt.data('billing')  || '';
-      var shipping = $opt.data('shipping') || billing;
-      $('#billing_address').val(billing);
-      $('#shipping_address').val(shipping);
+      var id = $(this).val();
+      if (!id) {
+        $('#billing_address').val('');
+        $('#shipping_address').val('');
+        return;
+      }
+
+      var customerUrl = "{{ url('customer') }}"; // /customer
+
+      fetch(customerUrl + '/' + id)
+        .then(function(res) {
+          if (!res.ok) throw new Error('Network response was not ok (' + res.status + ')');
+          return res.json();
+        })
+        .then(function(data) {
+          $('#billing_address').val(data.billing_address || '');
+          $('#shipping_address').val(data.shipping_address || '');
+        })
+        .catch(function(err) {
+          console.error('Failed to fetch customer addresses', err);
+          $('#billing_address').val('');
+          $('#shipping_address').val('');
+        });
     });
 
     // ── Mode toggle ──────────────────────────────────────────────────────────
@@ -686,4 +704,4 @@
     $('#customer_id').trigger('change');
   });
 </script>
-@endpush
+@endsection

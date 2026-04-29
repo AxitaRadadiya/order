@@ -328,4 +328,38 @@ $query=Customer::query();
             'data' => $data,
         ]);
     }
+
+    public function getCustomer($id)
+    {
+        $customer = Customer::with('address')->find($id);
+        if (!$customer) {
+            return response()->json([], 404);
+        }
+
+        $addr = $customer->address;
+        $billing = '';
+        $shipping = '';
+        if ($addr) {
+            $billing = trim(
+                ($addr->billing_street  ?? '') . ' ' .
+                ($addr->billing_city    ?? '') . ' ' .
+                ($addr->billing_state   ?? '') . ' ' .
+                ($addr->billing_country ?? '') . ' - ' .
+                ($addr->billing_pin_code ?? '')
+            );
+
+            $shipping = trim(
+                ($addr->shipping_street  ?? $addr->billing_street  ?? '') . ' ' .
+                ($addr->shipping_city    ?? $addr->billing_city    ?? '') . ' ' .
+                ($addr->shipping_state   ?? $addr->billing_state   ?? '') . ' ' .
+                ($addr->shipping_country ?? $addr->billing_country ?? '') . ' - ' .
+                ($addr->shipping_pin_code ?? $addr->billing_pin_code ?? '')
+            );
+        }
+
+        return response()->json([
+            'billing_address' => $billing,
+            'shipping_address' => $shipping,
+        ]);
+    }
 }
