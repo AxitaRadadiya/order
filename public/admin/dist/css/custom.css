@@ -241,3 +241,9 @@ input[type="checkbox"] {
 .table td.checked { background: #ffffff; }
 input.perm-chk:checked { accent-color: #2b207a; }
 input.perm-all:checked{ accent-color: #2b207a; }
+
+.list-group-item.active {
+    background: linear-gradient(135deg, #5E60CE, #7F53AC) !important;
+    border-color: #7F53AC !important;
+    color: #fff !important;
+}

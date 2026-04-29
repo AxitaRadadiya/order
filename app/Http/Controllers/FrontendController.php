@@ -21,7 +21,8 @@ class FrontendController extends Controller
             ->latest()
             ->paginate(12);
 
-        return view('frontend.products', compact('items'));
+        $categories = Category::orderBy('name')->get();
+        return view('frontend.products', compact('items', 'categories'));
     }
 
     public function category(Category $category)
