@@ -105,12 +105,12 @@
             @endif
             @if(request('date_from'))
               <span class="badge badge-warning mr-1">
-                From: {{ \Carbon\Carbon::parse(request('date_from'))->format('d M Y') }}
+                    From: {{ \Carbon\Carbon::parse(request('date_from'))->format('d M Y') }}
               </span>
             @endif
             @if(request('date_to'))
               <span class="badge badge-warning mr-1">
-                To: {{ \Carbon\Carbon::parse(request('date_to'))->format('d M Y') }}
+                    To: {{ \Carbon\Carbon::parse(request('date_to'))->format('d M Y') }}
               </span>
             @endif
             <a href="{{ route('activity-logs.index') }}" class="badge badge-danger">
@@ -147,7 +147,7 @@
                 <th>Action</th>
                 <th>Description</th>
                 <th>Model</th>
-                <th>Date &amp; Time</th>
+                <th>Date</th>
                 <th width="70">Action</th>
                 
               </tr>
@@ -195,8 +195,11 @@
                   </td>
 
                   <td class="text-nowrap">
-                    <div class="font-weight-bold" style="font-size:.83rem;">{{ $log->created_at->format('d M Y') }}</div>
-                    <div class="text-muted" style="font-size:.75rem;">{{ $log->created_at->format('h:i A') }}</div>
+                    <div class="font-weight-bold" style="font-size:.83rem;">{{ $log->created_at->timezone(config('app.timezone'))->format('d M Y') }}</div>
+                    <!-- <div class="text-muted" style="font-size:.75rem;">
+                      {{ $log->created_at->timezone(config('app.timezone'))->format('h:i:s A') }}
+                      ({{ $log->created_at->timezone(config('app.timezone'))->format('P') }} {{ config('app.timezone') }})
+                    </div> -->
                   </td>
 
                   <td>

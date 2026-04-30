@@ -85,6 +85,15 @@ class AuthenticatedSessionController extends Controller
             $request->session()->forget('allowed_modules');
         }
 
+        // If retailer or distributor logged in, send them to the public catalog
+        try {
+            if ($user->hasRole(['retailer', 'distributor'])) {
+                return redirect()->intended(route('catalog', absolute: false));
+            }
+        } catch (\Throwable $e) {
+            // ignore and fall back to dashboard
+        }
+
         return redirect()->intended(route('dashboard', absolute: false));
     }
 

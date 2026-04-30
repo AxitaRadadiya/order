@@ -37,6 +37,59 @@
           </a>
         </div>
       </div>
+      <div class="card-body pt-2 pb-0 border-bottom">
+        <div class="row">
+          <div class="col-md-3">
+            <div class="form-group mb-0">
+              <label class="small">Country</label>
+              <select id="filter_country" class="form-control form-control-sm">
+                <option value="">-- All Countries --</option>
+                @foreach($countries as $c)
+                  <option value="{{ $c->name }}">{{ $c->name }}</option>
+                @endforeach
+              </select>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="form-group mb-0">
+              <label class="small">State</label>
+              <select id="filter_state" class="form-control form-control-sm">
+                <option value="">-- All States --</option>
+                @foreach($states as $s)
+                  <option value="{{ $s->name }}">{{ $s->name }}</option>
+                @endforeach
+              </select>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="form-group mb-0">
+              <label class="small">City</label>
+              <select id="filter_city" class="form-control form-control-sm">
+                <option value="">-- All Cities --</option>
+                @foreach($cities as $ct)
+                  <option value="{{ $ct->name }}">{{ $ct->name }}</option>
+                @endforeach
+              </select>
+            </div>
+          </div>
+          <div class="col-md-2">
+            <div class="form-group mb-0">
+              <label class="small">Status</label>
+              <select id="filter_status" class="form-control form-control-sm">
+                <option value="">-- Any --</option>
+                <option value="active">Active</option>
+                <option value="inactive">Inactive</option>
+              </select>
+            </div>
+          </div>
+          <div class="col-md-1 d-flex align-items-end">
+            <div class="form-group mb-0">
+              <button id="filter_apply" class="btn btn-sm btn-primary">Filter</button>
+              <button id="filter_reset" class="btn btn-sm btn-light">Reset</button>
+            </div>
+          </div>
+        </div>
+      </div>
       <div class="card-body">
         <div class="table-responsive">
           <table id="customerTable" class="table mb-0" style="width:100%">

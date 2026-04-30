@@ -173,7 +173,14 @@ $(document).ready(function () {
                 url: '{{ route('customers.list') }}',
                 dataType: 'json',
                 type: 'GET',
-                data: { _token: '{{csrf_token()}}' }
+                data: function(d) {
+                    // include CSRF token and optional filters if present on the page
+                    d._token = '{{csrf_token()}}';
+                    if ($('#filter_country').length) d.country = $('#filter_country').val();
+                    if ($('#filter_state').length) d.state = $('#filter_state').val();
+                    if ($('#filter_city').length) d.city = $('#filter_city').val();
+                    if ($('#filter_status').length) d.status = $('#filter_status').val();
+                }
             },
             columns: [
             { data: 'id' },
@@ -188,6 +195,10 @@ $(document).ready(function () {
         });
     }
     load_customer();
+
+    // Filter buttons (if present on the page)
+    $(document).on('click', '#filter_apply', function(e){ e.preventDefault(); load_customer(); });
+    $(document).on('click', '#filter_reset', function(e){ e.preventDefault(); $('#filter_country,#filter_state,#filter_city,#filter_status').val(''); load_customer(); });
 
     function load_order() {
         if ($.fn.dataTable.isDataTable('#orderTable')) {

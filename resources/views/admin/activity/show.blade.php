@@ -83,18 +83,20 @@
             </div>
           </div>
 
+          {{--
           <div class="col-md-3 col-sm-6">
             <div class="d-flex align-items-start">
               <div class="mr-3 rounded-circle bg-warning d-flex align-items-center justify-content-center" style="width:48px;height:48px;">
                 <i class="fas fa-clock text-white"></i>
               </div>
               <div>
-                <div class="text-muted text-uppercase font-weight-bold small">Date &amp; Time</div>
-                <div class="mt-1 font-weight-medium">{{ $log->created_at->format('d-m-Y, h:i A') }}</div>
-                <div class="text-muted small">{{ $log->created_at->diffForHumans() }}</div>
+                <div class="text-muted text-uppercase font-weight-bold small">Date</div>
+                <div class="mt-1 font-weight-medium">{{ $log->created_at->format('d-m-Y') }}</div>
+                <!-- <div class="text-muted small">{{ $log->created_at->diffForHumans() }}</div> -->
               </div>
             </div>
           </div>
+          --}}
 
           @if($log->model_type)
           <div class="col-md-3 col-sm-6">

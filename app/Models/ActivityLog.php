@@ -29,6 +29,14 @@ class ActivityLog extends Model
         'new_values' => 'array',
     ];
 
+    /**
+     * Ensure timestamps are cast to Carbon instances.
+     */
+    // protected $dates = [
+    //     'created_at',
+    //     'updated_at',
+    // ];
+
     // ── Relationships ──────────────────────────────
 
     public function user(): BelongsTo

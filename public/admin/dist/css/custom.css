@@ -225,10 +225,12 @@ body.frontend { padding-top: 70px; background: #F4F7FE; }
 .table th {
     font-size: 14px;
     font-weight: 600;
+    padding: .25rem !important;
 }
 
 .table td {
     vertical-align: middle;
+    padding: .25rem !important;
 }
 
 input[type="checkbox"] {
