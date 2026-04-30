@@ -18,8 +18,10 @@ class CustomerController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Customer::with(['address', 'bankDetail']);
-        return view('admin.customer.index');
+        $countries = Country::orderBy('name')->get();
+        $states = State::orderBy('name')->get();
+        $cities = City::orderBy('name')->get();
+        return view('admin.customer.index', compact('countries','states','cities'));
     }
 
     public function create()
@@ -37,7 +39,7 @@ class CustomerController extends Controller
         $request->validate([
             'name'         => 'required|string|max:255',
             'email'        => 'required|email|unique:users,email',
-            'phone'        => 'nullable|string|max:20',
+            'phone'        => 'nullable|digits:10',
             'company_name' => 'nullable|string|max:255',
             'website'      => 'nullable|url|max:255',
             'password'     => 'required|min:6',
@@ -147,7 +149,7 @@ class CustomerController extends Controller
         $request->validate([
             'name'         => 'required|string|max:255',
             'email'        => 'required|email|unique:users,email,' . $customer->id,
-            'phone'        => 'nullable|string|max:20',
+            'phone'        => 'nullable|digits:10',
             'company_name' => 'nullable|string|max:255',
             'website'      => 'nullable|url|max:255',
             'password'     => 'nullable|min:6',
@@ -261,7 +263,7 @@ class CustomerController extends Controller
             $orderColumn = $columns[$colIndex] ?? 'id';
             $orderDir = $order['dir'] ?? 'desc';
         }
-$query=Customer::query();
+            $query=Customer::query();
         //$query = Customer::whereIn('role_id', [7, 8]);
 
         if (!empty($searchValue)) {
@@ -271,6 +273,35 @@ $query=Customer::query();
                   ->orWhere('company_name', 'like', "%{$searchValue}%")
                   ->orWhere('phone', 'like', "%{$searchValue}%");
             });
+        }
+
+        // Apply filters from request (country, state, city, status)
+        $filterCountry = $request->input('country');
+        $filterState = $request->input('state');
+        $filterCity = $request->input('city');
+        $filterStatus = $request->input('status');
+
+        if ($filterCountry) {
+            $query->whereHas('address', function ($qa) use ($filterCountry) {
+                $qa->where('billing_country', $filterCountry)
+                   ->orWhere('shipping_country', $filterCountry);
+            });
+        }
+        if ($filterState) {
+            $query->whereHas('address', function ($qa) use ($filterState) {
+                $qa->where('billing_state', $filterState)
+                   ->orWhere('shipping_state', $filterState);
+            });
+        }
+        if ($filterCity) {
+            $query->whereHas('address', function ($qa) use ($filterCity) {
+                $qa->where('billing_city', $filterCity)
+                   ->orWhere('shipping_city', $filterCity);
+            });
+        }
+        if (!is_null($filterStatus) && $filterStatus !== '') {
+            if ($filterStatus === 'active') $query->where('status', 1);
+            elseif ($filterStatus === 'inactive') $query->where('status', 0);
         }
 
         $recordsTotal = Customer::count();

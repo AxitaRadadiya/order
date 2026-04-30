@@ -229,7 +229,11 @@ class ItemController extends Controller
 
     public function catalog()
      {
-         $items = Item::with(['category', 'group', 'colors']) ->where('status', 1) ->latest() ->paginate(12); 
+         $items = Item::with(['category', 'group', 'colors'])
+                      ->where('status', 1)
+                      ->where('show_item_on_web', 1)
+                      ->latest()
+                      ->paginate(12);
          return view('admin.catalog.index', compact('items')); 
     }
     public function showCatalog(Item $item)
@@ -323,7 +327,8 @@ class ItemController extends Controller
     public function activeItemList(Request $request)
     {
         $query = Item::with(['category', 'group', 'colors'])
-                     ->where('status', 1);          // ✅ inactive items excluded
+                     ->where('status', 1)
+                     ->where('show_item_on_web', 1); // only items marked to show on web
 
         $items = $query->orderBy('name')->get()->map(function ($item) {
             $sizes = [];

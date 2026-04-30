@@ -56,7 +56,7 @@
         <div class="col-md-3 mb-4">
 
             {{-- CLICKABLE CARD --}}
-            <a href="{{ route('catalog.show', $item->id) }}" class="product-link">
+            <div class="product-link" onclick="window.location='{{ route('catalog.show', $item->id) }}'" style="cursor:pointer;">
 
                 <div class="card product-card shadow-sm">
 
@@ -106,11 +106,18 @@
                             </span>
                         </div>
 
+                        {{-- Add Order button for retailers/distributors --}}
+                        @if(auth()->check() && auth()->user()->hasRole(['retailer', 'distributor']))
+                            <a href="{{ route('orders.create', ['item_id' => $item->id]) }}" class="btn btn-sm btn-primary mt-2" onclick="event.stopPropagation();">
+                                <i class="fas fa-cart-plus"></i> Add Order
+                            </a>
+                        @endif
+
                     </div>
 
                 </div>
 
-            </a>
+            </div>
 
         </div>
 

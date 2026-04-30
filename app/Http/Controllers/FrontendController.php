@@ -10,7 +10,11 @@ class FrontendController extends Controller
 {
     public function home()
 {
-    $items = Item::where('status',1)->latest()->take(8)->get();
+        $items = Item::where('status', 1)
+                     ->where('show_item_on_web', 1)
+                     ->latest()
+                     ->take(8)
+                     ->get();
     return view('frontend.home', compact('items'));
 }
 
@@ -18,6 +22,7 @@ class FrontendController extends Controller
     {
         $items = Item::with('category')
             ->where('status', 1)
+            ->where('show_item_on_web', 1)
             ->latest()
             ->paginate(12);
 
@@ -30,6 +35,7 @@ class FrontendController extends Controller
         $items = Item::with('category')
             ->where('status', 1)
             ->where('category_id', $category->id)
+            ->where('show_item_on_web', 1)
             ->latest()
             ->paginate(12);
 
@@ -41,6 +47,7 @@ class FrontendController extends Controller
         $categories = Category::orderBy('name')->get();
         $items = Item::with('category')
             ->where('status', 1)
+            ->where('show_item_on_web', 1)
             ->latest()
             ->paginate(12);
 
@@ -51,6 +58,7 @@ class FrontendController extends Controller
     {
         $items = Item::where('status', 1)
             ->where('category_id', $category->id)
+            ->where('show_item_on_web', 1)
             ->latest()
             ->get()
             ->map(function ($it) {
@@ -69,6 +77,10 @@ class FrontendController extends Controller
 
     public function show(Item $item)
     {
+        if (! $item->show_item_on_web) {
+            abort(404);
+        }
+
         return view('frontend.product-details', compact('item'));
     }
 }
