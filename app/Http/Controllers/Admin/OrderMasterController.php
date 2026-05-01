@@ -130,9 +130,27 @@ class OrderMasterController extends Controller
     // -----------------------------------------------------------------------
     // Create / Store
     // -----------------------------------------------------------------------
-    public function create()
+    public function create(Request $request)
     {
-        return view('admin.orders.create', $this->viewData());
+        $data = $this->viewData();
+
+        // Prefill item_id if provided in query (from catalog "Add Order" button)
+        $data['pre_item_id'] = $request->query('item_id');
+
+        // If a retailer/distributor is creating the order, default customer to themselves
+        $preUser = null;
+        try {
+            $user = auth()->user();
+            if ($user && $user->hasRole(['retailer', 'distributor'])) {
+                $preUser = $user->id;
+            }
+        } catch (\Throwable $e) {
+            $preUser = null;
+        }
+
+        $data['pre_user_id'] = $preUser;
+
+        return view('admin.orders.create', $data);
     }
 
     public function store(Request $request)

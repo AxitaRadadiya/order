@@ -45,29 +45,45 @@ class AuthenticatedSessionController extends Controller
             if ($user->hasRole(['super-admin', 'admin'])) {
                 $request->session()->forget('allowed_modules');
             } elseif ($role) {
-                $permissionNames = $role->permissions()->pluck('name')->toArray();
+                $permissionNames = $role->permissions()->pluck('name')->map(fn($n) => strtolower($n))->toArray();
+
+                // If role has a catch-all permission name like `all-modules` or `all`, grant full access
+                if (in_array('all-modules', $permissionNames, true) || in_array('all', $permissionNames, true)) {
+                    $request->session()->forget('allowed_modules');
+                    // short-circuit — full access
+                    return redirect()->intended(route('dashboard', absolute: false));
+                }
 
                 $modules = [];
 
-                foreach ($permissionNames as $perm) {
-                    if (str_starts_with($perm, 'item-')) {
-                        $modules[] = 'items';
-                    }
+                // Fixed permissions for retailer and distributor roles
+                if ($user->hasRole(['retailer', 'distributor'])) {
+                    $modules = ['catalog', 'orders'];
+                } else {
+                    foreach ($permissionNames as $perm) {
+                        if (str_starts_with($perm, 'item-')) {
+                            $modules[] = 'items';
+                        }
 
-                    if (str_starts_with($perm, 'order-')) {
-                        $modules[] = 'orders';
-                    }
+                        if (str_starts_with($perm, 'order-')) {
+                            $modules[] = 'orders';
+                        }
 
-                    if (str_starts_with($perm, 'dashboard-')) {
-                        $modules[] = 'dashboard';
-                    }
+                        if (str_starts_with($perm, 'catalog-') || $perm === 'catalog') {
+                            $modules[] = 'catalog';
+                        }
 
-                    if (str_starts_with($perm, 'user-')) {
-                        $modules[] = 'users';
-                    }
+                        if (str_starts_with($perm, 'dashboard-')) {
+                            $modules[] = 'dashboard';
+                        }
 
-                    if (str_starts_with($perm, 'role-') || str_starts_with($perm, 'permission-')) {
-                        $modules[] = 'settings';
+                        if (str_starts_with($perm, 'user-')) {
+                            $modules[] = 'users';
+                        }
+
+                        if (str_starts_with($perm, 'role-') || str_starts_with($perm, 'permission-')) {
+                            $modules[] = 'settings';
+                        }
                     }
                 }
 
@@ -85,7 +101,7 @@ class AuthenticatedSessionController extends Controller
             $request->session()->forget('allowed_modules');
         }
 
-        // If retailer or distributor logged in, send them to the public catalog
+        // If retailer or distributor logged in, send them to the catalog
         try {
             if ($user->hasRole(['retailer', 'distributor'])) {
                 return redirect()->intended(route('catalog', absolute: false));

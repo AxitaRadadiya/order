@@ -263,7 +263,9 @@ class CustomerController extends Controller
             $orderColumn = $columns[$colIndex] ?? 'id';
             $orderDir = $order['dir'] ?? 'desc';
         }
-            $query=Customer::query();
+            // Only list customers who are assigned retailer/distributor roles
+            $roleIds = Role::whereIn('name', ['retailer', 'distributor'])->pluck('id')->toArray();
+            $query = Customer::whereIn('role_id', $roleIds);
         //$query = Customer::whereIn('role_id', [7, 8]);
 
         if (!empty($searchValue)) {

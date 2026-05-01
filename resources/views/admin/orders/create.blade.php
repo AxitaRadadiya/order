@@ -703,8 +703,46 @@
     // initialize Select2 on existing size-selects
     if ($.fn.select2) { $('.size-select').select2({ placeholder: 'Sizes', width: '100%' }); }
 
-    // trigger customer change on load to auto-fill addresses
-    $('#customer_id').trigger('change');
+    // Prefill customer and item if provided by controller (from catalog Add Order)
+    var PRE_ITEM_ID = @json($pre_item_id ?? null);
+    var PRE_USER_ID = @json($pre_user_id ?? null);
+
+    if (PRE_USER_ID) {
+      $('#customer_id').val(PRE_USER_ID).trigger('change');
+    } else {
+      // trigger customer change on load to auto-fill addresses for selected customer (old input)
+      $('#customer_id').trigger('change');
+    }
+
+    if (PRE_ITEM_ID) {
+      // try to select on first existing row
+      var $first = $('#itemsTable tbody tr').first();
+      if ($first.length) {
+        var $sel = $first.find('.article-select');
+        var $opt = $sel.find('option[data-id="' + PRE_ITEM_ID + '"]');
+        if ($opt.length) {
+          $sel.val($opt.val()).trigger('change');
+        } else {
+          // fallback: find article_number from ITEMS array by id
+          var found = ITEMS.find(function(i){ return i.id == PRE_ITEM_ID; });
+          if (found && found.article_number) {
+            $sel.val(found.article_number).trigger('change');
+          }
+        }
+      } else {
+        // no rows — append one and set
+        var idx = rowCounter++;
+        $('#itemsTable tbody').append(buildRow(idx));
+        var $sel = $('#itemsTable tbody tr:last').find('.article-select');
+        var $opt = $sel.find('option[data-id="' + PRE_ITEM_ID + '"]');
+        if ($opt.length) {
+          $sel.val($opt.val()).trigger('change');
+        } else {
+          var found = ITEMS.find(function(i){ return i.id == PRE_ITEM_ID; });
+          if (found && found.article_number) { $sel.val(found.article_number).trigger('change'); }
+        }
+      }
+    }
   });
 </script>
 @endsection

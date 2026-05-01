@@ -84,16 +84,36 @@
       @elseif($user)
       @php
         if (!empty($allowed)) {
-          $showItems = in_array('items', $allowed, true);
-          $showOrders = in_array('orders', $allowed, true);
+          $showItems   = in_array('items',   $allowed, true);
+          $showOrders  = in_array('orders',  $allowed, true);
+          $showCatalog = in_array('catalog', $allowed, true);
         } else {
           // Fallback: derive from role permissions
           $role = $user->role;
           $perms = $role ? $role->permissions()->pluck('name')->toArray() : [];
-          $showItems = collect($perms)->contains(fn($p) => str_starts_with($p, 'item-'));
-          $showOrders = collect($perms)->contains(fn($p) => str_starts_with($p, 'order-'));
+          $showItems   = collect($perms)->contains(fn($p) => str_starts_with($p, 'item-'));
+          $showOrders  = collect($perms)->contains(fn($p) => str_starts_with($p, 'order-'));
+          $showCatalog = $user->hasRole(['retailer', 'distributor'])
+                         || collect($perms)->contains(fn($p) => str_starts_with($p, 'catalog-') || $p === 'catalog');
+        }
+
+        // Retailer / distributor always get catalog + orders only
+        if ($user->hasRole(['retailer', 'distributor'])) {
+          $showCatalog = true;
+          $showOrders  = true;
+          $showItems   = false;
         }
       @endphp
+
+      @if($showCatalog)
+      <li class="nav-header">Shop</li>
+        <li class="nav-item">
+          <a href="{{ route('catalog') }}" class="nav-link {{ Request::routeIs('catalog', 'catalog.show') ? 'active' : '' }}">
+            <i class="nav-icon"></i>
+            <p>🛍️ Catalog</p>
+          </a>
+        </li>
+      @endif
 
       @if($showItems || $showOrders)
       <li class="nav-header">Sell</li>
@@ -116,12 +136,6 @@
         @endif
       @endif
       @endif
-       <li class="nav-item">
-            <a href="{{ route('catalog') }}" class="nav-link {{ Request::routeIs('catalog') ? 'active' : '' }}">
-              <i class="nav-icon"></i>
-              <p>🛍️ Catalog</p>
-            </a>
-          </li> 
     </ul>
   </nav>
 </div>
