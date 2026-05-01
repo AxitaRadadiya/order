@@ -12,7 +12,7 @@ class Customer extends Model
         'name',
         'company_name',
         'email',
-        'phone',
+        'mobile',
         'website',
         'password',
         'payment_terms',

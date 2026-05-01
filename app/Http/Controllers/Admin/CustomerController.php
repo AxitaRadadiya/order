@@ -39,7 +39,7 @@ class CustomerController extends Controller
         $request->validate([
             'name'         => 'required|string|max:255',
             'email'        => 'required|email|unique:users,email',
-            'phone'        => 'nullable|digits:10',
+            'mobile'        => 'nullable|digits:10',
             'company_name' => 'nullable|string|max:255',
             'website'      => 'nullable|url|max:255',
             'password'     => 'required|min:6',
@@ -57,7 +57,7 @@ class CustomerController extends Controller
                 'name'            => $request->name,
                 'company_name'    => $request->company_name,
                 'email'           => $request->email,
-                'phone'           => $request->phone,
+                'mobile'           => $request->mobile,
                 'website'         => $request->website,
                 'password'        => Hash::make($request->password),
                 'role_id'         => $request->input('role_id') ?? null,
@@ -149,7 +149,7 @@ class CustomerController extends Controller
         $request->validate([
             'name'         => 'required|string|max:255',
             'email'        => 'required|email|unique:users,email,' . $customer->id,
-            'phone'        => 'nullable|digits:10',
+            'mobile'        => 'nullable|digits:10',
             'company_name' => 'nullable|string|max:255',
             'website'      => 'nullable|url|max:255',
             'password'     => 'nullable|min:6',
@@ -167,7 +167,7 @@ class CustomerController extends Controller
                 'name'            => $request->name,
                 'company_name'    => $request->company_name,
                 'email'           => $request->email,
-                'phone'           => $request->phone,
+                'mobile'           => $request->mobile,
                 'website'         => $request->website,
                 'role_id'         => $request->filled('role_id') ? $request->role_id : ($customer->role_id ?? null),
                 'payment_terms'   => $request->payment_terms,
@@ -248,7 +248,7 @@ class CustomerController extends Controller
     public function list(Request $request)
     {
         
-        $columns = ['id', 'name', 'email', 'phone', 'company_name', 'status'];
+        $columns = ['id', 'name', 'email', 'mobile', 'company_name', 'status'];
 
         $draw = intval($request->get('draw'));
         $start = intval($request->get('start', 0));
@@ -273,7 +273,7 @@ class CustomerController extends Controller
                 $q->where('name', 'like', "%{$searchValue}%")
                   ->orWhere('email', 'like', "%{$searchValue}%")
                   ->orWhere('company_name', 'like', "%{$searchValue}%")
-                  ->orWhere('phone', 'like', "%{$searchValue}%");
+                  ->orWhere('mobile', 'like', "%{$searchValue}%");
             });
         }
 
@@ -347,7 +347,7 @@ class CustomerController extends Controller
                 'id' => $customer->id,
                 'name' => $customer->name,
                 'email' => $customer->email,
-                'phone' => $customer->phone,
+                'mobile' => $customer->mobile,
                 'company_name' => $customer->company_name,
                 'status' => $statusBadge,
                 'action' => $actions,

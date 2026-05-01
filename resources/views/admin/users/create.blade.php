@@ -12,9 +12,13 @@
     <div class="main-card">
       <div class="main-card-head" style="justify-content: space-between;">
         <div class="main-card-title"><i class="fas fa-user-edit"></i> User Details</div>
-        <a href="{{ route('users.index') }}" class="btn-cancel mb-1">
-          <i class="fas fa-arrow-left"></i> Back
-        </a>
+        <div class="col-sm-6">
+          <ol class="breadcrumb float-sm-right">
+            <li class="breadcrumb-item"><a href="{{ route('dashboard') }}">Home</a></li>
+            <li class="breadcrumb-item"><a href="{{ route('users.index') }}">Users</a></li>
+            <li class="breadcrumb-item active">Create</li>
+          </ol>
+        </div>
       </div>
       <div class="main-card-body">
 

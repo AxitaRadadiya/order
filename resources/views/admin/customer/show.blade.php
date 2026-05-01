@@ -39,7 +39,7 @@
               <div class="col-md-4 mb-2"><strong class="text-muted">Name:</strong> {{ $customer->name }}</div>
               <div class="col-md-4 mb-2"><strong class="text-muted">Company Name:</strong> {{ $customer->company_name ?? '-' }}</div>
               <div class="col-md-4 mb-2"><strong class="text-muted">Email:</strong> <a href="mailto:{{ $customer->email }}">{{ $customer->email }}</a></div>
-              <div class="col-md-4 mb-2"><strong class="text-muted">Mobile Number:</strong> {{ $customer->phone ?? '-' }}</div>
+              <div class="col-md-4 mb-2"><strong class="text-muted">Mobile Number:</strong> {{ $customer->mobile ?? '-' }}</div>
               <div class="col-md-4 mb-2"><strong class="text-muted">Payment Terms:</strong> {{ $customer->payment_terms ? str_replace('_',' ', ucfirst($customer->payment_terms)) : '-' }}</div>
               <div class="col-md-4 mb-2"><strong class="text-muted">Place of Supply:</strong> {{ $customer->place_of_supply ?? '-' }}</div>
             </div>

@@ -18,7 +18,7 @@
           <div class="main-card-title fs-5 fw-bold" style="font-size:20px;">
             <i class="fas fa-tag me-2"></i> Role Info
           </div>
-          <a href="{{ route('roles.index') }}" class="btn-cancel">
+          <a href="{{ route('roles.index') }}" class="btn-cancel mb-1">
             <i class="fas fa-arrow-left me-1"></i> Back
           </a>
         </div>
@@ -44,8 +44,8 @@
           </div>
 
           <div>
-            <button type="button" class="btn-submit me-1" onclick="selectAll(true)">Select All</button>
-            <button type="button" class="btn-cancel" onclick="selectAll(false)">Clear</button>
+            <button type="button" class="btn-submit mr-1 mb-1" onclick="selectAll(true)">Select All</button>
+            <button type="button" class="btn-cancel mb-1" onclick="selectAll(false)">Clear</button>
           </div>
         </div>
 
@@ -104,8 +104,8 @@
         </div>
 
         <div class="d-flex justify-content-end mt-3">
-          <button type="submit" class="btn-submit">Create Role</button>
-          <a href="{{ route('roles.index') }}" class="btn-cancel ms-2">Cancel</a>
+          <button type="submit" class="btn-submit mr-1">Create Role</button>
+          <a href="{{ route('roles.index') }}" class="btn-cancel">Cancel</a>
         </div>
       </div>
 

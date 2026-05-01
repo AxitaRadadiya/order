@@ -186,7 +186,7 @@ $(document).ready(function () {
             { data: 'id' },
             { data: 'name' },
             { data: 'email' },
-            { data: 'phone' },
+            { data: 'mobile' },
             { data: 'company_name' },
             { data: 'status' },
             { data: 'action' }

@@ -5,22 +5,6 @@
 @endsection
 @section('content')
 
-<div class="page-hero">
-  <div class="orb"></div>
-  <div class="container-fluid" style="position:relative;z-index:2;">
-    <div class="section-tabs">
-      <a href="{{ route('users.index') }}" class="section-tab active">
-        <i class="fas fa-users"></i>
-        <span>User</span>
-      </a>
-      <a href="{{ route('roles.index') }}" class="section-tab">
-        <i class="fas fa-user-tag"></i>
-        <span>Role</span>
-      </a>
-    </div>
-  </div>
-</div>
-
 <div class="pull-card">
   <div class="container-fluid" style="padding:0;">
     <div class="main-card">
@@ -29,9 +13,13 @@
           <i class="fas fa-pen"></i>Edit User
           <span class="count-badge">{{ $user->name }}</span>
         </div>
-        <a href="{{ route('users.index') }}" class="btn-cancel mb-1">
-          <i class="fas fa-arrow-left mr-1"></i> Back
-        </a>
+        <div class="col-sm-6">
+          <ol class="breadcrumb float-sm-right">
+            <li class="breadcrumb-item"><a href="{{ route('dashboard') }}">Home</a></li>
+            <li class="breadcrumb-item"><a href="{{ route('users.index') }}">Users</a></li>
+            <li class="breadcrumb-item active">Edit</li>
+          </ol>
+      </div>
       </div>
       <div class="main-card-body">
 

@@ -37,7 +37,7 @@
           </a>
         </div>
       </div>
-      <div class="card-body pt-2 pb-0 border-bottom">
+      <div class="card-body pt-2 pb-3 border-bottom">
         <div class="row">
           <div class="col-md-3">
             <div class="form-group mb-0">
@@ -98,7 +98,7 @@
                 <th>ID</th>
                 <th>Name</th>
                 <th>Email</th>
-                <th>Phone</th>
+                <th>Mobile</th>
                 <th>Company</th>
                 <th>Status</th>
                 <th width="140">Action</th>

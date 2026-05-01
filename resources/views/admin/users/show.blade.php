@@ -5,24 +5,19 @@
 @endsection
 @section('content')
 
-<div class="page-hero">
-  <div class="orb"></div>
-  <div class="container-fluid" style="position:relative;z-index:2;">
-    <div class="section-tabs">
-      <a href="{{ route('users.index') }}" class="section-tab active">
-        <i class="fas fa-users"></i>
-        <span>User</span>
-      </a>
-      <a href="{{ route('roles.index') }}" class="section-tab">
-        <i class="fas fa-user-tag"></i>
-        <span>Role</span>
-      </a>
-    </div>
-    <div class="subsection-tabs">
-      <a href="{{ route('users.edit', $user->id) }}" class="subsection-tab">
-        <i class="fas fa-pen"></i>
-        <span>Edit</span>
-      </a>
+<div class="content-header">
+  <div class="container-fluid">
+    <div class="row mb-2">
+      <div class="col-sm-6">
+        <h1 class="m-0">User Details</h1>
+      </div>
+      <div class="col-sm-6">
+        <ol class="breadcrumb float-sm-right">
+          <li class="breadcrumb-item"><a href="{{ route('dashboard') }}">Home</a></li>
+          <li class="breadcrumb-item"><a href="{{ route('users.index') }}">Users</a></li>
+          <li class="breadcrumb-item active">show</li>
+        </ol>
+      </div>
     </div>
   </div>
 </div>

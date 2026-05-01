@@ -94,10 +94,10 @@
               <div class="form-group">
                 <label>Mobile Number</label>
                 <input type="tel" inputmode="numeric" pattern="[0-9]{10}"
-                       class="form-control phone-only @error('phone') is-invalid @enderror"
-                       name="phone" value="{{ old('phone', $customer->phone) }}"
+                       class="form-control phone-only @error('mobile') is-invalid @enderror"
+                       name="mobile" value="{{ old('mobile', $customer->mobile) }}"
                        placeholder="10-digit mobile number" maxlength="10">
-                @error('phone')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                @error('mobile')<div class="invalid-feedback">{{ $message }}</div>@enderror
               </div>
             </div>
 
