@@ -23,7 +23,7 @@
   <div class="card card-default">
     <div class="card-header">
       <h3 class="card-title">All Orders</h3>
-      <div class="card-tools">
+      <div class="card-tools d-flex align-items-center">
         <a href="{{ route('orders.create') }}" class="btn-create">
           <i class="fas fa-plus"></i> New Order
         </a>
