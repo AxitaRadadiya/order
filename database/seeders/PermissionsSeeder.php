@@ -63,6 +63,17 @@ class PermissionsSeeder extends Seeder
                     ['name' => 'report-delete'],
                 ],
             ],
+            'Catalog' => [
+                'Catalog' => [
+                    ['name' => 'catalog'],
+                ],
+            ],
+            'System' => [
+                'System' => [
+                    // catch-all permission to grant full access via login logic
+                    ['name' => 'all-modules'],
+                ],
+            ],
         ];
 
         foreach ($permissions as $modules) {

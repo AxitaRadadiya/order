@@ -28,6 +28,16 @@ class OrderMasterController extends Controller
     {
         $query = OrderMaster::with('customer');
 
+        // If the logged-in user is a retailer/distributor, show only their orders
+        try {
+            $authUser = auth()->user();
+            if ($authUser && $authUser->hasRole(['retailer', 'distributor'])) {
+                $query->where('user_id', $authUser->id);
+            }
+        } catch (\Throwable $e) {
+            // ignore and show default
+        }
+
         $totalData = $query->count();
         $totalFiltered = $totalData;
 
@@ -185,6 +195,12 @@ class OrderMasterController extends Controller
     {
         $order->load('items', 'customer');
 
+        // Retailer/distributor may only view their own orders
+        $user = auth()->user();
+        if ($user && $user->hasRole(['retailer', 'distributor']) && $order->user_id !== $user->id) {
+            abort(403);
+        }
+
         return view('admin.orders.show', compact('order'));
     }
 
@@ -195,6 +211,11 @@ class OrderMasterController extends Controller
     {
         $order->load('items');
 
+        $user = auth()->user();
+        if ($user && $user->hasRole(['retailer', 'distributor']) && $order->user_id !== $user->id) {
+            abort(403);
+        }
+
         return view('admin.orders.edit', array_merge(
             $this->viewData(),
             compact('order')
@@ -203,6 +224,11 @@ class OrderMasterController extends Controller
 
     public function update(Request $request, OrderMaster $order)
     {
+        $user = auth()->user();
+        if ($user && $user->hasRole(['retailer', 'distributor']) && $order->user_id !== $user->id) {
+            abort(403);
+        }
+
         $request->validate([
             'user_id' => 'required|exists:users,id',
             'date'    => 'required|date',
@@ -233,6 +259,11 @@ class OrderMasterController extends Controller
     // -----------------------------------------------------------------------
     public function destroy(OrderMaster $order)
     {
+        $user = auth()->user();
+        if ($user && $user->hasRole(['retailer', 'distributor']) && $order->user_id !== $user->id) {
+            abort(403);
+        }
+
         $order->delete();
 
         return redirect()->route('orders.index')->with('success', 'Order deleted.');
@@ -244,7 +275,19 @@ class OrderMasterController extends Controller
 
     private function viewData(): array
     {
-        $customers = User::with('address')->orderBy('name')->get();
+        $customersQuery = User::with('address')->orderBy('name');
+
+        // For retailer/distributor users, restrict customer list to themselves
+        try {
+            $u = auth()->user();
+            if ($u && $u->hasRole(['retailer', 'distributor'])) {
+                $customersQuery->where('id', $u->id);
+            }
+        } catch (\Throwable $e) {
+            // ignore
+        }
+
+        $customers = $customersQuery->get();
         $items     = Item::orderBy('name')->get();
 
         $customersJson = $customers->mapWithKeys(function (User $u) {

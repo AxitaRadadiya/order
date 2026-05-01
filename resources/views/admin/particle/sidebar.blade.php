@@ -84,17 +84,21 @@
       @elseif($user)
       @php
         if (!empty($allowed)) {
-          $showItems   = in_array('items',   $allowed, true);
-          $showOrders  = in_array('orders',  $allowed, true);
-          $showCatalog = in_array('catalog', $allowed, true);
+          $showItems    = in_array('items',     $allowed, true);
+          $showOrders   = in_array('orders',    $allowed, true);
+          $showCatalog  = in_array('catalog',   $allowed, true);
+          $showCustomers= in_array('customers', $allowed, true);
+          $showSettings = in_array('settings',  $allowed, true);
         } else {
-          // Fallback: derive from role permissions
+          // Fallback: derive from role permissions (normalize to lowercase)
           $role = $user->role;
-          $perms = $role ? $role->permissions()->pluck('name')->toArray() : [];
-          $showItems   = collect($perms)->contains(fn($p) => str_starts_with($p, 'item-'));
-          $showOrders  = collect($perms)->contains(fn($p) => str_starts_with($p, 'order-'));
-          $showCatalog = $user->hasRole(['retailer', 'distributor'])
-                         || collect($perms)->contains(fn($p) => str_starts_with($p, 'catalog-') || $p === 'catalog');
+          $perms = $role ? $role->permissions()->pluck('name')->map(fn($n) => strtolower($n))->toArray() : [];
+          $showItems    = collect($perms)->contains(fn($p) => str_starts_with($p, 'item-'));
+          $showOrders   = collect($perms)->contains(fn($p) => str_starts_with($p, 'order-'));
+          $showCatalog  = $user->hasRole(['retailer', 'distributor'])
+                          || collect($perms)->contains(fn($p) => str_starts_with($p, 'catalog-') || $p === 'catalog');
+          $showCustomers= collect($perms)->contains(fn($p) => str_starts_with($p, 'customer-'));
+          $showSettings = collect($perms)->contains(fn($p) => str_starts_with($p, 'role-') || str_starts_with($p, 'permission-') || str_starts_with($p, 'setting-'));
         }
 
         // Retailer / distributor always get catalog + orders only
@@ -113,6 +117,16 @@
             <p>🛍️ Catalog</p>
           </a>
         </li>
+      @endif
+
+      @if($showCustomers)
+      <li class="nav-header">System</li>
+      <li class="nav-item">
+        <a href="{{ route('customers.index') }}" class="nav-link {{ Request::routeIs('customers.*') ? 'active' : '' }}">
+          <i class="nav-icon"></i>
+          <p>🏢 Customers</p>
+        </a>
+      </li>
       @endif
 
       @if($showItems || $showOrders)
@@ -134,7 +148,41 @@
           </a>
         </li>
         @endif
-      @endif
+        @endif
+
+        @if($showSettings)
+        <li class="nav-header">Manage</li>
+        <li class="nav-item {{ Request::routeIs('roles.*', 'users.*', 'master.*', 'item-master.*') ? 'menu-open' : '' }}">
+          <a href="#" class="nav-link {{ Request::routeIs('roles.*', 'users.*', 'master.*', 'item-master.*') ? 'active' : '' }}">
+            <i class="nav-icon"></i>
+            <p>
+              ⚙️ Settings
+              <i class="right fas fa-angle-left"></i>
+            </p>
+          </a>
+
+          <ul class="nav nav-treeview">
+            <li class="nav-item">
+              <a href="{{ route('roles.index') }}" class="nav-link {{ Request::routeIs('roles.*', 'users.*') ? 'active' : '' }}">
+                <i class="nav-icon"></i>
+                <p>👥 User & Role</p>
+              </a>
+            </li>
+            <li class="nav-item">
+              <a href="{{ route('master.index') }}" class="nav-link {{ Request::routeIs('master.*') ? 'active' : '' }}">
+                <i class="nav-icon"></i>
+                <p>📋 Master Data</p>
+              </a>
+            </li>
+            <li class="nav-item">
+              <a href="{{ route('item-master.index') }}" class="nav-link {{ Request::routeIs('item-master.*') ? 'active' : '' }}">
+                <i class="nav-icon"></i>
+                <p>🧩 Item Master</p>
+              </a>
+            </li>
+          </ul>
+        </li>
+        @endif
       @endif
     </ul>
   </nav>

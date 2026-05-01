@@ -21,11 +21,12 @@ class UserController extends Controller
 
     public function index(): View
     {
-        $adminRole = Role::firstOrCreate(['name' => 'admin']);
+        // Exclude customers (retailer/distributor) from the users index
+        $excludeRoleIds = Role::whereIn('name', ['retailer', 'distributor'])->pluck('id')->toArray();
 
         return view('admin.users.index', [
             'users' => User::with(['role'])
-                ->where('role_id', $adminRole->id)
+                ->when(!empty($excludeRoleIds), fn($q) => $q->whereNotIn('role_id', $excludeRoleIds))
                 ->orderBy('id')
                 ->paginate(15),
         ]);
@@ -143,8 +144,8 @@ class UserController extends Controller
 
     public function userList(Request $request)
     {
-        $adminRole = Role::firstOrCreate(['name' => 'admin']);
-        $query = User::with(['role'])->where('role_id', $adminRole->id);
+        $excludeRoleIds = Role::whereIn('name', ['retailer', 'distributor'])->pluck('id')->toArray();
+        $query = User::with(['role'])->when(!empty($excludeRoleIds), fn($q) => $q->whereNotIn('role_id', $excludeRoleIds));
 
         $totalData = $query->count();
         $totalFiltered = $totalData;

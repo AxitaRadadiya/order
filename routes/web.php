@@ -108,9 +108,14 @@ Route::group(['middleware' => ['auth']], function () {
     Route::get('admin/profile/password', [AdminController::class, 'password'])->name('admin.profile.password');
     Route::patch('admin/profile', [AdminController::class, 'update'])->name('admin.profile.update');
     Route::post('admin/profile/password', [AdminController::class, 'updatePassword'])->name('admin.profile.updatePassword');
-   //catalog routes
-    Route::get('/catalog', [ItemController::class, 'catalog'])->name('catalog');
-    Route::get('/catalog/{item}', [ItemController::class, 'showCatalog'])->name('catalog.show');
+  //catalog routes (protected by module access middleware)
+  Route::get('/catalog', [ItemController::class, 'catalog'])
+    ->name('catalog')
+    ->middleware(\App\Http\Middleware\EnsureModuleAccess::class . ':catalog');
+
+  Route::get('/catalog/{item}', [ItemController::class, 'showCatalog'])
+    ->name('catalog.show')
+    ->middleware(\App\Http\Middleware\EnsureModuleAccess::class . ':catalog');
 
  
 

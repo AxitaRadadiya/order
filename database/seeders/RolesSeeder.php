@@ -41,5 +41,20 @@ class RolesSeeder extends Seeder
             $permissionIds = Permission::pluck('id')->toArray();
             $superAdminRole->permissions()->sync($permissionIds);
         }
+
+        // Ensure retailer/distributor have catalog permission by default
+        $catalogPerm = Permission::where('name', 'catalog')->first();
+        if ($catalogPerm) {
+            $retailer = Role::where('name', 'retailer')->first();
+            $distributor = Role::where('name', 'distributor')->first();
+
+            if ($retailer) {
+                $retailer->permissions()->syncWithoutDetaching([$catalogPerm->id]);
+            }
+
+            if ($distributor) {
+                $distributor->permissions()->syncWithoutDetaching([$catalogPerm->id]);
+            }
+        }
     }
 }

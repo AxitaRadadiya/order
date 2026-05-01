@@ -81,13 +81,25 @@ class AuthenticatedSessionController extends Controller
                             $modules[] = 'users';
                         }
 
+                        if (str_starts_with($perm, 'customer-')) {
+                            $modules[] = 'customers';
+                        }
+
+                        if (str_starts_with($perm, 'setting-')) {
+                            $modules[] = 'settings';
+                        }
+
+                        if (str_starts_with($perm, 'report-')) {
+                            $modules[] = 'reports';
+                        }
+
                         if (str_starts_with($perm, 'role-') || str_starts_with($perm, 'permission-')) {
                             $modules[] = 'settings';
                         }
                     }
                 }
 
-                $modules = array_values(array_unique($modules));
+                $modules = array_values(array_unique(array_map(fn($m) => strtolower($m), $modules)));
 
                 if (empty($modules)) {
                     $request->session()->forget('allowed_modules');
