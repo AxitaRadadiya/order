@@ -1,63 +1,3 @@
-<style>
-.upload-box {
-    display: flex;
-    gap: 12px;
-    flex-wrap: wrap;
-    padding: 10px;
-    border: 1px solid #eee;
-    border-radius: 10px;
-    background: #fafafa;
-	min-height: 140px;
-}
-
-.preview-item {
-    width: 120px;
-    height: 120px;
-    position: relative;
-    border-radius: 10px;
-    overflow: hidden;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-}
-
-.preview-item img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-}
-
-.remove-btn {
-    position: absolute;
-    top: 6px;
-    right: 6px;
-    background: #ff4d4f;
-    color: #fff;
-    border: none;
-    border-radius: 50%;
-    width: 26px;
-    height: 26px;
-    cursor: pointer;
-    font-size: 16px;
-}
-
-.upload-placeholder {
-    width: 120px;
-    height: 120px;
-    border: 2px dashed #7F53AC;
-    border-radius: 10px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    color: #7F53AC;
-    font-weight: 600;
-    transition: 0.3s;
-}
-
-.upload-placeholder:hover {
-    background: #f3efff;
-}
-
-</style>
 @extends('admin.layouts.app')
 @section('title', 'Create Item')
 
@@ -66,7 +6,7 @@
 	<div class="container-fluid">
 		<div class="row mb-2">
 			<div class="col-sm-6">
-				<h1 class="m-0">Create Item</h1>
+				<h1 class="m-0"><i class="mr-2 text-teal"></i>Create Item</h1>
 			</div>
 			<div class="col-sm-6">
 				<ol class="breadcrumb float-sm-right">
@@ -80,13 +20,14 @@
 </div>
 <section class="content">
 	<div class="container-fluid">
-		<div class="card card-outline card-primary">
+		<div class="card card-outline card-primary h-100">
 			<div class="card-header">
 				<h3 class="card-title"><i class="fas fa-box mr-1"></i>Create Item</h3>
 			</div>
 			<div class="main-card-body">
 				<form action="{{ route('items.store') }}" method="POST" enctype="multipart/form-data">
 					@csrf
+
 					<div class="row">
 						<div class="col-md-4">
 							<div class="form-group">
@@ -204,17 +145,36 @@
 								<input type="number" step="0.01" name="tax_percent" value="{{ old('tax_percent', 0) }}" class="form-control">
 							</div>
 						</div>
-						<div class="col-md-12">
-    						<div class="form-group">
-        						<label class="font-weight-bold">
-           						 	Upload Images 
-           							 <small class="text-muted">(Max 5 • JPG/PNG • 2MB)</small>
-        						</label>
 
-        						<div id="uploadBox" class="upload-box"></div>
-									<input type="file" id="itemImages" name="images[]" accept="image/jpeg,image/png" multiple hidden>
-									<small id="imageError" class="text-danger d-block mt-2"></small>
-    							</div>
+						{{-- ✅ MULTIPLE IMAGES: up to 5, jpg/png only, max 2 MB each --}}
+						<div class="col-md-12">
+							<div class="form-group">
+								<label>
+									Images
+									<small class="text-muted">(Max 5 images • JPG / PNG only • Max 2 MB each)</small>
+								</label>
+
+								<input type="file" id="itemImages" name="images[]" multiple accept=".jpg,.jpeg,.png" style="display:none">
+
+								<div id="uploadDropzone" class="d-flex align-items-center p-3 mb-2" style="border:2px dashed #e6d9fb;border-radius:10px;min-height:140px;gap:16px;background:#fff;">
+									<div id="uploadTile" style="width:110px;height:110px;border:2px dashed #caa7f0;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#6b3fa8;cursor:pointer;flex-shrink:0;">
+										<div style="text-align:center;font-size:16px;font-weight:600;">+ Upload</div>
+									</div>
+
+									<div id="imagePreviewContainer" class="d-flex flex-wrap" style="gap:8px;flex:1;">
+										<!-- thumbnails go here -->
+									</div>
+								</div>
+
+								@error('images')
+									<div class="text-danger small mt-1">{{ $message }}</div>
+								@enderror
+								@error('images.*')
+									<div class="text-danger small mt-1">{{ $message }}</div>
+								@enderror
+
+								<input type="hidden" name="primary_image" id="primary_image" value="">
+								<div id="imageError" class="text-danger small mt-1" style="display:none;"></div>
 							</div>
 						</div>
 
@@ -227,7 +187,7 @@
 								</select>
 							</div>
 						</div>
-						<div class="col-md-6 d-flex align-items-end">
+						<div class="col-md-6 p-4">
 							<div class="form-group">
 								<input type="hidden" name="show_item_on_web" value="0">
 								<div class="custom-control custom-switch">
@@ -240,11 +200,9 @@
 						</div>
 					</div>
 
-					<div class="row">
-						<div class="col-12 mt-3 mb-1 text-right">
-							<a href="{{ route('items.index') }}" class="btn-cancel mr-2"><i class="fas fa-times mr-1"></i>Cancel</a>
-							<button type="submit" class="btn-submit"><i class="fas fa-save mr-1"></i>Save Item</button>
-						</div>
+					<div class="mt-3 mb-3 text-right">
+						<a href="{{ route('items.index') }}" class="btn-cancel mr-2"><i class="fas fa-times mr-1"></i>Cancel</a>
+						<button type="submit" class="btn-submit"><i class="fas fa-save mr-1"></i>Save Item</button>
 					</div>
 				</form>
 			</div>
@@ -252,116 +210,151 @@
 	</div>
 </section>
 @endsection
-	
-@push('pageScript')
+
+@section('pageScript')
 <script>
-document.addEventListener("DOMContentLoaded", function () {
-
-	const fileInput  = document.getElementById('itemImages');
-	const uploadBox  = document.getElementById('uploadBox');
-	const errorBox   = document.getElementById('imageError');
-
+;(function () {
+	const input     = document.getElementById('itemImages');
+	const preview   = document.getElementById('imagePreviewContainer');
+	const errorBox  = document.getElementById('imageError');
+	const dropzone  = document.getElementById('uploadDropzone');
+	const uploadTile = document.getElementById('uploadTile');
     const MAX_FILES = 5;
-    const MAX_SIZE  = 2 * 1024 * 1024;
-    const ALLOWED_TYPES = ['image/jpeg', 'image/png'];
+    const MAX_MB    = 2;
+    let   accepted  = [];   // DataTransfer-backed file list
 
-    let filesList = [];
-
-    function renderPreview() {
-        uploadBox.innerHTML = '';
-
-        filesList.forEach((file, index) => {
-            const reader = new FileReader();
-
-            reader.onload = function (e) {
-                const div = document.createElement('div');
-                div.className = 'preview-item';
-
-                div.innerHTML = `
-                    <img src="${e.target.result}">
-                    <button type="button" class="remove-btn">&times;</button>
-                `;
-
-                div.querySelector('.remove-btn').onclick = () => removeFile(index);
-
-                uploadBox.appendChild(div);
-            };
-
-            reader.readAsDataURL(file);
-        });
-
-        renderPlaceholder();
-    }
-
-    function renderPlaceholder() {
-        if (filesList.length >= MAX_FILES) return;
-
-        const div = document.createElement('div');
-        div.className = 'upload-placeholder';
-        div.innerHTML = '+ Upload';
-
-		div.onclick = () => {
-			fileInput.value = '';
-			fileInput.click();
-		};
-
-        uploadBox.appendChild(div);
-    }
-
-	fileInput.addEventListener('change', function () {
-		handleFiles(this.files);
-	});
-
-    function handleFiles(files) {
-        hideError();
-
-        Array.from(files).forEach(file => {
-
-            if (!ALLOWED_TYPES.includes(file.type)) {
-                return showError('Only JPG & PNG allowed');
-            }
-
-            if (file.size > MAX_SIZE) {
-                return showError('Max size 2MB');
-            }
-
-            if (filesList.length >= MAX_FILES) {
-                return showError('Max 5 images allowed');
-            }
-
-            if (filesList.some(f => f.name === file.name && f.size === file.size)) {
-                return showError('Duplicate image');
-            }
-
-            filesList.push(file);
-        });
-
-        syncInputs();
-        renderPreview();
-    }
-
-    function removeFile(index) {
-        filesList.splice(index, 1);
-        syncInputs();
-        renderPreview();
-    }
-
-	function syncInputs() {
-		const dt = new DataTransfer();
-		filesList.forEach(file => {
-			dt.items.add(file);
-		});
-		fileInput.files = dt.files;
+	function updateUploadVisibility() {
+		if (!uploadTile) return;
+		if (accepted.length >= MAX_FILES) {
+			uploadTile.style.display = 'none';
+		} else {
+			uploadTile.style.display = '';
+		}
 	}
 
-    function showError(msg) {
-        errorBox.textContent = msg;
+	input.addEventListener('change', function () {
+        errorBox.style.display = 'none';
+        errorBox.textContent   = '';
+
+        const newFiles   = Array.from(this.files);
+        const errors     = [];
+
+        newFiles.forEach(function (file) {
+            const ext = file.name.split('.').pop().toLowerCase();
+
+            if (!['jpg', 'jpeg', 'png'].includes(ext)) {
+                errors.push(file.name + ': only JPG / PNG allowed.');
+                return;
+            }
+            if (file.size > MAX_MB * 1024 * 1024) {
+                errors.push(file.name + ': exceeds ' + MAX_MB + ' MB limit.');
+                return;
+            }
+            if (accepted.length >= MAX_FILES) {
+                errors.push('Maximum ' + MAX_FILES + ' images allowed. "' + file.name + '" skipped.');
+                return;
+            }
+            accepted.push(file);
+        });
+
+        if (errors.length) {
+            errorBox.textContent   = errors.join(' ');
+            errorBox.style.display = 'block';
+        }
+
+        syncInput();
+        renderPreviews();
+    });
+
+	// click tile opens file dialog
+	uploadTile.addEventListener('click', function () { input.click(); });
+
+	// drag & drop
+	['dragenter','dragover'].forEach(function(ev){
+		dropzone.addEventListener(ev, function(e){ e.preventDefault(); dropzone.style.background = '#fbf7ff'; });
+	});
+	['dragleave','drop'].forEach(function(ev){
+		dropzone.addEventListener(ev, function(e){ e.preventDefault(); dropzone.style.background = '#fff'; });
+	});
+	dropzone.addEventListener('drop', function(e){
+		e.preventDefault();
+		errorBox.style.display = 'none';
+		const files = Array.from(e.dataTransfer.files || []);
+		if (!files.length) return;
+
+		const newFiles = files.filter(function(f){
+			const ext = f.name.split('.').pop().toLowerCase();
+			return ['jpg','jpeg','png'].includes(ext);
+		});
+
+		// append respecting limits
+		newFiles.forEach(function(f){ if (accepted.length < MAX_FILES) accepted.push(f); });
+		syncInput(); renderPreviews();
+	});
+
+    function syncInput() {
+        // Rebuild the FileList from accepted[] using DataTransfer
+        const dt = new DataTransfer();
+        accepted.forEach(function (f) { dt.items.add(f); });
+        input.files = dt.files;
+
+        // Update custom-file label
+        const label = input.nextElementSibling;
+        if (label && label.classList.contains('custom-file-label')) {
+            label.textContent = accepted.length
+                ? accepted.length + ' file(s) selected'
+                : 'Choose images\u2026';
+        }
+		updateUploadVisibility();
     }
 
-    function hideError() {
-        errorBox.textContent = '';
-    }
+	function renderPreviews() {
+		preview.innerHTML = '';
+		accepted.forEach(function (file, idx) {
+			const reader = new FileReader();
+			reader.onload = function (e) {
+				const wrapper = document.createElement('div');
+				wrapper.style.cssText = 'position:relative;display:inline-block;margin-right:8px;';
 
-    renderPreview();
-});
+				const img = document.createElement('img');
+				img.src   = e.target.result;
+				img.style.cssText = 'width:90px;height:90px;object-fit:cover;border-radius:6px;border:1px solid #ddd;cursor:pointer;';
+
+				// primary marker
+				const radio = document.createElement('input');
+				radio.type = 'radio';
+				radio.name = 'primary_select_new';
+				radio.style.cssText = 'position:absolute;bottom:4px;left:6px;z-index:2;';
+				radio.addEventListener('change', function () {
+					document.getElementById('primary_image').value = 'new-' + idx;
+					// clear existing-image radios if any (edit view compatibility)
+					const exist = document.getElementsByName('primary_exist');
+					exist.forEach ? exist.forEach(function (e) { e.checked = false; }) : Array.from(exist).forEach(function (e) { e.checked = false; });
+				});
+
+				const btn = document.createElement('button');
+				btn.type        = 'button';
+				btn.innerHTML   = '&times;';
+				btn.title       = 'Remove';
+				btn.style.cssText =
+					'position:absolute;top:2px;right:2px;width:20px;height:20px;line-height:18px;' +
+					'text-align:center;border-radius:50%;border:none;background:rgba(220,53,69,.85);' +
+					'color:#fff;font-size:14px;cursor:pointer;padding:0;';
+				btn.addEventListener('click', function () {
+					accepted.splice(idx, 1);
+					syncInput();
+					renderPreviews();
+				});
+
+				wrapper.appendChild(img);
+				wrapper.appendChild(radio);
+				wrapper.appendChild(btn);
+				preview.appendChild(wrapper);
+			};
+			reader.readAsDataURL(file);
+		});
+		updateUploadVisibility();
+	}
+})();
 </script>
+@endsection
