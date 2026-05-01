@@ -39,7 +39,7 @@
       </div>
       <div class="card-body pt-2 pb-3 border-bottom">
         <div class="row">
-          <div class="col-md-3">
+          <div class="col-md-2">
             <div class="form-group mb-0">
               <label class="small">Country</label>
               <select id="filter_country" class="form-control form-control-sm">
@@ -50,7 +50,7 @@
               </select>
             </div>
           </div>
-          <div class="col-md-3">
+          <div class="col-md-2">
             <div class="form-group mb-0">
               <label class="small">State</label>
               <select id="filter_state" class="form-control form-control-sm">
@@ -61,7 +61,7 @@
               </select>
             </div>
           </div>
-          <div class="col-md-3">
+          <div class="col-md-2">
             <div class="form-group mb-0">
               <label class="small">City</label>
               <select id="filter_city" class="form-control form-control-sm">
@@ -82,10 +82,10 @@
               </select>
             </div>
           </div>
-          <div class="col-md-1 d-flex align-items-end">
+          <div class="col-md-2 d-flex align-items-end">
             <div class="form-group mb-0">
-              <button id="filter_apply" class="btn btn-sm btn-primary">Filter</button>
-              <button id="filter_reset" class="btn btn-sm btn-light">Reset</button>
+              <button id="filter_apply" class="btn-submit mr-1"><i class="fas fa-search mr-1"></i> Filter</button>
+              <button id="filter_reset" class="btn-cancel"><i class="fas fa-sync-alt mr-1"></i> Reset</button>
             </div>
           </div>
         </div>
