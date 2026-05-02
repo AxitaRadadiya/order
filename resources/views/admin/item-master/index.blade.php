@@ -34,14 +34,14 @@
                         <a href="#category" data-toggle="tab" aria-expanded="true"
                            class="nav-link {{ $activeTab === 'category' ? 'active' : '' }}">
                             <i class="mdi mdi-home-variant d-lg-none d-block"></i>
-                            <span class="d-none d-lg-block">Category</span>
+                            <span class="d-none d-lg-block font-weight-bold">Category</span>
                         </a>
                     </li>
                      <li class="nav-item mr-1">
                         <a href="#sub-category" data-toggle="tab" aria-expanded="true"
                            class="nav-link {{ $activeTab === 'sub-category' ? 'active' : '' }}">
                             <i class="mdi mdi-home-variant d-lg-none d-block"></i>
-                            <span class="d-none d-lg-block">Sub-Category</span>
+                            <span class="d-none d-lg-block font-weight-bold">Sub-Category</span>
                         </a>
                     </li>
 
@@ -49,7 +49,7 @@
                         <a href="#group" data-toggle="tab" aria-expanded="false"
                            class="nav-link {{ $activeTab === 'group' ? 'active' : '' }}">
                             <i class="mdi mdi-account-group d-lg-none d-block"></i>
-                            <span class="d-none d-lg-block">Group</span>
+                            <span class="d-none d-lg-block font-weight-bold">Group</span>
                         </a>
                     </li>
 
@@ -57,7 +57,7 @@
                         <a href="#sub-group" data-toggle="tab" aria-expanded="false"
                            class="nav-link {{ $activeTab === 'sub-group' ? 'active' : '' }}">
                             <i class="mdi mdi-account-group d-lg-none d-block"></i>
-                            <span class="d-none d-lg-block">Sub-Group</span>
+                            <span class="d-none d-lg-block font-weight-bold">Sub-Group</span>
                         </a>
                     </li>
 
@@ -65,14 +65,14 @@
                         <a href="#size" data-toggle="tab" aria-expanded="false"
                            class="nav-link {{ $activeTab === 'size' ? 'active' : '' }}">
                             <i class="mdi mdi-ruler d-lg-none d-block"></i>
-                            <span class="d-none d-lg-block">Size</span>
+                            <span class="d-none d-lg-block font-weight-bold">Size</span>
                         </a>
                     </li>
                      <li class="nav-item">
                         <a href="#color" data-toggle="tab" aria-expanded="false"
                            class="nav-link {{ $activeTab === 'color' ? 'active' : '' }}">
                             <i class="mdi mdi-palette d-lg-none d-block"></i>
-                            <span class="d-none d-lg-block">Color</span>
+                            <span class="d-none d-lg-block font-weight-bold">Color</span>
                         </a>
                     </li>
 

@@ -13,8 +13,8 @@
 
       <li class="nav-item">
         <a href="{{ route('dashboard') }}" class="nav-link {{ Route::is('dashboard') ? 'active' : '' }}">
-          <i class="nav-icon"></i>
-          <p>🏡 Dashboard</p>
+          <span class="nav-icon">🏡</span>
+          <p>Dashboard</p>
         </a>
       </li>
 
@@ -25,28 +25,28 @@
 
       <li class="nav-item">
         <a href="{{ route('customers.index') }}" class="nav-link {{ Request::routeIs('customers.*') ? 'active' : '' }}">
-          <i class="nav-icon"></i>
-          <p>🏢 Customers</p>
+          <span class="nav-icon">🏢</span>
+          <p>Customers</p>
         </a>
       </li>
       <li class="nav-item">
         <a href="{{ route('items.index') }}" class="nav-link {{ Request::routeIs('items.*') ? 'active' : '' }}">
-          <i class="nav-icon"></i>
-          <p>🗂️ Items</p>
+          <span class="nav-icon">🗂️</span>
+          <p>Items</p>
         </a>
       </li>
       <li class="nav-item">
         <a href="{{ route('orders.index') }}" class="nav-link {{ Request::routeIs('orders.*') ? 'active' : '' }}">
-          <i class="nav-icon"></i>
-          <p>📦 Orders</p>
+          <span class="nav-icon">📦</span>
+          <p>Orders</p>
         </a>
       </li>
 
       <li class="nav-item {{ Request::routeIs('roles.*', 'users.*', 'master.*', 'item-master.*') ? 'menu-open' : '' }}">
         <a href="#" class="nav-link {{ Request::routeIs('roles.*', 'users.*', 'master.*', 'item-master.*') ? 'active' : '' }}">
-          <i class="nav-icon"></i>
+          <span class="nav-icon">⚙️</span>
           <p>
-            ⚙️ Settings
+            Settings
             <i class="right fas fa-angle-left"></i>
           </p>
         </a>
@@ -54,20 +54,20 @@
         <ul class="nav nav-treeview">
           <li class="nav-item">
             <a href="{{ route('roles.index') }}" class="nav-link {{ Request::routeIs('roles.*', 'users.*') ? 'active' : '' }}">
-              <i class="nav-icon"></i>
-              <p>👥 User & Role</p>
+              <span class="nav-icon">👥</span>
+              <p>User & Role</p>
             </a>
           </li>
           <li class="nav-item">
             <a href="{{ route('master.index') }}" class="nav-link {{ Request::routeIs('master.*') ? 'active' : '' }}">
-              <i class="nav-icon"></i>
-              <p>📋 Master Data</p>
+              <span class="nav-icon">📋</span>
+              <p>Master Data</p>
             </a>
           </li>
           <li class="nav-item">
             <a href="{{ route('item-master.index') }}" class="nav-link {{ Request::routeIs('item-master.*') ? 'active' : '' }}">
-              <i class="nav-icon"></i>
-              <p>🧩 Item Master</p>
+              <span class="nav-icon">🧩</span>
+              <p>Item Master</p>
             </a>
           </li>
                 
@@ -76,8 +76,8 @@
 
       <li class="nav-item">
         <a href="{{ route('activity-logs.index') }}" class="nav-link {{ Request::routeIs('activity-logs.*') ? 'active' : '' }}">
-          <i class="nav-icon"></i>
-          <p> 🕒 Activity Logs</p>
+          <span class="nav-icon">🕒</span>
+          <p>Activity Logs</p>
         </a>
       </li>
 
@@ -113,8 +113,8 @@
       <li class="nav-header">Shop</li>
         <li class="nav-item">
           <a href="{{ route('catalog') }}" class="nav-link {{ Request::routeIs('catalog', 'catalog.show') ? 'active' : '' }}">
-            <i class="nav-icon"></i>
-            <p>🛍️ Catalog</p>
+            <span class="nav-icon">🛍️</span>
+            <p>Catalog</p>
           </a>
         </li>
       @endif
@@ -123,8 +123,8 @@
       <li class="nav-header">System</li>
       <li class="nav-item">
         <a href="{{ route('customers.index') }}" class="nav-link {{ Request::routeIs('customers.*') ? 'active' : '' }}">
-          <i class="nav-icon"></i>
-          <p>🏢 Customers</p>
+          <span class="nav-icon">🏢</span>
+          <p>Customers</p>
         </a>
       </li>
       @endif
@@ -134,8 +134,8 @@
         @if($showItems)
         <li class="nav-item">
           <a href="{{ route('items.index') }}" class="nav-link {{ Request::routeIs('items.*') ? 'active' : '' }}">
-            <i class="nav-icon"></i>
-            <p>🗂️ Items</p>
+            <span class="nav-icon">🗂️</span>
+            <p>Items</p>
           </a>
         </li>
         @endif
@@ -143,8 +143,8 @@
         @if($showOrders)
         <li class="nav-item">
           <a href="{{ route('orders.index') }}" class="nav-link {{ Request::routeIs('orders.*') ? 'active' : '' }}">
-            <i class="nav-icon"></i>
-            <p>📦 Orders</p>
+            <span class="nav-icon">📦</span>
+            <p>Orders</p>
           </a>
         </li>
         @endif
@@ -154,9 +154,9 @@
         <li class="nav-header">Manage</li>
         <li class="nav-item {{ Request::routeIs('roles.*', 'users.*', 'master.*', 'item-master.*') ? 'menu-open' : '' }}">
           <a href="#" class="nav-link {{ Request::routeIs('roles.*', 'users.*', 'master.*', 'item-master.*') ? 'active' : '' }}">
-            <i class="nav-icon"></i>
+            <span class="nav-icon">⚙️</span>
             <p>
-              ⚙️ Settings
+              Settings
               <i class="right fas fa-angle-left"></i>
             </p>
           </a>
@@ -164,20 +164,20 @@
           <ul class="nav nav-treeview">
             <li class="nav-item">
               <a href="{{ route('roles.index') }}" class="nav-link {{ Request::routeIs('roles.*', 'users.*') ? 'active' : '' }}">
-                <i class="nav-icon"></i>
-                <p>👥 User & Role</p>
+                <span class="nav-icon">👥</span>
+                <p>User & Role</p>
               </a>
             </li>
             <li class="nav-item">
               <a href="{{ route('master.index') }}" class="nav-link {{ Request::routeIs('master.*') ? 'active' : '' }}">
-                <i class="nav-icon"></i>
-                <p>📋 Master Data</p>
+                <span class="nav-icon">📋</span>
+                <p>Master Data</p>
               </a>
             </li>
             <li class="nav-item">
               <a href="{{ route('item-master.index') }}" class="nav-link {{ Request::routeIs('item-master.*') ? 'active' : '' }}">
-                <i class="nav-icon"></i>
-                <p>🧩 Item Master</p>
+                <span class="nav-icon">🧩</span>
+                <p>Item Master</p>
               </a>
             </li>
           </ul>

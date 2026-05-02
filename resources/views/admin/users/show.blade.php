@@ -52,7 +52,7 @@
         <div class="card shadow-sm">
           <div class="card-body">
             <h5 class="card-title">Profile Details</h5>
-            <div class="row mt-3">
+            <div class="row mt-4 p-2">
               <div class="col-md-6">
                 <dl class="row">
                   <dt class="col-sm-4">Name</dt>
