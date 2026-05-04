@@ -228,7 +228,7 @@
 		if (accepted.length >= MAX_FILES) {
 			uploadTile.style.display = 'none';
 		} else {
-			uploadTile.style.display = '';
+			uploadTile.style.display = 'flex';
 		}
 	}
 
