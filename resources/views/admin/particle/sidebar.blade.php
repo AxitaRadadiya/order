@@ -1,9 +1,9 @@
 <!-- Brand Logo -->
-<a href="{{ route('dashboard') }}" class="brand-link">
-  <div class="nb-logo">
-    <svg viewBox="0 0 24 24" width="16" height="16" fill="#fff"><path d="M12 2L2 7l10 5 10-5-10-5zm0 5.236L5.618 7 12 3.764 18.382 7 12 7.236zM2 17l10 5 10-5-10-5-10 5z"/></svg>
+<a href="{{ route('dashboard') }}" class="brand-link d-flex align-items-center">
+  <div class="nb-logo mr-2">
+    <svg viewBox="0 0 24 24" width="20" height="20" fill="#fff"><path d="M12 2L2 7l10 5 10-5-10-5zm0 5.236L5.618 7 12 3.764 18.382 7 12 7.236zM2 17l10 5 10-5-10-5-10 5z"/></svg>
   </div>
-  <span class="brand-text">Live By Life</span>
+  <span class="brand-text font-weight-bold">Live By Life</span>
 </a>
 
 <div class="sidebar">

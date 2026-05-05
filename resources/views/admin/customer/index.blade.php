@@ -41,7 +41,7 @@
         <div class="row">
           <div class="col-md-2">
             <div class="form-group mb-0">
-              <label class="small">Country</label>
+              <label class="font weight bold">Country</label>
               <select id="filter_country" class="form-control form-control-sm">
                 <option value="">-- All Countries --</option>
                 @foreach($countries as $c)
@@ -52,7 +52,7 @@
           </div>
           <div class="col-md-2">
             <div class="form-group mb-0">
-              <label class="small">State</label>
+              <label class="font weight bold">State</label>
               <select id="filter_state" class="form-control form-control-sm">
                 <option value="">-- All States --</option>
                 @foreach($states as $s)
@@ -63,7 +63,7 @@
           </div>
           <div class="col-md-2">
             <div class="form-group mb-0">
-              <label class="small">City</label>
+              <label class="font weight bold">City</label>
               <select id="filter_city" class="form-control form-control-sm">
                 <option value="">-- All Cities --</option>
                 @foreach($cities as $ct)
@@ -74,7 +74,7 @@
           </div>
           <div class="col-md-2">
             <div class="form-group mb-0">
-              <label class="small">Status</label>
+              <label class="font weight bold">Status</label>
               <select id="filter_status" class="form-control form-control-sm">
                 <option value="">-- Any --</option>
                 <option value="active">Active</option>
@@ -82,7 +82,7 @@
               </select>
             </div>
           </div>
-          <div class="col-md-2 d-flex align-items-end">
+          <div class="col-md-3 d-flex align-items-end">
             <div class="form-group mb-0">
               <button id="filter_apply" class="btn-submit mr-1"><i class="fas fa-search mr-1"></i> Filter</button>
               <button id="filter_reset" class="btn-cancel"><i class="fas fa-sync-alt mr-1"></i> Reset</button>

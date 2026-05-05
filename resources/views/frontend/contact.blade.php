@@ -3,6 +3,7 @@
 @section('title','Contact')
 
 @section('content')
+<div class="container mt-4 mb-5 front">
 <h2>Contact Us</h2>
 
 <form>
@@ -17,5 +18,5 @@
   </div>
   <button class="btn-create">Send</button>
 </form>
-
+</div>
 @endsection
