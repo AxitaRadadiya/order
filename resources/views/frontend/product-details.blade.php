@@ -4,7 +4,7 @@
 
 @section('content')
 
-<div class="container mt-4">
+<div class="container mt-4 mb-5 front">
 
   <div class="row">
 
@@ -28,7 +28,7 @@
         <img id="mainImage"
              src="{{ isset($images[0]) ? asset('storage/'.$images[0]) : asset('no-image.png') }}"
              class="img-fluid border rounded"
-             style="max-height:350px;">
+             style="max-height:300px; ">
       </div>
 
       {{-- THUMBNAILS --}}
@@ -75,8 +75,8 @@
 
       {{-- BUTTONS --}}
       <div class="mt-4">
-        <a href="{{ route('products') }}" class="btn btn-secondary">Back</a>
-        <button class="btn btn-primary">Add to Cart</button>
+        <a href="{{ route('products') }}" class="btn btn-secondary" style="border-radius: 12px;">Back</a>
+        <button class="btn-create">Add to Cart</button>
       </div>
 
     </div>

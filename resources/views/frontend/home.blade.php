@@ -4,17 +4,24 @@
 
 @section('content')
 
-<section class="hero text-center">
-  <div class="container front">
-    <h1 class="display-4 font-weight-bold" >Welcome to My Store</h1>
-    <p class="lead">Discover amazing products at the best prices</p>
-    <a href="{{ route('products') }}" class="btn-create btn-lg mt-3">
-      Shop Now
-    </a>
+<section class="hero-banner py-4">
+  <div class="container-fluid">
+    <div class="row align-items-center" style="background:#ffffff; padding: 20px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
+      <div class="col-lg-6 text-left px-5">
+        <h1 class="display-4 font-weight-bold">Upgrade Your Style</h1>
+        <p class="lead">Discover premium denim and curated apparel — great prices, fast shipping.</p>
+        <div class="mt-4">
+          <a href="{{ route('products') }}" class="btn-create mr-2">Shop Now</a>
+        </div>
+      </div>
+      <div class="col-lg-6 text-center p-0">
+          <img src="{{ asset('admin/dist/img/j1.jpg') }}" alt="Jeans" class="img-fluid hero-image" onerror="this.onerror=null;this.style.display='none'">
+      </div>
+    </div>
   </div>
 </section>
 
-<section class="py-5">
+<section class="py-4">
   <div class="container front">
 
     <div class="d-flex justify-content-between align-items-center mb-4">
@@ -48,18 +55,30 @@
               $srcSecond = $toSrc($secondRaw);
             @endphp
 
-            <img src="{{ $srcMain }}" alt="{{ $item->name }}" class="primary-img">
-            @if($srcSecond)
-              <img src="{{ $srcSecond }}" alt="{{ $item->name }} - alternate" class="secondary-full">
-              <img src="{{ $srcSecond }}" alt="thumb" class="secondary-thumb">
-            @endif
+            <a href="{{ route('products.show',$item) }}" class="product-link" aria-label="Open {{ $item->name }} details">
+              <img src="{{ $srcMain }}" alt="{{ $item->name }}" class="primary-img">
+
+              @if($srcSecond)
+                <img src="{{ $srcSecond }}" alt="{{ $item->name }} - alternate" class="secondary-full">
+                <img src="{{ $srcSecond }}" alt="thumb" class="secondary-thumb">
+              @endif
+            </a>
+
+            <div class="product-overlay" aria-hidden="true">
+              <div class="cat-name">{{ $item->category->name ?? 'General' }}</div>
+              @if($item->category)
+                <a class="cat-link" href="{{ route('products') }}?category_id={{ $item->category->id }}">View category</a>
+              @else
+                <a class="cat-link" href="{{ route('products') }}">View products</a>
+              @endif
+            </div>
           </div>
 
           {{-- BODY --}}
-          <div class="card-body text-center">
-            <small class="text-muted d-block">
+          <div class="card-body text-center" style="padding:0px;">
+            <!--<small class="text-muted d-block">
               {{ $item->category->name ?? 'General' }}
-            </small>
+            </small>-->
 
             <h6 class="product-title mt-1">
               {{ $item->name }}
@@ -69,10 +88,7 @@
               ₹{{ number_format($item->price,2) }}
             </p>
 
-            <a href="{{ route('products.show',$item) }}"
-               class="btn btn-sm btn-outline-primary">
-               View Details
-            </a>
+            
           </div>
 
         </div>
@@ -87,36 +103,26 @@
   </div>
 </section>
 
-{{-- ABOUT SECTION --}}
-<section class="py-5 bg-light text-center">
-  <div class="container">
-    <h2>About Us</h2>
-    <p class="text-muted">
-      We provide high-quality products with the best pricing and customer experience.
-    </p>
-  </div>
-</section>
+{{-- OUR CLIENTS (marquee) --}}
+<section class="py-3 marquee-top marquee-top--gray">
+  <div class="container mb-4">
+    <h3 class="mb-4">Our Clients</h3>
+    <p class="text-muted mb-3">Trusted by brands and manufacturers. Click a logo to visit the client's website.</p>
 
-{{-- CONTACT SECTION --}}
-<section class="py-5 text-center">
-  <div class="container">
-    <h2>Contact Us</h2>
-    <p class="text-muted mb-4">Have questions? Send us a message.</p>
-
-    <div class="row justify-content-center">
-      <div class="col-md-6">
-        <form>
-          <div class="form-group">
-            <input type="text" class="form-control" placeholder="Your Name">
-          </div>
-          <div class="form-group">
-            <input type="email" class="form-control" placeholder="Email">
-          </div>
-          <div class="form-group">
-            <textarea class="form-control" rows="4" placeholder="Message"></textarea>
-          </div>
-          <button class="btn btn-primary btn-block">Send Message</button>
-        </form>
+    <div class="marquee" aria-hidden="false">
+      <div class="marquee-track">
+        <a href="https://denimjeans.in" target="_blank" rel="noopener" class="mx-3 d-inline-block"><img src="{{ asset('admin/dist/img/c1.jpg') }}" alt="Denim Jeans" class="client-logo" onerror="this.onerror=null;this.src='{{ asset('admin/dist/img/clients/placeholder.png') }}'"></a>
+        <a href="#" target="_blank" rel="noopener" class="mx-3 d-inline-block"><img src="{{ asset('admin/dist/img/c2.jpg') }}" alt="Client 2" class="client-logo" onerror="this.onerror=null;this.src='{{ asset('admin/dist/img/clients/placeholder.png') }}'"></a>
+        <a href="#" target="_blank" rel="noopener" class="mx-3 d-inline-block"><img src="{{ asset('admin/dist/img/c3.jpg') }}" alt="Client 3" class="client-logo" onerror="this.onerror=null;this.src='{{ asset('admin/dist/img/clients/placeholder.png') }}'"></a>
+        <a href="#" target="_blank" rel="noopener" class="mx-3 d-inline-block"><img src="{{ asset('admin/dist/img/c4.jpg') }}" alt="Client 4" class="client-logo" onerror="this.onerror=null;this.src='{{ asset('admin/dist/img/clients/placeholder.png') }}'"></a>
+        <a href="#" target="_blank" rel="noopener" class="mx-3 d-inline-block"><img src="{{ asset('admin/dist/img/c5.png') }}" alt="Client 5" class="client-logo" onerror="this.onerror=null;this.src='{{ asset('admin/dist/img/clients/placeholder.png') }}'"></a>
+      </div>
+      <div class="marquee-track" aria-hidden="true">
+        <a href="https://denimjeans.in" target="_blank" rel="noopener" class="mx-3 d-inline-block"><img src="{{ asset('admin/dist/img/c1.jpg') }}" alt="Denim Jeans" class="client-logo" onerror="this.onerror=null;this.src='{{ asset('admin/dist/img/clients/placeholder.png') }}'"></a>
+        <a href="#" target="_blank" rel="noopener" class="mx-3 d-inline-block"><img src="{{ asset('admin/dist/img/c2.jpg') }}" alt="Client 2" class="client-logo" onerror="this.onerror=null;this.src='{{ asset('admin/dist/img/clients/placeholder.png') }}'"></a>
+        <a href="#" target="_blank" rel="noopener" class="mx-3 d-inline-block"><img src="{{ asset('admin/dist/img/c3.jpg') }}" alt="Client 3" class="client-logo" onerror="this.onerror=null;this.src='{{ asset('admin/dist/img/clients/placeholder.png') }}'"></a>
+        <a href="#" target="_blank" rel="noopener" class="mx-3 d-inline-block"><img src="{{ asset('admin/dist/img/c4.jpg') }}" alt="Client 4" class="client-logo" onerror="this.onerror=null;this.src='{{ asset('admin/dist/img/clients/placeholder.png') }}'"></a>
+        <a href="#" target="_blank" rel="noopener" class="mx-3 d-inline-block"><img src="{{ asset('admin/dist/img/c5.png') }}" alt="Client 5" class="client-logo" onerror="this.onerror=null;this.src='{{ asset('admin/dist/img/clients/placeholder.png') }}'"></a>
       </div>
     </div>
 
@@ -125,5 +131,5 @@
 
 @endsection
 
-
-<!-- Frontend styles are loaded from public/admin/dist/css/custom.css -->
+@push('styles')
+@endpush

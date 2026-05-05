@@ -22,10 +22,10 @@
       </div>
 
       <div class="col-lg-9">
-        <h5 id="itemsTitle">All Products</h5>
+       <!-- <h5 id="itemsTitle">All Products</h5>-->
         <div id="itemsGrid" class="row mt-3">
           @forelse($items as $item)
-            <div class="col-md-3 mb-4">
+            <div class="col-md-4 mb-4">
               <div class="card product-card shadow-sm h-100">
 
                 {{-- IMAGE --}}
@@ -45,28 +45,28 @@
                     $srcSecond = $toSrc($secondRaw);
                   @endphp
 
-                  <img src="{{ $srcMain }}" alt="{{ $item->name }}" class="primary-img" loading="lazy">
+                  <a href="{{ route('products.show',$item) }}" class="product-link" aria-label="Open {{ $item->name }} details">
+                    <img src="{{ $srcMain }}" alt="{{ $item->name }}" class="primary-img" loading="lazy">
 
-                  @if($srcSecond)
-                    <img src="{{ $srcSecond }}" alt="{{ $item->name }} - alternate" class="secondary-full" loading="lazy">
-                    <img src="{{ $srcSecond }}" alt="thumb" class="secondary-thumb" loading="lazy">
-                  @endif
+                    @if($srcSecond)
+                      <img src="{{ $srcSecond }}" alt="{{ $item->name }} - alternate" class="secondary-full" loading="lazy">
+                      <img src="{{ $srcSecond }}" alt="thumb" class="secondary-thumb" loading="lazy">
+                    @endif
+                  </a>
                 </div>
 
                 {{-- BODY --}}
-                <div class="card-body text-center">
+                <div class="card-body text-center" style="padding:0px;">
 
-                  <small class="text-muted d-block">
+                 <!-- <small class="text-muted d-block">
                     {{ $item->category->name ?? 'General' }}
-                  </small>
+                  </small>-->
 
                   <h6 class="product-title mt-1">{{ $item->name }}</h6>
 
                   <p class="text-danger font-weight-bold">
                     ₹{{ number_format($item->price,2) }}
                   </p>
-
-                  <a href="{{ route('products.show',$item) }}" class="btn btn-sm btn-create">View Details</a>
 
                 </div>
 
@@ -108,7 +108,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
     items.forEach(function (it) {
       var col = document.createElement('div'); col.className = 'col-lg-3 col-md-4 col-6 mb-4';
-      col.innerHTML = '\n        <div class="card product-card shadow-sm h-100">\n          <div class="product-img d-flex align-items-center justify-content-center bg-light" style="height:200px;">\n            <img src="' + (it.image||'') + '" alt="' + (it.name||'') + '" style="max-height:180px; max-width:100%; object-fit:contain;">\n          </div>\n          <div class="card-body text-center">\n            <small class="text-muted d-block">' + (it.category||'') + '</small>\n            <h6 class="product-title mt-1">' + (it.name||'') + '</h6>\n            <p class="text-danger font-weight-bold">₹' + (it.price||'') + '</p>\n            <a href="' + (it.url||'#') + '" class="btn btn-sm btn-create">View Details</a>\n          </div>\n        </div>';
+      col.innerHTML = '\n        <div class="card product-card shadow-sm h-100">\n          <div class="product-img d-flex align-items-center justify-content-center bg-light" style="height:200px;">\n            <a href="' + (it.url||'#') + '" class="product-link"><img src="' + (it.image||'') + '" alt="' + (it.name||'') + '" style="max-height:180px; max-width:100%; object-fit:contain;"></a>\n          </div>\n          <div class="card-body text-center">\n            <small class="text-muted d-block">' + (it.category||'') + '</small>\n            <h6 class="product-title mt-1">' + (it.name||'') + '</h6>\n            <p class="text-danger font-weight-bold">₹' + (it.price||'') + '</p>\n          </div>\n        </div>';
       grid.appendChild(col);
     });
   }
