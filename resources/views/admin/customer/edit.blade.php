@@ -71,10 +71,21 @@
                 <select name="role_id" class="form-control">
                   <option value="">-- Default (retailer) --</option>
                   @foreach($roles as $r)
-                    <option value="{{ $r->id }}"
+                    <option value="{{ $r->id }}" data-name="{{ $r->name }}"
                             @selected(old('role_id', $customer->role_id) == $r->id)>
                       {{ $r->name }}
                     </option>
+                  @endforeach
+                </select>
+              </div>
+            </div>
+            <div class="col-md-3" id="distributor_field" style="display:none;">
+              <div class="form-group">
+                <label>Distributor</label>
+                <select name="distributor_id" class="form-control">
+                  <option value="">-- Select distributor --</option>
+                  @foreach($distributors ?? [] as $d)
+                    <option value="{{ $d->id }}" @selected(old('distributor_id', $customer->distributor_id ?? '') == $d->id)>{{ $d->company_name ?: $d->name }}</option>
                   @endforeach
                 </select>
               </div>
@@ -107,10 +118,6 @@
                 <div class="input-group">
                   <input type="password" class="form-control @error('password') is-invalid @enderror"
                          id="password" name="password" placeholder="New password">
-                  <div class="input-group-append">
-                    <button class="btn btn-outline-secondary toggle-password" type="button"
-                            data-target="password"><i class="fas fa-eye"></i></button>
-                  </div>
                   @error('password')<div class="invalid-feedback">{{ $message }}</div>@enderror
                 </div>
               </div>
@@ -122,10 +129,6 @@
                   <input type="password" class="form-control @error('password_confirmation') is-invalid @enderror"
                          id="password_confirmation" name="password_confirmation"
                          placeholder="Confirm new password">
-                  <div class="input-group-append">
-                    <button class="btn btn-outline-secondary toggle-password" type="button"
-                            data-target="password_confirmation"><i class="fas fa-eye"></i></button>
-                  </div>
                   @error('password_confirmation')<div class="invalid-feedback">{{ $message }}</div>@enderror
                 </div>
               </div>
@@ -382,14 +385,6 @@
 <script>
 $(function () {
 
-  /* ── Password toggle ───────────────────────────────────────────────── */
-  $('.toggle-password').on('click', function () {
-    var $inp = $('#' + $(this).data('target'));
-    $inp.attr('type', $inp.attr('type') === 'password' ? 'text' : 'password');
-    $(this).find('i').toggleClass('fa-eye fa-eye-slash');
-  });
-
-  /* ── Data injected from PHP ────────────────────────────────────────── */
   @php
     $statesArr = $states->map(fn($s) => ['id' => $s->id, 'country_id' => $s->country_id, 'name' => $s->name])->values()->toArray();
     $citiesArr = $cities->map(fn($c) => ['id' => $c->id, 'state_id'   => $c->state_id,   'name' => $c->name])->values()->toArray();
@@ -498,6 +493,24 @@ $(function () {
   $(document).on('keypress', '.phone-only', function (e) {
     if (!/[0-9]/.test(String.fromCharCode(e.which))) e.preventDefault();
   });
+
+  /* ── Show/hide distributor when role is retailer ───────────────────── */
+  function toggleDistributor() {
+    var $opt = $('select[name="role_id"] option:selected');
+    var selName = $opt.data('name');
+    var text = $opt.text() || '';
+    var name = String(selName || text).toLowerCase();
+    var val = $('select[name="role_id"]').val();
+    if (val === '' || name.indexOf('retailer') !== -1) {
+      $('#distributor_field').show();
+    } else {
+      $('#distributor_field').hide();
+      $('#distributor_field select').val('');
+    }
+  }
+  $('select[name="role_id"]').on('change', toggleDistributor);
+  // init on load
+  toggleDistributor();
 
 });
 </script>

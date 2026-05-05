@@ -80,6 +80,7 @@ class User extends Authenticatable
         'password',
         'profile_image',
         'role_id',
+        'distributor_id',
         'status',
         'mobile',
         'note',
@@ -112,6 +113,16 @@ class User extends Authenticatable
     public function role()
     {
         return $this->belongsTo(Role::class);
+    }
+
+    public function distributor()
+    {
+        return $this->belongsTo(self::class, 'distributor_id');
+    }
+
+    public function retailers()
+    {
+        return $this->hasMany(self::class, 'distributor_id');
     }
 
     

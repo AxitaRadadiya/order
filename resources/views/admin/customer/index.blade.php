@@ -20,14 +20,6 @@
 
 <section class="content">
   <div class="container-fluid">
-
-    @if(session('success'))
-      <div class="alert alert-success alert-dismissible fade show">
-        <i class="fas fa-check-circle mr-1"></i>{{ session('success') }}
-        <button type="button" class="close" data-dismiss="alert"><span>&times;</span></button>
-      </div>
-    @endif
-
     <div class="card">
       <div class="card-header">
         <h3 class="card-title">Customer List</h3>

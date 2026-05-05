@@ -21,7 +21,9 @@ class RegisteredUserController extends Controller
      */
     public function create(): View
     {
-        return view('auth.register');
+        $distributors = User::whereHas('role', function ($q) { $q->where('name', 'distributor'); })->get(['id','company_name','name']);
+
+        return view('auth.register', compact('distributors'));
     }
 
     /**
@@ -35,6 +37,7 @@ class RegisteredUserController extends Controller
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:'.User::class],
             'mobile' => ['nullable', 'string', 'max:30'],
+            'distributor_id' => ['nullable', 'exists:users,id'],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
         ]);
 
@@ -44,6 +47,7 @@ class RegisteredUserController extends Controller
             'name' => $request->name,
             'email' => $request->email,
             'mobile' => $request->input('mobile'),
+            'distributor_id' => $request->input('distributor_id'),
             'password' => Hash::make($request->password),
             'role_id' => $role->id,
         ]);

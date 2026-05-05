@@ -13,15 +13,6 @@ class PermissionsSeeder extends Seeder
     public function run(): void
     {
         $permissions = [
-            'User' => [
-                'User' => [
-                    
-                    ['name' => 'user-create'],
-                    ['name' => 'user-view'],
-                    ['name' => 'user-edit'],
-                    ['name' => 'user-delete'],
-                ],
-            ],
             'Customer' => [
                 'Customer' => [
                     

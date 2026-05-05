@@ -31,7 +31,8 @@ class CustomerController extends Controller
         $cities = City::orderBy('name')->get();
         // Only allow selecting retail/distributor roles in customer creation
         $roles = Role::whereIn('name', ['retailer', 'distributor'])->orderBy('name')->get();
-        return view('admin.customer.create', compact('countries', 'states', 'cities', 'roles'));
+        $distributors = Customer::whereHas('role', function ($q) { $q->where('name', 'distributor'); })->get(['id','company_name','name']);
+        return view('admin.customer.create', compact('countries', 'states', 'cities', 'roles', 'distributors'));
     }
 
     public function store(Request $request)
@@ -43,6 +44,7 @@ class CustomerController extends Controller
             'company_name' => 'nullable|string|max:255',
             'website'      => 'nullable|url|max:255',
             'password'     => 'required|min:6',
+            'distributor_id' => 'nullable|exists:users,id',
             'role_id' => 'nullable|exists:roles,id',
             'gst_number'   => 'nullable|string|max:20',
             'pan_number'   => 'nullable|string|max:15',
@@ -59,6 +61,7 @@ class CustomerController extends Controller
                 'email'           => $request->email,
                 'mobile'           => $request->mobile,
                 'website'         => $request->website,
+                'distributor_id'  => $request->input('distributor_id'),
                 'password'        => Hash::make($request->password),
                 'role_id'         => $request->input('role_id') ?? null,
                 'payment_terms'   => $request->payment_terms,
@@ -141,7 +144,8 @@ class CustomerController extends Controller
         $states = State::orderBy('name')->get();
         $cities = City::orderBy('name')->get();
         $roles = Role::whereIn('name', ['retailer', 'distributor'])->orderBy('name')->get();
-        return view('admin.customer.edit', compact('customer', 'countries', 'states', 'cities', 'roles'));
+        $distributors = Customer::whereHas('role', function ($q) { $q->where('name', 'distributor'); })->get(['id','company_name','name']);
+        return view('admin.customer.edit', compact('customer', 'countries', 'states', 'cities', 'roles', 'distributors'));
     }
 
     public function update(Request $request, Customer $customer)
@@ -153,6 +157,7 @@ class CustomerController extends Controller
             'company_name' => 'nullable|string|max:255',
             'website'      => 'nullable|url|max:255',
             'password'     => 'nullable|min:6',
+            'distributor_id' => 'nullable|exists:users,id',
             'role_id'      => 'nullable|exists:roles,id',
             'gst_number'   => 'nullable|string|max:20',
             'pan_number'   => 'nullable|string|max:15',
@@ -168,6 +173,7 @@ class CustomerController extends Controller
                 'company_name'    => $request->company_name,
                 'email'           => $request->email,
                 'mobile'           => $request->mobile,
+                'distributor_id'  => $request->filled('distributor_id') ? $request->distributor_id : ($customer->distributor_id ?? null),
                 'website'         => $request->website,
                 'role_id'         => $request->filled('role_id') ? $request->role_id : ($customer->role_id ?? null),
                 'payment_terms'   => $request->payment_terms,

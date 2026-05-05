@@ -163,6 +163,22 @@
             </div>
 
             <div class="field">
+                <label for="distributor_id">Distributor (optional)</label>
+                <div class="input-wrap">
+                    <span class="input-icon">
+                        <svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-3.33 0-10 1.67-10 5v3h20v-3c0-3.33-6.67-5-10-5z"/></svg>
+                    </span>
+                    <select id="distributor_id" name="distributor_id" style="width:100%;height:44px;background:var(--bg3);border:1px solid var(--border2);border-radius:9px;padding:0 12px 0 38px;font-size:.88rem;color:black;outline:none;">
+                        <option value="">-- Select distributor (optional) --</option>
+                        @foreach($distributors ?? [] as $d)
+                            <option value="{{ $d->id }}" {{ old('distributor_id') == $d->id ? 'selected' : '' }}>{{ $d->company_name ?: $d->name }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                @error('distributor_id')<p class="err">{{ $message }}</p>@enderror
+            </div>
+
+            <div class="field">
                 <label for="password">Password</label>
                 <div class="input-wrap">
                     <span class="input-icon">

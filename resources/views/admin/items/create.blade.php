@@ -60,55 +60,60 @@
 						<div class="col-md-4">
 							<div class="form-group">
 								<label>Group</label>
-								<select name="group_id" class="form-control">
+								<select name="group_id" class="form-control select2 @error('group_id') is-invalid @enderror">
 									<option value="">-- Select --</option>
 									@foreach($groups as $g)
 									<option value="{{ $g->id }}" {{ old('group_id') == $g->id ? 'selected' : '' }}>{{ $g->name }}</option>
 									@endforeach
 								</select>
+								@error('group_id')<div class="invalid-feedback">{{ $message }}</div>@enderror
 							</div>
 						</div>
 						<div class="col-md-4">
 							<div class="form-group">
 								<label>Sub-Group</label>
-								<select name="sub_group" class="form-control">
+								<select name="sub_group" class="form-control select2 @error('sub_group') is-invalid @enderror">
 									<option value="">-- Select --</option>
 									@foreach($sub_groups as $subG)
 									<option value="{{ $subG->id }}" {{ old('sub_group') == $subG->id ? 'selected' : '' }}>{{ $subG->name }}</option>
 									@endforeach
 								</select>
+								@error('sub_group')<div class="invalid-feedback">{{ $message }}</div>@enderror
 							</div>
 						</div>
 						<div class="col-md-4">
 							<div class="form-group">
 								<label>Category</label>
-								<select name="category_id" class="form-control">
+								<select name="category_id" class="form-control select2 @error('category_id') is-invalid @enderror">
 									<option value="">-- Select --</option>
 									@foreach($categories as $cat)
 									<option value="{{ $cat->id }}" {{ old('category_id') == $cat->id ? 'selected' : '' }}>{{ $cat->name }}</option>
 									@endforeach
 								</select>
+								@error('category_id')<div class="invalid-feedback">{{ $message }}</div>@enderror
 							</div>
 						</div>
 						<div class="col-md-4">
 							<div class="form-group">
 								<label>Sub-Category</label>
-								<select name="sub_category" class="form-control">
+								<select name="sub_category" class="form-control select2 @error('sub_category') is-invalid @enderror">
 									<option value="">-- Select --</option>
 									@foreach($sub_categories as $subCat)
 									<option value="{{ $subCat->id }}" {{ old('sub_category') == $subCat->id ? 'selected' : '' }}>{{ $subCat->name }}</option>
 									@endforeach
 								</select>
+								@error('sub_category')<div class="invalid-feedback">{{ $message }}</div>@enderror
 							</div>
 						</div>
 						<div class="col-md-4">
 							<div class="form-group">
 								<label>Colors</label>
-								<select name="colors[]" class="form-control" multiple>
+								<select name="colors[]" class="form-control select2 @error('colors') is-invalid @enderror" multiple>
 									@foreach($colors as $color)
 									<option value="{{ $color->id }}" {{ in_array($color->id, (array) old('colors', [])) ? 'selected' : '' }}>{{ $color->name }}</option>
 									@endforeach
 								</select>
+								@error('colors')<div class="invalid-feedback">{{ $message }}</div>@enderror
 							</div>
 						</div>
 

@@ -28,11 +28,19 @@ class OrderMasterController extends Controller
     {
         $query = OrderMaster::with('customer');
 
-        // If the logged-in user is a retailer/distributor, show only their orders
+        // If the logged-in user is a retailer, show only their orders.
+        // If the logged-in user is a distributor, show orders for themselves
+        // and for any retailers assigned to them.
         try {
             $authUser = auth()->user();
-            if ($authUser && $authUser->hasRole(['retailer', 'distributor'])) {
-                $query->where('user_id', $authUser->id);
+            if ($authUser) {
+                if ($authUser->hasRole('retailer')) {
+                    $query->where('user_id', $authUser->id);
+                } elseif ($authUser->hasRole('distributor')) {
+                    $retailerIds = User::where('distributor_id', $authUser->id)->pluck('id')->toArray();
+                    $ids = array_merge([$authUser->id], $retailerIds);
+                    $query->whereIn('user_id', $ids);
+                }
             }
         } catch (\Throwable $e) {
             // ignore and show default
@@ -195,10 +203,19 @@ class OrderMasterController extends Controller
     {
         $order->load('items', 'customer');
 
-        // Retailer/distributor may only view their own orders
+        // Retailers may only view their own orders. Distributors may view
+        // their own orders and orders created by retailers assigned to them.
         $user = auth()->user();
-        if ($user && $user->hasRole(['retailer', 'distributor']) && $order->user_id !== $user->id) {
-            abort(403);
+        if ($user) {
+            if ($user->hasRole('retailer') && $order->user_id !== $user->id) {
+                abort(403);
+            }
+            if ($user->hasRole('distributor')) {
+                $retailerIds = User::where('distributor_id', $user->id)->pluck('id')->toArray();
+                if ($order->user_id !== $user->id && !in_array($order->user_id, $retailerIds)) {
+                    abort(403);
+                }
+            }
         }
 
         return view('admin.orders.show', compact('order'));
@@ -212,8 +229,16 @@ class OrderMasterController extends Controller
         $order->load('items');
 
         $user = auth()->user();
-        if ($user && $user->hasRole(['retailer', 'distributor']) && $order->user_id !== $user->id) {
-            abort(403);
+        if ($user) {
+            if ($user->hasRole('retailer') && $order->user_id !== $user->id) {
+                abort(403);
+            }
+            if ($user->hasRole('distributor')) {
+                $retailerIds = User::where('distributor_id', $user->id)->pluck('id')->toArray();
+                if ($order->user_id !== $user->id && !in_array($order->user_id, $retailerIds)) {
+                    abort(403);
+                }
+            }
         }
 
         return view('admin.orders.edit', array_merge(
@@ -225,8 +250,16 @@ class OrderMasterController extends Controller
     public function update(Request $request, OrderMaster $order)
     {
         $user = auth()->user();
-        if ($user && $user->hasRole(['retailer', 'distributor']) && $order->user_id !== $user->id) {
-            abort(403);
+        if ($user) {
+            if ($user->hasRole('retailer') && $order->user_id !== $user->id) {
+                abort(403);
+            }
+            if ($user->hasRole('distributor')) {
+                $retailerIds = User::where('distributor_id', $user->id)->pluck('id')->toArray();
+                if ($order->user_id !== $user->id && !in_array($order->user_id, $retailerIds)) {
+                    abort(403);
+                }
+            }
         }
 
         $request->validate([
@@ -275,13 +308,24 @@ class OrderMasterController extends Controller
 
     private function viewData(): array
     {
-        $customersQuery = User::with('address')->orderBy('name');
+        $customersQuery = User::with('address')
+            ->whereHas('role', function ($q) {
+                $q->whereIn('name', ['retailer', 'distributor']);
+            })->orderBy('name');
 
-        // For retailer/distributor users, restrict customer list to themselves
+        // For retailer users, restrict customer list to themselves.
+        // For distributor users, include the distributor and their retailers.
         try {
             $u = auth()->user();
-            if ($u && $u->hasRole(['retailer', 'distributor'])) {
-                $customersQuery->where('id', $u->id);
+            if ($u) {
+                if ($u->hasRole('retailer')) {
+                    $customersQuery->where('id', $u->id);
+                } elseif ($u->hasRole('distributor')) {
+                    $customersQuery->where(function ($q) use ($u) {
+                        $q->where('id', $u->id)
+                          ->orWhere('distributor_id', $u->id);
+                    });
+                }
             }
         } catch (\Throwable $e) {
             // ignore
