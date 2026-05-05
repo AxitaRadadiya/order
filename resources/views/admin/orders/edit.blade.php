@@ -138,12 +138,13 @@
                   <th width="160">Article Number</th>
                   <th width="160">Item</th>
                   <th width="160">Color</th>
-                  <th width="160">Size(s)</th>
+                  <th width="220">Size(s)</th>
                   <th>Description</th>
                   <th width="80">Qty</th>
                   <th width="110">MRP</th>
                   <th width="80">Tax %</th>
                   <th width="110">Total</th>
+                  <th width="100">Status</th>
                   <th width="40">Action</th>
                 </tr>
               </thead>
@@ -176,22 +177,31 @@
                             data-rate="{{ $itm->price }}"
                             data-tax="{{ $itm->tax_percent ?? 0 }}"
                             data-desc="{{ $itm->description ?? '' }}"
-                            {{ (isset($it['item_id']) && $it['item_id'] == $itm->id) ? 'selected' : '' }}>
+                            {{ ($itemId == $itm->id || $articleNum == $itm->article_number) ? 'selected' : '' }}>
                             {{ $itm->article_number }}
                           </option>
                         @endforeach
                       </select>
                       <input type="hidden" name="items[{{ $i }}][item_id]" class="item-id-hidden" value="{{ $itemId }}">
+                      <input type="hidden" name="items[{{ $i }}][order_item_id]" class="order-item-id-hidden" value="{{ $isArr ? ($it['id'] ?? '') : ($it->id ?? '') }}">
                     </td>
                     <td>
                       <input type="text" name="items[{{ $i }}][item_name]" class="form-control item-name-input" value="{{ $itemName }}" readonly>
                     </td>
                     <td>
                       {{-- Color select --}}
-                      <select name="items[{{ $i }}][color]" class="form-control color-select">
-                        <option value="">--</option>
-                        @foreach($colors as $col)
-                          <option value="{{ $col->id }}" {{ (isset($it['color']) && $it['color'] == $col->id) || (isset($it['color_id']) && $it['color_id'] == $col->id) ? 'selected' : '' }}>{{ $col->name }}</option>
+                      @php
+                        $selectedColors = $color;
+                        if (!is_array($selectedColors)) {
+                          $selectedColors = explode(',', $selectedColors);
+                        }
+                        $selectedColors = array_map('trim', $selectedColors);
+                        $rowItem = !empty($itemId) ? $items->firstWhere('id', $itemId) : null;
+                        $rowColors = ($rowItem && $rowItem->colors->isNotEmpty()) ? $rowItem->colors : $colors;
+                      @endphp
+                      <select name="items[{{ $i }}][color][]" class="form-control color-select select2" multiple>
+                        @foreach($rowColors as $col)
+                          <option value="{{ $col->id }}" {{ in_array((string) $col->id, $selectedColors) ? 'selected' : '' }}>{{ $col->name }}</option>
                         @endforeach
                       </select>
                     </td>
@@ -199,22 +209,48 @@
                       {{-- Size multi-select --}}
                       @php
                         $selectedSizes = [];
-                        if (!empty($it['sizes'])) {
+                        if ($isArr && !empty($it['sizes'])) {
                           $selectedSizes = is_array($it['sizes']) ? $it['sizes'] : explode(',', $it['sizes']);
                           $selectedSizes = array_map('trim', $selectedSizes);
+                        } elseif (!empty($size)) {
+                          $selectedSizes = array_map('trim', explode(',', $size));
                         }
+                        $sizeQuantities = $isArr ? ($it['size_quantities'] ?? []) : ($it->size_quantities ?? []);
                       @endphp
                       <select name="items[{{ $i }}][sizes][]" class="form-control size-select select2" multiple>
                         @foreach($sizesJson as $sz)
                           <option value="{{ $sz }}" {{ in_array($sz, $selectedSizes) ? 'selected' : '' }}>{{ $sz }}</option>
                         @endforeach
                       </select>
+                      <div class="size-qty-wrapper mt-2">
+                        @foreach($selectedSizes as $selectedSize)
+                          <div class="input-group input-group-sm mb-1 size-qty-row" data-size="{{ $selectedSize }}">
+                            <div class="input-group-prepend"><span class="input-group-text">{{ $selectedSize }}</span></div>
+                            <input type="number" step="1" min="0" name="items[{{ $i }}][size_quantities][{{ $selectedSize }}]" class="form-control size-qty" value="{{ $sizeQuantities[$selectedSize] ?? '' }}" placeholder="Qty">
+                          </div>
+                        @endforeach
+                      </div>
                     </td>
                     <td><input type="text"   name="items[{{ $i }}][description]" class="form-control desc" value="{{ $desc }}" readonly></td>
-                    <td><input type="number" step="0.01" name="items[{{ $i }}][quantity]"    class="form-control qty"         value="{{ $qty }}"></td>
+                    <td><input type="number" step="0.01" name="items[{{ $i }}][quantity]"    class="form-control qty"         value="{{ $qty }}" readonly></td>
                     <td><input type="number" step="0.01" name="items[{{ $i }}][rate]"        class="form-control rate"        value="{{ $rate }}" readonly></td>
                     <td><input type="number" step="0.01" name="items[{{ $i }}][tax_rate]"    class="form-control tax"         value="{{ $taxRate }}" readonly></td>
                     <td><input type="number" step="0.01" name="items[{{ $i }}][total]"       class="form-control total"       value="{{ $total }}" readonly></td>
+                    @php
+                      $selectedStatus = $isArr ? ($it['status'] ?? '') : ($it->status ?? '');
+                    @endphp
+                    <td>
+                      @if(auth()->user() && auth()->user()->hasRole('retailer'))
+                        <input type="hidden" name="items[{{ $i }}][status]" value="{{ $selectedStatus ?: 'pending' }}">
+                        <span class="badge badge-secondary">{{ ucfirst($selectedStatus ?: 'pending') }}</span>
+                      @else
+                        <select name="items[{{ $i }}][status]" class="form-control status-select">
+                          @foreach(['pending','draft','confirmed','shipped','delivered'] as $st)
+                            <option value="{{ $st }}" {{ ($selectedStatus == $st) ? 'selected' : '' }}>{{ ucfirst($st) }}</option>
+                          @endforeach
+                        </select>
+                      @endif
+                    </td>
                     <td><button type="button" class="btn btn-sm btn-danger remove-item"><i class="fas fa-trash"></i></button></td>
                   </tr>
                 @endforeach
@@ -240,8 +276,7 @@
                       <input type="text" name="items[0][item_name]" class="form-control item-name-input" value="" readonly>
                     </td>
                     <td>
-                      <select name="items[0][color]" class="form-control color-select">
-                        <option value="">--</option>
+                      <select name="items[0][color][]" class="form-control color-select select2" multiple>
                         @foreach($colors as $col)
                           <option value="{{ $col->id }}">{{ $col->name }}</option>
                         @endforeach
@@ -253,12 +288,25 @@
                           <option value="{{ $sz }}">{{ $sz }}</option>
                         @endforeach
                       </select>
+                      <div class="size-qty-wrapper mt-2"></div>
                     </td>
                     <td><input type="text"   name="items[0][description]" class="form-control desc" readonly></td>
-                    <td><input type="number" step="0.01" name="items[0][quantity]"    class="form-control qty"         value="1"></td>
+                    <td><input type="number" step="0.01" name="items[0][quantity]"    class="form-control qty"         value="0" readonly></td>
                     <td><input type="number" step="0.01" name="items[0][rate]"        class="form-control rate"        value="0" readonly></td>
                     <td><input type="number" step="0.01" name="items[0][tax_rate]"    class="form-control tax"         value="0" readonly></td>
                     <td><input type="number" step="0.01" name="items[0][total]"       class="form-control total"       value="0" readonly></td>
+                    <td>
+                      @if(auth()->user() && auth()->user()->hasRole('retailer'))
+                        <input type="hidden" name="items[0][status]" value="pending">
+                        <span class="badge badge-secondary">Pending</span>
+                      @else
+                        <select name="items[0][status]" class="form-control status-select">
+                          @foreach(['pending','draft','confirmed','shipped','delivered'] as $st)
+                            <option value="{{ $st }}">{{ ucfirst($st) }}</option>
+                          @endforeach
+                        </select>
+                      @endif
+                    </td>
                     <td><button type="button" class="btn btn-sm btn-danger remove-item"><i class="fas fa-trash"></i></button></td>
                   </tr>
                 @endif
@@ -405,14 +453,16 @@
           </div>
           <div class="form-group col-md-3">
             <label>Status</label>
-            <select name="status" class="form-control">
-              @foreach(['pending' => 'Pending', 'draft' => 'Draft', 'confirmed' => 'Confirmed', 'shipped' => 'Shipped', 'delivered' => 'Delivered'] as $val => $label)
-                <option value="{{ $val }}"
-                  {{ old('status', $order->status) == $val ? 'selected' : '' }}>
-                  {{ $label }}
-                </option>
-              @endforeach
-            </select>
+            @if(auth()->user() && auth()->user()->hasRole('retailer'))
+              <input type="hidden" name="status" value="{{ old('status', $order->status) }}">
+              <div><span class="badge badge-secondary">{{ ucfirst(old('status', $order->status) ?? 'pending') }}</span></div>
+            @else
+              <select name="status" class="form-control">
+                @foreach(['pending' => 'Pending', 'draft' => 'Draft', 'confirmed' => 'Confirmed', 'shipped' => 'Shipped', 'delivered' => 'Delivered'] as $val => $label)
+                  <option value="{{ $val }}" {{ old('status', $order->status) == $val ? 'selected' : '' }}>{{ $label }}</option>
+                @endforeach
+              </select>
+            @endif
           </div>
           </div>
 
@@ -439,6 +489,7 @@ $(function () {
 
   var ITEMS = @json($itemsJson);
   var COLORS = @json($colors);
+  var IS_RETAILER = @json(optional(auth()->user())->hasRole('retailer') ?? false);
 
   function itemByArticle(val) {
     return ITEMS.find(function(i) {
@@ -446,10 +497,82 @@ $(function () {
     });
   }
 
+  function rowIndex($row) {
+    var name = $row.find('.qty').attr('name') || '';
+    var match = name.match(/items\[(\d+)\]/);
+    return match ? match[1] : 0;
+  }
+
+  function escapeHtml(value) {
+    return String(value).replace(/[&<>"']/g, function(ch) {
+      return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' })[ch];
+    });
+  }
+
+  function normalizeSelected(value) {
+    if (!value) return [];
+    return Array.isArray(value) ? value.map(String) : String(value).split(',').map(function(v) { return v.trim(); });
+  }
+
+  function colorOptions(colors, selected) {
+    selected = normalizeSelected(selected);
+    colors = (colors && colors.length) ? colors : COLORS;
+
+    return colors.map(function(c) {
+      var id = String(c.id);
+      return '<option value="' + escapeHtml(id) + '"' +
+        (selected.indexOf(id) !== -1 ? ' selected' : '') +
+        '>' + escapeHtml(c.name) + '</option>';
+    }).join('');
+  }
+
+  function populateColorSelect($row, colors, selected) {
+    var $color = $row.find('.color-select');
+    selected = selected || $color.val() || [];
+    if ($color.hasClass('select2-hidden-accessible')) { $color.select2('destroy'); }
+    $color.html(colorOptions(colors, selected));
+    $color.select2({ placeholder: 'Colors', width: '100%' });
+  }
+
+  function syncSizeQtyInputs($row) {
+    var idx = rowIndex($row);
+    var sizes = $row.find('.size-select').val() || [];
+    var oldValues = {};
+
+    $row.find('.size-qty').each(function() {
+      oldValues[$(this).closest('.size-qty-row').data('size')] = $(this).val();
+    });
+
+    var html = sizes.map(function(size) {
+      var safeSize = escapeHtml(size);
+      var value = oldValues[size] || '';
+      return '<div class="input-group input-group-sm mb-1 size-qty-row" data-size="' + safeSize + '">' +
+        '<div class="input-group-prepend"><span class="input-group-text">' + safeSize + '</span></div>' +
+        '<input type="number" step="1" min="0" name="items[' + idx + '][size_quantities][' + safeSize + ']" class="form-control size-qty" value="' + escapeHtml(value) + '" placeholder="Qty">' +
+      '</div>';
+    }).join('');
+
+    $row.find('.size-qty-wrapper').html(html);
+    updateRowQty($row);
+  }
+
+  function updateRowQty($row) {
+    if (!$row.find('.size-qty').length) {
+      return;
+    }
+
+    var qty = 0;
+    $row.find('.size-qty').each(function() {
+      qty += parseFloat($(this).val()) || 0;
+    });
+    $row.find('.qty').val(qty);
+  }
+
   // ── Recalculate totals ───────────────────────────────────────────────────
   function recalc() {
     var subtotal = 0;
     $('#itemsTable tbody tr').each(function () {
+      updateRowQty($(this));
       var qty  = parseFloat($(this).find('.qty').val())  || 0;
       var rate = parseFloat($(this).find('.rate').val()) || 0;
       var tax  = parseFloat($(this).find('.tax').val())  || 0;
@@ -465,11 +588,15 @@ $(function () {
     $('#grand_total').val(grand.toFixed(2));
   }
 
-  $(document).on('input', '.qty,.rate,.tax', recalc);
+  $(document).on('input', '.size-qty,.rate,.tax', recalc);
+  $(document).on('change', '.size-select', function() {
+    syncSizeQtyInputs($(this).closest('tr'));
+    recalc();
+  });
   $('#discount,#adjustment').on('input', recalc);
 
   // ── Auto-fill row when item selected ─────────────────────────────────────
-  $(document).on('change', '.item-select', function () {
+  $(document).on('change', '.article-select', function () {
     var $row  = $(this).closest('tr');
     var id    = $(this).val();
     if (!id) return;
@@ -494,11 +621,8 @@ $(function () {
     if (!$row.find('.desc').val()) {
       $row.find('.desc').val(found.desc || '');
     }
-    // populate color select (all colors, preselect item's color if present)
-    var colorOpts = '<option value="">--</option>' + COLORS.map(function(c){
-      return '<option value="' + c.id + '"' + (found.color_id && found.color_id == c.id ? ' selected' : '') + '>' + c.name + '</option>';
-    }).join('');
-    $row.find('.color-select').html(colorOpts);
+    // populate color select from the selected article's colors
+    populateColorSelect($row, found.colors || []);
 
     // populate size select (use item's sizes if present else ALL_SIZES)
     var sizeChoices = (found.sizes && found.sizes.length) ? found.sizes : ALL_SIZES;
@@ -509,6 +633,7 @@ $(function () {
     if ($size.hasClass('select2-hidden-accessible')) { $size.select2('destroy'); }
     $size.html(sizeOpts);
     $size.select2({ placeholder: 'Sizes', width: '100%' });
+    syncSizeQtyInputs($row);
     recalc();
   });
 
@@ -525,10 +650,8 @@ $(function () {
         '>' + (m.article_number || '') + '</option>';
     }).join('');
 
-    // color select options (global COLORS)
-    var colorOpts = '<option value="">--</option>' + COLORS.map(function(c){
-      return '<option value="' + c.id + '">' + c.name + '</option>';
-    }).join('');
+    // color select options (article colors when available, otherwise global COLORS)
+    var colorOpts = colorOptions(it.colors || COLORS, it.color || it.color_id || []);
 
     // size options (leave empty; will be populated on item-select change)
     var sizeOpts = (it.sizes && it.sizes.length) ? it.sizes.map(function(s){ return '<option value="' + s + '" selected>' + s + '</option>'; }).join('') : '';
@@ -537,28 +660,62 @@ $(function () {
       '<td>' +
         '<select name="items[' + idx + '][article_number]" class="form-control article-select">' + opts + '</select>' +
         '<input type="hidden" name="items[' + idx + '][item_id]" class="item-id-hidden" value="' + (it.item_id || '') + '">' +
+        '<input type="hidden" name="items[' + idx + '][order_item_id]" class="order-item-id-hidden" value="' + (it.id || '') + '">' +
       '</td>' +
       '<td><input type="text" name="items[' + idx + '][item_name]" class="form-control item-name-input" value="' + (it.item_name || '') + '" readonly></td>' +
-      '<td><select name="items[' + idx + '][color]" class="form-control color-select">' + colorOpts + '</select></td>' +
-      '<td><select name="items[' + idx + '][sizes][]" class="form-control size-select" multiple>' + sizeOpts + '</select></td>' +
+      '<td><select name="items[' + idx + '][color][]" class="form-control color-select" multiple>' + colorOpts + '</select></td>' +
+      '<td><select name="items[' + idx + '][sizes][]" class="form-control size-select" multiple>' + sizeOpts + '</select><div class="size-qty-wrapper mt-2"></div></td>' +
       '<td><input type="text"   name="items[' + idx + '][description]" class="form-control desc"        value="' + (it.description || '') + '" readonly></td>' +
-      '<td><input type="number" step="0.01" name="items[' + idx + '][quantity]"    class="form-control qty"         value="' + (it.quantity || 1) + '"></td>' +
+      '<td><input type="number" step="0.01" name="items[' + idx + '][quantity]"    class="form-control qty"         value="' + (it.quantity || 0) + '" readonly></td>' +
       '<td><input type="number" step="0.01" name="items[' + idx + '][rate]"        class="form-control rate"        value="' + (it.rate || 0) + '" readonly></td>' +
       '<td><input type="number" step="0.01" name="items[' + idx + '][tax_rate]"    class="form-control tax"         value="' + (it.tax_rate || 0) + '" readonly></td>' +
       '<td><input type="number" step="0.01" name="items[' + idx + '][total]"       class="form-control total"       value="' + (it.total || 0) + '" readonly></td>' +
+      '<td>' +
+        '<select name="items[' + idx + '][status]" class="form-control status-select">' +
+          ['pending','draft','confirmed','shipped','delivered'].map(function(s){
+            return '<option value="' + s + '"' + ((it.status && it.status == s) ? ' selected' : '') + '>' + (s.charAt(0).toUpperCase() + s.slice(1)) + '</option>';
+          }).join('') +
+        '</select>' +
+      '</td>' +
       '<td><button type="button" class="btn btn-sm btn-danger remove-item"><i class="fas fa-trash"></i></button></td>' +
     '</tr>';
   }
 
   var rowCounter = $('#itemsTable tbody tr').length;
 
+  // If the current user is a retailer, ensure status inputs are not editable and
+  // replace selects with hidden fields so the server receives a controlled value.
+  if (IS_RETAILER) {
+    $('#itemsTable tbody tr').each(function() {
+      var $s = $(this).find('.status-select');
+      if ($s.length) {
+        var name = $s.attr('name');
+        var val = $s.val() || 'pending';
+        $s.after('<input type="hidden" name="' + name + '" value="' + val + '">');
+        $s.remove();
+      }
+    });
+  }
+
   $('#addItem').on('click', function () {
     $('#itemsTable tbody').append(buildRow(rowCounter));
     // initialize Select2 on newly appended row
     var $new = $('#itemsTable tbody tr:last');
     $new.find('.size-select').select2({ placeholder: 'Sizes', width: '100%' });
+    $new.find('.color-select').select2({ placeholder: 'Colors', width: '100%' });
+    syncSizeQtyInputs($new);
     rowCounter++;
     recalc();
+    if (IS_RETAILER) {
+      var $last = $('#itemsTable tbody tr:last');
+      var $s = $last.find('.status-select');
+      if ($s.length) {
+        var name = $s.attr('name');
+        var val = $s.val() || 'pending';
+        $s.after('<input type="hidden" name="' + name + '" value="' + val + '">');
+        $s.remove();
+      }
+    }
   });
 
   $(document).on('click', '.remove-item', function () {
@@ -696,6 +853,8 @@ $(function () {
     // set article-select value (find article_number from ITEMS by id)
     var foundArticle = (function(){ var f = ITEMS.find(function(x){ return x.id == itemId; }); return f ? f.article_number : ''; })();
     if (foundArticle) { $tr.find('.article-select').val(foundArticle).trigger('change'); }
+    $tr.find('.size-select').val(sizes).trigger('change');
+    $tr.find('.size-qty').val(sets);
     $tr.append('<input type="hidden" name="items[' + idx + '][size_from]" value="' + from  + '">');
     $tr.append('<input type="hidden" name="items[' + idx + '][size_to]"   value="' + to    + '">');
     $tr.append('<input type="hidden" name="items[' + idx + '][sets]"      value="' + sets  + '">');
@@ -706,7 +865,10 @@ $(function () {
   recalc();
   srRecalc();
 
-  if ($.fn.select2) { $('.size-select').select2({ placeholder: 'Sizes', width: '100%' }); }
+  if ($.fn.select2) {
+    $('.size-select').select2({ placeholder: 'Sizes', width: '100%' });
+    $('.color-select').select2({ placeholder: 'Colors', width: '100%' });
+  }
 
   // trigger customer change on load to auto-fill addresses
     $('#customer_id').trigger('change');

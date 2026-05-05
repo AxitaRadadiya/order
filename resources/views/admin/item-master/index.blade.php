@@ -22,7 +22,7 @@
     <div class="col-xl-12">
          @php
                     // Allowed tabs — default to 'category'
-                    $allowedTabs = ['category', 'sub-category', 'group', 'sub-group', 'size', 'color'];
+                    $allowedTabs = ['category', 'sub-category', 'group', 'sub-group', 'size', 'set', 'color'];
                     $activeTab   = in_array(request()->get('tab'), $allowedTabs)
                                     ? request()->get('tab')
                                     : 'category';
@@ -68,6 +68,13 @@
                             <span class="d-none d-lg-block font-weight-bold">Size</span>
                         </a>
                     </li>
+                    <li class="nav-item mr-1">
+                        <a href="#set" data-toggle="tab" aria-expanded="false"
+                           class="nav-link {{ $activeTab === 'set' ? 'active' : '' }}">
+                            <i class="mdi mdi-format-list-bulleted d-lg-none d-block"></i>
+                            <span class="d-none d-lg-block font-weight-bold">Set</span>
+                        </a>
+                    </li>
                      <li class="nav-item">
                         <a href="#color" data-toggle="tab" aria-expanded="false"
                            class="nav-link {{ $activeTab === 'color' ? 'active' : '' }}">
@@ -103,6 +110,9 @@
 
                     <div class="tab-pane {{ $activeTab === 'size' ? 'show active' : '' }}" id="size">
                         @include('admin.item-master.size.index')
+                    </div>
+                    <div class="tab-pane {{ $activeTab === 'set' ? 'show active' : '' }}" id="set">
+                        @include('admin.item-master.set.index')
                     </div>
                     <div class="tab-pane {{ $activeTab === 'color' ? 'show active' : '' }}" id="color">
                         @include('admin.item-master.color.index')

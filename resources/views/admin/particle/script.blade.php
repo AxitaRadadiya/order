@@ -270,6 +270,7 @@ $(document).ready(function () {
         load_Category();
         load_Group();
         load_Size();
+        load_Set();
         load_Color();
         load_SubCategory();
         load_SubGroup();
@@ -283,6 +284,7 @@ $(document).ready(function () {
             if (target === '#category') load_Category();
             if (target === '#group')    load_Group();
             if (target === '#size')     load_Size();
+            if (target === '#set')      load_Set();
             if(target === '#color')     load_Color();
             if(target === '#sub-category') load_SubCategory();
             if(target === '#sub-group') load_SubGroup();
@@ -965,6 +967,111 @@ $(document).ready(function () {
         $('.size-name-error').text('');
         $('input').removeClass('is-invalid');
     });
+
+    function load_Set() {
+        if ($.fn.dataTable.isDataTable('#SetTable')) {
+            $('#SetTable').DataTable().clear().destroy();
+            $('#SetTable tbody').empty();
+        }
+
+        $('#SetTable').DataTable({
+            paging:      true,
+            lengthChange: true,
+            searching:   true,
+            ordering:    true,
+            info:        true,
+            autoWidth:   false,
+            responsive:  true,
+            processing:  true,
+            serverSide:  true,
+            order:       [[0, 'asc']],
+            ajax: {
+                url:      "{{ route('set.list') }}",
+                dataType: "json",
+                type:     "GET",
+                data:     { _token: "{{ csrf_token() }}" }
+            },
+            columns: [
+                { data: 'id',     orderable: true  },
+                { data: 'name',   orderable: true  },
+                { data: 'sizes',  orderable: false },
+                { data: 'action', orderable: false }
+            ],
+            drawCallback: function () {
+                $('.dataTables_paginate > .pagination').addClass('pagination-rounded');
+            }
+        });
+    }
+
+    $(document).on('click', '.set-date-modal', function () {
+        $('#setForm')[0].reset();
+        $('#set_id').val('');
+        $('#set_name').val('');
+        $('#set_size_ids').val(null).trigger('change');
+        $('.set-name-error, .set-size-error').text('');
+        $('input, select').removeClass('is-invalid');
+
+        $('#setForm').attr('action', '{{ route("set.store") }}');
+        $('#setForm input[name="_method"]').remove();
+
+        $('#SetModal').modal('show');
+    });
+
+    $(document).on('click', '.edit-set-date-modal', function () {
+        var setId = $(this).data('id');
+        var setName = $(this).data('name');
+        var sizeIds = String($(this).data('size-ids') || '').split(',').filter(Boolean);
+
+        $('.set-name-error, .set-size-error').text('');
+        $('input, select').removeClass('is-invalid');
+
+        $('#set_id').val(setId);
+        $('#set_name').val(setName);
+        $('#set_size_ids').val(sizeIds).trigger('change');
+
+        var updateUrl = '{{ route("set.update", ":id") }}'.replace(':id', setId);
+        $('#setForm').attr('action', updateUrl);
+        $('#setForm input[name="_method"]').remove();
+        $('#setForm').append('<input type="hidden" name="_method" value="PUT">');
+
+        $('#SetModal').modal('show');
+    });
+
+    $(document).on('click', '#saveSet', function (e) {
+        e.preventDefault();
+
+        var name = $.trim($('#set_name').val());
+        var sizeIds = $('#set_size_ids').val() || [];
+
+        $('.error').text('');
+        $('input, select').removeClass('is-invalid');
+
+        if (!name) {
+            $('#set_name').addClass('is-invalid');
+            $('.set-name-error').text('Set Name is required.');
+            return;
+        }
+
+        if (!sizeIds.length) {
+            $('#set_size_ids').addClass('is-invalid');
+            $('.set-size-error').text('Please select at least one size.');
+            return;
+        }
+
+        $('#setForm').submit();
+    });
+
+    $('#SetModal').on('shown.bs.modal', function () {
+        $('#set_size_ids').select2({ placeholder: 'Select sizes', width: '100%', dropdownParent: $('#SetModal') });
+    });
+
+    $('#SetModal').on('hidden.bs.modal', function () {
+        $('#setForm input[name="_method"]').remove();
+        $('#setForm')[0].reset();
+        $('#set_size_ids').val(null).trigger('change');
+        $('.set-name-error, .set-size-error').text('');
+        $('input, select').removeClass('is-invalid');
+    });
  
         function load_Color() {
         if ($.fn.dataTable.isDataTable('#ColorTable')) {
@@ -1357,5 +1464,38 @@ document.addEventListener('change', function (e) {
     if (toggleBtn) {
         toggleBtn.textContent = allChecked ? 'None' : 'All';
     }
+});
+</script>
+
+<script>
+// Page-specific: Create User — show/hide distributor selector when role is retailer
+$(function(){
+    function isRetailerRole() {
+        var sel = document.getElementById('role_id');
+        if (!sel) return false;
+        var text = sel.options[sel.selectedIndex] ? sel.options[sel.selectedIndex].text.toLowerCase() : '';
+        return text === 'retailer';
+    }
+
+    function toggleDistributor() {
+        var wrapIds = ['distributorWrapper','distributor_field'];
+        var wrap = null;
+        for (var i=0;i<wrapIds.length;i++) { if (document.getElementById(wrapIds[i])) { wrap = document.getElementById(wrapIds[i]); break; } }
+        var dist = document.getElementById('distributor_id');
+        if (!dist || !wrap) return;
+        if (isRetailerRole()) {
+            $(wrap).show();
+            $(dist).attr('required','required');
+        } else {
+            $(wrap).hide();
+            dist.removeAttribute && dist.removeAttribute('required');
+            $(dist).value = '';
+            $(dist).val('');
+        }
+    }
+
+    $(document).on('change', '#role_id', toggleDistributor);
+    // Initialize on load in case view had old values
+    toggleDistributor();
 });
 </script>

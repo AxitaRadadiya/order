@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use App\Traits\LogsActivity;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class Size extends Model
 {
@@ -22,5 +23,10 @@ class Size extends Model
     public static function activeLabels(): \Illuminate\Support\Collection
     {
         return self::orderBy('name')->pluck('name')->values();
+    }
+
+    public function sets(): BelongsToMany
+    {
+        return $this->belongsToMany(Set::class, 'set_size')->withTimestamps();
     }
 }

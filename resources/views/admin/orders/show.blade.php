@@ -48,7 +48,20 @@
         <h5>Items</h5>
         <table class="table table-sm table-bordered"><thead><tr><th width="100">Article No.</th><th width="100">Item</th><th width="140">Color</th><th width="140">Size</th><th>Desc</th><th width="80">Qty</th><th width="100">MRP</th><th width="100">Total</th></tr></thead><tbody>
           @foreach($order->items as $it)
-            <tr><td>{{ $it->article_number }}</td><td>{{ $it->item_name }}</td><td>{{ $it->color }}</td><td>{{ $it->size }}</td><td>{{ $it->description }}</td><td>{{ $it->quantity }}</td><td>{{ number_format($it->rate,2) }}</td><td>{{ number_format($it->total,2) }}</td></tr>
+            @php
+              $sizeText = $it->size;
+              if (!empty($it->size_quantities)) {
+                $sizeText = collect($it->size_quantities)
+                  ->map(fn($qty, $size) => $size . ': ' . $qty)
+                  ->implode(', ');
+              }
+              $colorText = collect(explode(',', (string) $it->color))
+                ->map(fn($color) => trim($color))
+                ->filter()
+                ->map(fn($color) => $colorsById[$color] ?? $color)
+                ->implode(', ');
+            @endphp
+            <tr><td>{{ $it->article_number }}</td><td>{{ $it->item_name }}</td><td>{{ $colorText }}</td><td>{{ $sizeText }}</td><td>{{ $it->description }}</td><td>{{ $it->quantity }}</td><td>{{ number_format($it->rate,2) }}</td><td>{{ number_format($it->total,2) }}</td></tr>
           @endforeach
         </tbody></table>
         <div class="row mb-2 mt-5">

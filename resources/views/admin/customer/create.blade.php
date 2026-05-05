@@ -64,7 +64,7 @@
             <div class="col-md-3">
               <div class="form-group">
                 <label>Customer Type</label>
-                <select name="role_id" class="form-control">
+                <select id="role_id" name="role_id" class="form-control">
                   <option value="">-- Default (retailer) --</option>
                   @foreach($roles as $r)
                     <option value="{{ $r->id }}" data-name="{{ $r->name }}" @selected(old('role_id') == $r->id)>{{ $r->name }}</option>
@@ -72,10 +72,10 @@
                 </select>
               </div>
             </div>
-            <div class="col-md-3" id="distributor_field" style="display:none;">
+              <div class="col-md-3" id="distributor_field" style="display:none;">
               <div class="form-group">
                 <label>Distributor</label>
-                <select name="distributor_id" class="form-control">
+                <select id="distributor_id" name="distributor_id" class="form-control">
                   <option value="">-- Select distributor --</option>
                   @foreach($distributors ?? [] as $d)
                     <option value="{{ $d->id }}" @selected(old('distributor_id') == $d->id)>{{ $d->company_name ?: $d->name }}</option>

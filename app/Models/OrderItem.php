@@ -7,7 +7,11 @@ use Illuminate\Database\Eloquent\Model;
 class OrderItem extends Model
 {
     protected $fillable = [
-        'order_master_id','item_id','article_number','item_name','description','color','size','quantity','rate','tax_rate','total'
+        'order_master_id','item_id','article_number','item_name','description','color','size','size_quantities','quantity','rate','tax_rate','total','status'
+    ];
+
+    protected $casts = [
+        'size_quantities' => 'array',
     ];
 
     public function order()
@@ -18,5 +22,10 @@ class OrderItem extends Model
     public function item()
     {
         return $this->belongsTo(Item::class);
+    }
+
+    public function isComplete(): bool
+    {
+        return in_array($this->status, ['complete', 'delivered']);
     }
 }

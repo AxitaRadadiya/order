@@ -40,6 +40,9 @@ class OrderMasterController extends Controller
                     $retailerIds = User::where('distributor_id', $authUser->id)->pluck('id')->toArray();
                     $ids = array_merge([$authUser->id], $retailerIds);
                     $query->whereIn('user_id', $ids);
+                } elseif ($authUser->hasRole(['super-admin','superadmin'])) {
+                    // Superadmin should only see orders that are visible to superadmin.
+                    $query->where('visible_to_superadmin', true);
                 }
             }
         } catch (\Throwable $e) {
@@ -115,6 +118,35 @@ class OrderMasterController extends Controller
                 </div>
             </div>';
 
+            // If the logged-in user is a distributor and this order was created by one of
+            // their retailers and is awaiting distributor approval, show approve action.
+            try {
+                $au = auth()->user();
+                if ($au && $au->hasRole('distributor') && !$order->distributor_approved && $order->distributor_id == $au->id && $order->user_id != $au->id) {
+                    $approveUrl = route('orders.approve.distributor', $order->id);
+                    $actions = '<div class="btn-group">
+                        <button type="button" class="btn btn-sm" data-toggle="dropdown">
+                            <i class="fas fa-ellipsis-v"></i>
+                        </button>
+                        <div class="dropdown-menu">
+                            <a class="dropdown-item" href="' . $viewUrl . '">View</a>
+                            <a class="dropdown-item" href="' . $editUrl . '">Edit</a>
+                            <form method="POST" action="' . $approveUrl . '">
+                                <input type="hidden" name="_token" value="' . csrf_token() . '">
+                                <button type="submit" class="dropdown-item text-success">Approve</button>
+                            </form>
+                            <form method="POST" action="' . $deleteUrl . '">
+                                <input type="hidden" name="_token" value="' . csrf_token() . '">
+                                <input type="hidden" name="_method" value="DELETE">
+                                <button type="submit" class="dropdown-item text-danger deleteButton">Delete</button>
+                            </form>
+                        </div>
+                    </div>';
+                }
+            } catch (\Throwable $e) {
+                // ignore
+            }
+
             $data[] = [
                 'id'            => $start + $idx + 1,
                 'order_number'  => $orderNumber,
@@ -180,8 +212,33 @@ class OrderMasterController extends Controller
 
         DB::beginTransaction();
         try {
-            $order = OrderMaster::create($this->orderFields($request));
-            $this->syncItems($order, $request->input('items', []));
+            $fields = $this->orderFields($request);
+            $authUser = auth()->user();
+            if ($authUser && $authUser->hasRole('retailer')) {
+                $fields['distributor_id'] = $authUser->distributor_id;
+                $fields['distributor_approved'] = false;
+                $fields['visible_to_superadmin'] = false;
+            }
+            $order = OrderMaster::create($fields);
+            $subtotal = $this->syncItems($order, $request->input('items', []));
+
+            // Determine overall order status from item statuses: if all items share the same
+            // status, use that as the order status. Otherwise keep submitted order status.
+            $itemStatuses = $order->items()->pluck('status')->filter()->toArray();
+            $unique = array_values(array_unique($itemStatuses));
+            if (count($unique) === 1 && !empty($unique[0])) {
+                $orderStatus = $unique[0];
+            } else {
+                $orderStatus = $request->input('status', $order->status ?? 'pending');
+            }
+
+            // Retailers are not allowed to set the overall order status.
+            $authUser = auth()->user();
+            if ($authUser && $authUser->hasRole('retailer')) {
+                $orderStatus = 'pending';
+            }
+
+            $order->update(array_merge($this->calculatedTotals($request, $subtotal), ['status' => $orderStatus]));
             DB::commit();
 
             return redirect()->route('orders.index')
@@ -216,9 +273,16 @@ class OrderMasterController extends Controller
                     abort(403);
                 }
             }
+            // Superadmin can only view orders that are approved by distributor
+            // if the order requires distributor approval (has distributor_id set).
+            if ($user->hasRole(['super-admin','superadmin']) && $order->distributor_id && !$order->distributor_approved) {
+                abort(403);
+            }
         }
 
-        return view('admin.orders.show', compact('order'));
+        $colorsById = Color::pluck('name', 'id');
+
+        return view('admin.orders.show', compact('order', 'colorsById'));
     }
 
     // -----------------------------------------------------------------------
@@ -271,7 +335,25 @@ class OrderMasterController extends Controller
         try {
             $order->update($this->orderFields($request));
             $order->items()->delete();
-            $this->syncItems($order, $request->input('items', []));
+            $subtotal = $this->syncItems($order, $request->input('items', []));
+
+            // Determine overall order status from item statuses: if all items share the same
+            // status, use that as the order status. Otherwise keep submitted order status.
+            $itemStatuses = $order->items()->pluck('status')->filter()->toArray();
+            $unique = array_values(array_unique($itemStatuses));
+            if (count($unique) === 1 && !empty($unique[0])) {
+                $orderStatus = $unique[0];
+            } else {
+                $orderStatus = $request->input('status', $order->status ?? 'pending');
+            }
+
+            // Retailers are not allowed to set the overall order status.
+            $authUser = auth()->user();
+            if ($authUser && $authUser->hasRole('retailer')) {
+                $orderStatus = $order->status ?? 'pending';
+            }
+
+            $order->update(array_merge($this->calculatedTotals($request, $subtotal), ['status' => $orderStatus]));
             DB::commit();
 
             return redirect()->route('orders.index')
@@ -285,6 +367,34 @@ class OrderMasterController extends Controller
                 ->with('error', $e->getMessage())
                 ->with(array_merge($this->viewData(), compact('order')));
         }
+    }
+
+    /**
+     * Distributor approves an order created by their retailer.
+     */
+    public function approveByDistributor(Request $request, OrderMaster $order)
+    {
+        $user = auth()->user();
+        if (!$user || !$user->hasRole('distributor')) {
+            abort(403);
+        }
+
+        // Only allow the distributor assigned to this order to approve it.
+        if (empty($order->distributor_id) || $order->distributor_id != $user->id) {
+            abort(403);
+        }
+
+        if ($order->distributor_approved) {
+            return redirect()->back()->with('info', 'Order already approved.');
+        }
+
+        $order->update([
+            'distributor_approved' => true,
+            'distributor_approved_at' => now(),
+            'visible_to_superadmin' => true,
+        ]);
+
+        return redirect()->back()->with('success', 'Order approved and sent to superadmin.');
     }
 
     // -----------------------------------------------------------------------
@@ -332,7 +442,7 @@ class OrderMasterController extends Controller
         }
 
         $customers = $customersQuery->get();
-        $items     = Item::orderBy('name')->get();
+        $items     = Item::with('colors')->orderBy('name')->get();
 
         $customersJson = $customers->mapWithKeys(function (User $u) {
             $addr     = $u->address ?? null;
@@ -394,15 +504,20 @@ class OrderMasterController extends Controller
                 'rate'           => $item->price ?? 0,
                 'tax'            => $item->tax_percent ?? 0,
                 'desc'           => $item->description ?? '',
-                'color_id'       => optional($item->color)->id,
-                'color'          => optional($item->color)->name,
+                'colors'         => $item->colors->map(fn ($color) => [
+                    'id' => $color->id,
+                    'name' => $color->name,
+                ])->values(),
                 'sizes'          => $sizes,
             ];
         })->values();
     }
 
-    private function syncItems(OrderMaster $order, array $items): void
+    private function syncItems(OrderMaster $order, array $items): float
     {
+        $subtotal = 0;
+        $authUser = auth()->user();
+
         foreach ($items as $it) {
             $itemId   = $it['item_id']   ?? null;
             $itemName = $it['item_name'] ?? null;
@@ -423,13 +538,33 @@ class OrderMasterController extends Controller
                 $articleNumber = $itemModel->article_number ?? $itemModel->sku ?? null;
             }
 
-            $sizeVal = null;
-            if (!empty($it['sizes'])) {
-                $sizeVal = is_array($it['sizes'])
-                    ? implode(',', $it['sizes'])
-                    : $it['sizes'];
+            $sizeQuantities = $this->normalizeSizeQuantities($it);
+
+            if (!empty($sizeQuantities)) {
+                $sizeVal = implode(',', array_keys($sizeQuantities));
+                $quantity = array_sum($sizeQuantities);
+            } elseif (!empty($it['sizes'])) {
+                $selectedSizes = is_array($it['sizes']) ? $it['sizes'] : explode(',', $it['sizes']);
+                $selectedSizes = array_values(array_filter(array_map('trim', $selectedSizes), fn ($size) => $size !== ''));
+                $sizeVal = implode(',', $selectedSizes);
+                $quantity = (float) ($it['quantity'] ?? 0);
             } elseif (!empty($it['size_from']) || !empty($it['size_to'])) {
                 $sizeVal = trim(($it['size_from'] ?? '') . '-' . ($it['size_to'] ?? ''), '-');
+                $quantity = (float) ($it['quantity'] ?? 0);
+            } else {
+                $sizeVal = null;
+                $quantity = (float) ($it['quantity'] ?? 0);
+            }
+
+            $rate = (float) ($it['rate'] ?? 0);
+            $taxRate = (float) ($it['tax_rate'] ?? 0);
+            $total = round(($rate + ($rate * $taxRate / 100)) * $quantity, 2);
+            $subtotal += $total;
+
+            // If the current user is a retailer, they are not allowed to set item status.
+            $status = $it['status'] ?? 'pending';
+            if ($authUser && $authUser->hasRole('retailer')) {
+                $status = 'pending';
             }
 
             $order->items()->create([
@@ -437,16 +572,98 @@ class OrderMasterController extends Controller
                 'item_id'     => $itemId  ?: null,
                 'item_name'   => $itemName,
                 'description' => $it['description'] ?? null,
-                'color'       => $it['color']       ?? $it['color_id'] ?? null,
+                'color'       => $this->normalizeColors($it),
                 'size'        => $sizeVal,
-                'quantity'    => $it['quantity']    ?? 0,
-                'rate'        => $it['rate']        ?? 0,
-                'tax_rate'    => $it['tax_rate']    ?? 0,
-                'total'       => $it['total']       ?? 0,
+                'size_quantities' => !empty($sizeQuantities) ? $sizeQuantities : null,
+                'quantity'    => $quantity,
+                'rate'        => $rate,
+                'tax_rate'    => $taxRate,
+                'total'       => $total,
+                'status'      => $status,
                 'size_from'   => $it['size_from']   ?? null,
                 'size_to'     => $it['size_to']     ?? null,
                 'sets'        => $it['sets']        ?? null,
             ]);
         }
+
+        return $subtotal;
+    }
+
+    private function normalizeSizeQuantities(array $item): array
+    {
+        $selectedSizes = $item['sizes'] ?? [];
+        if (!is_array($selectedSizes)) {
+            $selectedSizes = explode(',', $selectedSizes);
+        }
+
+        $selectedSizes = array_values(array_filter(array_map('trim', $selectedSizes), fn ($size) => $size !== ''));
+        $submittedQuantities = $item['size_quantities'] ?? [];
+        if (!is_array($submittedQuantities)) {
+            return [];
+        }
+
+        $quantities = [];
+        foreach ($selectedSizes as $size) {
+            $qty = (float) ($submittedQuantities[$size] ?? 0);
+            if ($qty > 0) {
+                $quantities[$size] = $qty;
+            }
+        }
+
+        return $quantities;
+    }
+
+    private function normalizeColors(array $item): ?string
+    {
+        $colors = $item['color'] ?? $item['color_id'] ?? [];
+
+        if (!is_array($colors)) {
+            $colors = explode(',', (string) $colors);
+        }
+
+        $colors = array_values(array_filter(array_map('trim', $colors), fn ($color) => $color !== ''));
+
+        return !empty($colors) ? implode(',', $colors) : null;
+    }
+
+    private function calculatedTotals(Request $request, float $subtotal): array
+    {
+        $discount = (float) $request->input('discount', 0);
+        $adjustment = (float) $request->input('adjustment', 0);
+
+        return [
+            'subtotal' => round($subtotal, 2),
+            'grand_total' => round($subtotal - $discount + $adjustment, 2),
+        ];
+    }
+
+    // -----------------------------------------------------------------------
+    // AJAX: update single order item status
+    // -----------------------------------------------------------------------
+    public function updateItemStatus(Request $request, \App\Models\OrderItem $orderItem)
+    {
+        $request->validate([
+            'status' => 'required|string',
+        ]);
+
+        $order = $orderItem->order;
+        $user = auth()->user();
+        // Retailers are not allowed to change an item's status at all.
+        if ($user && $user->hasRole('retailer')) {
+            abort(403);
+        }
+
+        // Distributors may act on their own orders or retailers assigned to them.
+        if ($user && $user->hasRole('distributor')) {
+            $retailerIds = User::where('distributor_id', $user->id)->pluck('id')->toArray();
+            if ($order->user_id !== $user->id && !in_array($order->user_id, $retailerIds)) {
+                abort(403);
+            }
+        }
+
+        $orderItem->status = $request->input('status');
+        $orderItem->save();
+
+        return response()->json(['success' => true, 'status' => $orderItem->status]);
     }
 }

@@ -104,11 +104,12 @@
 						<div class="col-md-4">
 							<div class="form-group">
 								<label>Colors</label>
-								<select name="colors[]" class="form-control" multiple>
+								<select name="colors[]" class="form-control select2 @error('colors') is-invalid @enderror" multiple>
 									@foreach($colors as $color)
 									<option value="{{ $color->id }}" {{ in_array($color->id, (array) old('colors', $item->colors->pluck('id')->toArray())) ? 'selected' : '' }}>{{ $color->name }}</option>
 									@endforeach
 								</select>
+								@error('colors')<div class="invalid-feedback">{{ $message }}</div>@enderror
 							</div>
 						</div>
 

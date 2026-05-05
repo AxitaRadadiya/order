@@ -52,6 +52,15 @@ class CustomerController extends Controller
             'discount'     => 'nullable|numeric|min:0|max:100',
         ]);
 
+        // If role is retailer, distributor selection must be provided
+        $role = null;
+        if ($request->filled('role_id')) {
+            $role = Role::find($request->input('role_id'));
+        }
+        if ($role && strtolower($role->name) === 'retailer') {
+            $request->validate(['distributor_id' => 'required|exists:users,id']);
+        }
+
         DB::beginTransaction();
         try {
             // 1. Create Customer and assign role
@@ -167,6 +176,13 @@ class CustomerController extends Controller
 
         DB::beginTransaction();
         try {
+            // If role is being set to retailer, distributor selection must be provided
+            $roleId = $request->input('role_id', $customer->role_id);
+            $role = $roleId ? Role::find($roleId) : null;
+            if ($role && strtolower($role->name) === 'retailer') {
+                $request->validate(['distributor_id' => 'required|exists:users,id']);
+            }
+
             // 1. Update Customer
             $customerData = [
                 'name'            => $request->name,
