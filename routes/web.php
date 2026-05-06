@@ -23,6 +23,7 @@ use App\Http\Controllers\Admin\ItemController;
 use App\Http\Controllers\Admin\OrderMasterController;
 use App\Http\Controllers\Admin\SubGroupController;
 use App\Http\Controllers\Admin\SubCategoryController;
+use App\Http\Controllers\Admin\CartController;
 use App\Http\Controllers\FrontendController;    
 use Illuminate\Support\Facades\Artisan;
 
@@ -102,10 +103,14 @@ Route::group(['middleware' => ['auth']], function () {
     Route::post('order-items/{orderItem}/status', [OrderMasterController::class, 'updateItemStatus'])->name('order-items.status.update');
     Route::get('color-list', [ColorController::class,'list'])->name('color.list');
     Route::resource('color', ColorController::class);
+    // Cart routes (list + resource-style) placed alongside other admin resources
+
     Route::get('sub-category-list', [SubCategoryController::class,'list'])->name('sub-category.list');
     Route::resource('sub-category', SubCategoryController::class);
     Route::get('sub-group-list', [SubGroupController::class,'list'])->name('sub-group.list');
     Route::resource('sub-group', SubGroupController::class);
+  // RESTful cart resource (store, update, destroy, index)
+  Route::resource('cart', CartController::class);
 
 
     // Admin profile (admin area)
@@ -122,7 +127,8 @@ Route::group(['middleware' => ['auth']], function () {
     ->name('catalog.show')
     ->middleware(\App\Http\Middleware\EnsureModuleAccess::class . ':catalog');
 
- 
+  // Simple session-based cart for catalog (add/update/remove/view)
+
 
 });
 
