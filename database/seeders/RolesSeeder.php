@@ -56,5 +56,14 @@ class RolesSeeder extends Seeder
                 $distributor->permissions()->syncWithoutDetaching([$catalogPerm->id]);
             }
         }
+
+        // Ensure distributor has customer-view permission by default (allows access to Customers module)
+        $customerViewPerm = Permission::where('name', 'customer-view')->first();
+        if ($customerViewPerm) {
+            $distributor = Role::where('name', 'distributor')->first();
+            if ($distributor) {
+                $distributor->permissions()->syncWithoutDetaching([$customerViewPerm->id]);
+            }
+        }
     }
 }

@@ -107,6 +107,10 @@
           $showOrders  = true;
           $showItems   = false;
         }
+
+        if ($user->hasRole('distributor')) {
+          $showCustomers = true;
+        }
       @endphp
 
       @if($showCatalog)

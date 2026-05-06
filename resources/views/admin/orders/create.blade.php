@@ -224,7 +224,7 @@
                       <span class="badge badge-secondary">{{ ucfirst($it['status'] ?? 'pending') }}</span>
                     @else
                       <select name="items[{{ $i }}][status]" class="form-control status-select">
-                        @foreach(['pending','draft','confirmed','shipped','delivered'] as $st)
+                        @foreach(['pending','draft','confirmed','shipped','delivered', 'cancelled'] as $st)
                           <option value="{{ $st }}" {{ (isset($it['status']) && $it['status'] == $st) ? 'selected' : '' }}>{{ ucfirst($st) }}</option>
                         @endforeach
                       </select>
@@ -279,7 +279,7 @@
                       <span class="badge badge-secondary">Pending</span>
                     @else
                       <select name="items[0][status]" class="form-control status-select">
-                        @foreach(['pending','draft','confirmed','shipped','delivered'] as $st)
+                        @foreach(['pending','draft','confirmed','shipped','delivered', 'cancelled'] as $st)
                           <option value="{{ $st }}">{{ ucfirst($st) }}</option>
                         @endforeach
                       </select>
@@ -442,6 +442,7 @@
                 <option value="confirmed" {{ old('status','pending') == 'confirmed' ? 'selected' : '' }}>Confirmed</option>
                 <option value="shipped" {{ old('status','pending') == 'shipped'   ? 'selected' : '' }}>Shipped</option>
                 <option value="delivered" {{ old('status','pending') == 'delivered' ? 'selected' : '' }}>Delivered</option>
+                <option value="cancelled" {{ old('status','pending') == 'cancelled' ? 'selected' : '' }}>Cancelled</option>
               </select>
             @endif
           </div>
@@ -654,7 +655,7 @@
         '<td><input type="number" step="0.01" name="items[' + idx + '][total]"       class="form-control total"       value="' + (it.total || 0) + '" readonly></td>' +
         '<td>' +
           '<select name="items[' + idx + '][status]" class="form-control status-select">' +
-            ['pending','draft','confirmed','shipped','delivered'].map(function(s){
+            ['pending','draft','confirmed','shipped','delivered','cancelled'].map(function(s){
               return '<option value="' + s + '"' + ((it.status && it.status == s) ? ' selected' : '') + '>' + (s.charAt(0).toUpperCase() + s.slice(1)) + '</option>';
             }).join('') +
           '</select>' +
@@ -693,6 +694,8 @@
           var name = $s.attr('name');
           var val = $s.val() || 'pending';
           $s.after('<input type="hidden" name="' + name + '" value="' + val + '">');
+          // Add visible badge for retailer rows
+          $s.next('input[type=hidden]').after('<span class="badge badge-secondary">' + (val.charAt(0).toUpperCase() + val.slice(1)) + '</span>');
           $s.remove();
         }
       }

@@ -29,10 +29,27 @@ class CustomerController extends Controller
         $countries = Country::orderBy('name')->get();
         $states = State::orderBy('name')->get();
         $cities = City::orderBy('name')->get();
-        // Only allow selecting retail/distributor roles in customer creation
+        // Default: allow selecting retail/distributor roles in customer creation
         $roles = Role::whereIn('name', ['retailer', 'distributor'])->orderBy('name')->get();
         $distributors = Customer::whereHas('role', function ($q) { $q->where('name', 'distributor'); })->get(['id','company_name','name']);
-        return view('admin.customer.create', compact('countries', 'states', 'cities', 'roles', 'distributors'));
+
+        // If the logged-in user is a distributor, restrict creation to retailers
+        $isDistributorPanel = false;
+        $currentDistributorId = null;
+        try {
+            $u = auth()->user();
+            if ($u && $u->hasRole('distributor')) {
+                $isDistributorPanel = true;
+                $currentDistributorId = $u->id;
+                $roles = Role::where('name', 'retailer')->get();
+                // distributors list is not needed for distributor panel
+                $distributors = collect([['id' => $u->id, 'company_name' => $u->company_name, 'name' => $u->name]]);
+            }
+        } catch (\Throwable $e) {
+            // ignore
+        }
+
+        return view('admin.customer.create', compact('countries', 'states', 'cities', 'roles', 'distributors', 'isDistributorPanel', 'currentDistributorId'));
     }
 
     public function store(Request $request)
@@ -59,6 +76,20 @@ class CustomerController extends Controller
         }
         if ($role && strtolower($role->name) === 'retailer') {
             $request->validate(['distributor_id' => 'required|exists:users,id']);
+        }
+
+        // If current user is distributor, force created customer to be retailer under them
+        try {
+            $u = auth()->user();
+            if ($u && $u->hasRole('distributor')) {
+                $retailerRole = Role::where('name', 'retailer')->first();
+                if ($retailerRole) {
+                    $request->merge(['role_id' => $retailerRole->id]);
+                }
+                $request->merge(['distributor_id' => $u->id]);
+            }
+        } catch (\Throwable $e) {
+            // ignore
         }
 
         DB::beginTransaction();
@@ -154,11 +185,51 @@ class CustomerController extends Controller
         $cities = City::orderBy('name')->get();
         $roles = Role::whereIn('name', ['retailer', 'distributor'])->orderBy('name')->get();
         $distributors = Customer::whereHas('role', function ($q) { $q->where('name', 'distributor'); })->get(['id','company_name','name']);
-        return view('admin.customer.edit', compact('customer', 'countries', 'states', 'cities', 'roles', 'distributors'));
+
+        $isDistributorPanel = false;
+        $currentDistributorId = null;
+        try {
+            $u = auth()->user();
+            if ($u && $u->hasRole('distributor')) {
+                // Distributor editing — restrict role selection to retailer and prefill distributor
+                $isDistributorPanel = true;
+                $currentDistributorId = $u->id;
+                $roles = Role::where('name', 'retailer')->get();
+                $distributors = collect([['id' => $u->id, 'company_name' => $u->company_name, 'name' => $u->name]]);
+
+                // Ensure distributor can only edit their own retailers (or themselves)
+                if ($customer->id !== $u->id && $customer->distributor_id !== $u->id) {
+                    abort(403);
+                }
+            }
+        } catch (\Throwable $e) {
+            // ignore
+        }
+
+        return view('admin.customer.edit', compact('customer', 'countries', 'states', 'cities', 'roles', 'distributors', 'isDistributorPanel', 'currentDistributorId'));
     }
 
     public function update(Request $request, Customer $customer)
     {
+        // If current user is distributor, force role to retailer and distributor_id to current distributor
+        try {
+            $u = auth()->user();
+            if ($u && $u->hasRole('distributor')) {
+                $retailerRole = Role::where('name', 'retailer')->first();
+                if ($retailerRole) {
+                    $request->merge(['role_id' => $retailerRole->id]);
+                }
+                $request->merge(['distributor_id' => $u->id]);
+
+                // Prevent editing customers not assigned to this distributor
+                if ($customer->id !== $u->id && $customer->distributor_id !== $u->id) {
+                    abort(403);
+                }
+            }
+        } catch (\Throwable $e) {
+            // ignore
+        }
+
         $request->validate([
             'name'         => 'required|string|max:255',
             'email'        => 'required|email|unique:users,email,' . $customer->id,
@@ -285,9 +356,26 @@ class CustomerController extends Controller
             $orderColumn = $columns[$colIndex] ?? 'id';
             $orderDir = $order['dir'] ?? 'desc';
         }
-            // Only list customers who are assigned retailer/distributor roles
+            // By default list customers who are assigned retailer/distributor roles
             $roleIds = Role::whereIn('name', ['retailer', 'distributor'])->pluck('id')->toArray();
             $query = Customer::whereIn('role_id', $roleIds);
+
+            // If logged-in user is a distributor, show only their retailers
+            try {
+                $u = auth()->user();
+                if ($u && $u->hasRole('distributor')) {
+                    $retailerRole = Role::where('name', 'retailer')->first();
+                    if ($retailerRole) {
+                        $query = Customer::where('role_id', $retailerRole->id)
+                            ->where('distributor_id', $u->id);
+                    } else {
+                        // fallback: restrict by distributor_id
+                        $query = Customer::where('distributor_id', $u->id);
+                    }
+                }
+            } catch (\Throwable $e) {
+                // ignore and use default query
+            }
         //$query = Customer::whereIn('role_id', [7, 8]);
 
         if (!empty($searchValue)) {

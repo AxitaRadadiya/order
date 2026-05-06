@@ -38,6 +38,15 @@
     <form action="{{ route('customers.store') }}" method="POST">
       @csrf
 
+      @if(!empty($isDistributorPanel) && $isDistributorPanel)
+        {{-- When distributor creates customer, fix role to retailer and distributor_id to current distributor --}}
+        @php
+          $retailerRole = $roles->first();
+        @endphp
+        <input type="hidden" name="role_id" value="{{ $retailerRole?->id }}">
+        <input type="hidden" name="distributor_id" value="{{ $currentDistributorId }}">
+      @endif
+
       {{-- 1. Basic Info --}}
       <div class="card card-outline card-primary" style="padding:10px;">
         <div class="card-header">
@@ -64,23 +73,31 @@
             <div class="col-md-3">
               <div class="form-group">
                 <label>Customer Type</label>
-                <select id="role_id" name="role_id" class="form-control">
-                  <option value="">-- Default (retailer) --</option>
-                  @foreach($roles as $r)
-                    <option value="{{ $r->id }}" data-name="{{ $r->name }}" @selected(old('role_id') == $r->id)>{{ $r->name }}</option>
-                  @endforeach
-                </select>
+                @if(!empty($isDistributorPanel) && $isDistributorPanel)
+                  <input type="text" class="form-control" value="Retailer" disabled>
+                @else
+                  <select id="role_id" name="role_id" class="form-control">
+                    <option value="">-- Default (retailer) --</option>
+                    @foreach($roles as $r)
+                      <option value="{{ $r->id }}" data-name="{{ $r->name }}" @selected(old('role_id') == $r->id)>{{ $r->name }}</option>
+                    @endforeach
+                  </select>
+                @endif
               </div>
             </div>
               <div class="col-md-3" id="distributor_field" style="display:none;">
               <div class="form-group">
                 <label>Distributor</label>
-                <select id="distributor_id" name="distributor_id" class="form-control">
-                  <option value="">-- Select distributor --</option>
-                  @foreach($distributors ?? [] as $d)
-                    <option value="{{ $d->id }}" @selected(old('distributor_id') == $d->id)>{{ $d->company_name ?: $d->name }}</option>
-                  @endforeach
-                </select>
+                @if(!empty($isDistributorPanel) && $isDistributorPanel)
+                  <input type="text" class="form-control" value="{{ optional($distributors->first())['company_name'] ?: optional($distributors->first())['name'] }}" disabled>
+                @else
+                  <select id="distributor_id" name="distributor_id" class="form-control">
+                    <option value="">-- Select distributor --</option>
+                    @foreach($distributors ?? [] as $d)
+                      <option value="{{ $d->id }}" @selected(old('distributor_id') == $d->id)>{{ $d->company_name ?: $d->name }}</option>
+                    @endforeach
+                  </select>
+                @endif
               </div>
             </div>
             <div class="col-md-3">

@@ -59,6 +59,13 @@ class AuthenticatedSessionController extends Controller
                 // Fixed permissions for retailer and distributor roles
                 if ($user->hasRole(['retailer', 'distributor'])) {
                     $modules = ['catalog', 'orders'];
+
+                    // If the distributor/retailer role also has customer-* permissions,
+                    // include the customers module in allowed modules.
+                    $rolePerms = $role ? $role->permissions()->pluck('name')->map(fn($n) => strtolower($n))->toArray() : [];
+                    if (collect($rolePerms)->contains(fn($p) => str_starts_with($p, 'customer-'))) {
+                        $modules[] = 'customers';
+                    }
                 } else {
                     foreach ($permissionNames as $perm) {
                         if (str_starts_with($perm, 'item-')) {

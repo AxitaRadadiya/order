@@ -404,7 +404,7 @@ class OrderMasterController extends Controller
     {
         $user = auth()->user();
         if ($user && $user->hasRole(['retailer', 'distributor']) && $order->user_id !== $user->id) {
-            abort(403);
+            return redirect()->back()->with('error', 'You are not allowed to delete this order.');
         }
 
         $order->delete();
