@@ -25,8 +25,8 @@ class Size extends Model
         return self::orderBy('name')->pluck('name')->values();
     }
 
-    public function sets(): BelongsToMany
-    {
-        return $this->belongsToMany(Set::class, 'set_size')->withTimestamps();
-    }
+    // public function sets(): BelongsToMany
+    // {
+    //     return $this->belongsToMany(Set::class, 'set_size')->withTimestamps();
+    // }
 }

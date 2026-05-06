@@ -14,6 +14,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Str;
 use Illuminate\View\View;
 
 class ItemController extends Controller
@@ -79,7 +80,7 @@ class ItemController extends Controller
             $primaryPath = null;
 
             if ($primary && str_starts_with($primary, 'new-')) {
-                $idx = (int) str_after($primary, 'new-');
+                $idx = (int) Str::after($primary, 'new-');
                 if (isset($imagePaths[$idx])) {
                     $primaryPath = $imagePaths[$idx];
                 }
@@ -176,7 +177,7 @@ class ItemController extends Controller
             $primary = $request->input('primary_image');
             $primaryPath = null;
             if ($primary && str_starts_with($primary, 'new-')) {
-                $idx = (int) str_after($primary, 'new-');
+                $idx = (int) Str::after($primary, 'new-');
                 if (isset($imagePaths[$idx])) {
                     $primaryPath = $imagePaths[$idx];
                 }

@@ -36,7 +36,7 @@
                 </button>
             </div>
             <div class="modal-body">
-                <form action="{{ route('set.store') }}" method="POST" id="setForm">
+                <form action="" method="POST" id="setForm">
                     @csrf
                     <input type="hidden" name="set_id" id="set_id">
                     <div class="row">
