@@ -68,6 +68,9 @@ $(document).ready(function () {
 
     $('.select2').select2();
 
+    // Ensure AJAX requests include the CSRF token so Laravel doesn't redirect/respondd with HTML
+    $.ajaxSetup({ headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') } });
+
     // Date range pickers
     $('.single_date').daterangepicker({
         singleDatePicker: true,
@@ -213,7 +216,11 @@ $(document).ready(function () {
                 url: '{{ route('orders.list') }}',
                 dataType: 'json',
                 type: 'GET',
-                data: { _token: '{{csrf_token()}}' }
+                data: { _token: '{{csrf_token()}}' },
+                error: function (xhr, textStatus, errorThrown) {
+                    console.error('Order list AJAX error:', textStatus, errorThrown, xhr.responseText);
+                    Toast.fire({ icon: 'error', title: 'Failed to load orders. See console for details.' });
+                }
             },
             columns: [
             { data: 'id' },

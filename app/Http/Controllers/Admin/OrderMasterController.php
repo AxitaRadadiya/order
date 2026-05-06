@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use App\Models\OrderMaster;
 use App\Models\OrderItem;
 use App\Models\User;
@@ -41,8 +42,10 @@ class OrderMasterController extends Controller
                     $ids = array_merge([$authUser->id], $retailerIds);
                     $query->whereIn('user_id', $ids);
                 } elseif ($authUser->hasRole(['super-admin','superadmin'])) {
-                    // Superadmin should only see orders that are visible to superadmin.
-                    $query->where('visible_to_superadmin', true);
+                    // If the column exists, restrict to orders visible to superadmin.
+                    if (Schema::hasColumn('order_masters', 'visible_to_superadmin')) {
+                        $query->where('visible_to_superadmin', true);
+                    }
                 }
             }
         } catch (\Throwable $e) {
