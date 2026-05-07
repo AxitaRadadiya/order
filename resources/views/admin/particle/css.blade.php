@@ -21,7 +21,6 @@
   <link rel="stylesheet" href="{{ asset('admin/plugins/datatables-buttons/css/buttons.bootstrap4.min.css') }}">
   <!-- Theme style -->
   <link rel="stylesheet" href="{{ asset('admin/dist/css/adminlte.min.css') }}">
-  <link rel="stylesheet" href="{{ asset('admin/dist/css/custom.css') }}">
   <!-- overlayScrollbars -->
   <link rel="stylesheet" href="{{ asset('admin/plugins/overlayScrollbars/css/OverlayScrollbars.min.css') }}">
   <!-- Daterange picker -->
@@ -30,3 +29,5 @@
   <link rel="stylesheet" href="{{ asset('admin/plugins/summernote/summernote-bs4.min.css') }}">
 
   {{-- <link rel="stylesheet" href="{{ asset('admin/plugins/autocomplete/jquery.autocomplete.css') }}"> --}}
+  <!-- Custom admin styles (loaded last to allow overrides) -->
+  <link rel="stylesheet" href="{{ asset('admin/dist/css/custom.css') }}">
