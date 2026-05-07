@@ -865,6 +865,7 @@
     // Prefill customer and item if provided by controller (from catalog Add Order)
     var PRE_ITEM_ID = @json($pre_item_id ?? null);
     var PRE_USER_ID = @json($pre_user_id ?? null);
+    var PRE_ITEMS = @json($pre_items ?? null);
 
     if (PRE_USER_ID) {
       $('#customer_id').val(PRE_USER_ID).trigger('change');
@@ -901,6 +902,88 @@
           if (found && found.article_number) { $sel.val(found.article_number).trigger('change'); }
         }
       }
+    }
+
+    // If multiple items are provided (from cart), append them
+    if (Array.isArray(PRE_ITEMS) && PRE_ITEMS.length) {
+      // remove any placeholder empty row that was rendered by the server
+      $('#itemsTable tbody tr').each(function() {
+        var $r = $(this);
+        var art = $r.find('.article-select').val();
+        var iid = $r.find('.item-id-hidden').val();
+        var name = $r.find('.item-name-input').val();
+        if ((!art || art === '') && (!iid || iid === '') && (!name || name === '')) {
+          $r.remove();
+        }
+      });
+      // recalculate rowCounter after removing placeholders
+      rowCounter = $('#itemsTable tbody tr').length;
+      PRE_ITEMS.forEach(function(it) {
+        var idx = rowCounter++;
+        // Map our pre-item fields to the expected 'it' shape used by buildRow
+        var rowData = {
+          item_id: it.item_id || it.id || null,
+          item_name: it.item_name || it.name || '',
+          rate: it.rate || 0,
+          tax_rate: it.tax_rate || 0,
+          quantity: it.quantity || it.qty || 0,
+          description: it.description || '',
+          color: it.color || it.color_id || null,
+          sizes: it.sizes || it.size || null,
+          size_quantities: it.size_quantities || null
+        };
+
+        $('#itemsTable tbody').append(buildRow(idx, rowData));
+        var $tr = $('#itemsTable tbody tr:last');
+
+        // set article-select value if we can find the article by item id
+        if (rowData.item_id) {
+          var foundArticle = (function(){ var f = ITEMS.find(function(x){ return x.id == rowData.item_id; }); return f ? f.article_number : ''; })();
+          if (foundArticle) { $tr.find('.article-select').val(foundArticle).trigger('change'); }
+        }
+
+        // initialize Select2 on the new row selects
+        if ($.fn.select2) {
+          $tr.find('.size-select').select2({ placeholder: 'Sizes', width: '100%' });
+          $tr.find('.color-select').select2({ placeholder: 'Colors', width: '100%' });
+        }
+
+        // set color (supports single id or comma-separated)
+        if (rowData.color) {
+          try {
+            var colorVal = Array.isArray(rowData.color) ? rowData.color.map(String) : String(rowData.color).split(',').map(function(s){ return s.trim(); });
+            $tr.find('.color-select').val(colorVal).trigger('change');
+          } catch (e) { /* ignore */ }
+        }
+
+        // set sizes and per-size quantities if present
+        if (rowData.sizes) {
+          var sizesVal = Array.isArray(rowData.sizes) ? rowData.sizes : String(rowData.sizes).split(',').map(function(s){ return s.trim(); });
+          // set the select value and synchronously build qty inputs
+          $tr.find('.size-select').val(sizesVal);
+          // build size-qty inputs based on selected sizes
+          try { syncSizeQtyInputs($tr); } catch (e) { $tr.find('.size-select').trigger('change'); }
+
+          if (rowData.size_quantities && typeof rowData.size_quantities === 'object') {
+            // populate per-size qty inputs immediately
+            Object.keys(rowData.size_quantities).forEach(function(sz){
+              var $inp = $tr.find('.size-qty-row[data-size="' + sz + '"]').find('.size-qty');
+              if ($inp.length) { $inp.val(rowData.size_quantities[sz]); }
+            });
+            updateRowQty($tr);
+            recalc();
+          } else {
+            recalc();
+          }
+        } else {
+          // set rate/qty explicitly when no sizes
+          $tr.find('.rate').val(rowData.rate || 0);
+          $tr.find('.qty').val(rowData.quantity || 0);
+          $tr.find('.size-select').trigger('change');
+        }
+
+      });
+      recalc();
     }
   });
 </script>

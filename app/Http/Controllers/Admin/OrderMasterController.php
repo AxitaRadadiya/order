@@ -187,6 +187,48 @@ class OrderMasterController extends Controller
         // Prefill item_id if provided in query (from catalog "Add Order" button)
         $data['pre_item_id'] = $request->query('item_id');
 
+        // If called from cart, prepare pre_items from session cart entries
+        $data['pre_items'] = null;
+        if ($request->query('from_cart')) {
+            $cart = session()->get('cart', []);
+            $pre = [];
+            foreach ($cart as $entry) {
+                try {
+                    $itemModel = null;
+                    if (!empty($entry['item_id'])) {
+                        $itemModel = Item::find($entry['item_id']);
+                    }
+                } catch (\Throwable $e) {
+                    $itemModel = null;
+                }
+
+                // Normalize size fields: cart may store single 'size' and total 'qty'
+                $sizesVal = null;
+                $sizeQuantities = null;
+                if (!empty($entry['size'])) {
+                    // single size selected in cart
+                    $sizesVal = [$entry['size']];
+                    $sizeQuantities = [$entry['size'] => ($entry['qty'] ?? ($entry['quantity'] ?? 0))];
+                } elseif (!empty($entry['size_quantities']) && is_array($entry['size_quantities'])) {
+                    $sizesVal = array_keys($entry['size_quantities']);
+                    $sizeQuantities = $entry['size_quantities'];
+                }
+
+                $pre[] = [
+                    'item_id' => $entry['item_id'] ?? null,
+                    'item_name' => $entry['name'] ?? ($itemModel?->name ?? ''),
+                    'rate' => $entry['price'] ?? ($itemModel?->price ?? 0),
+                    'tax_rate' => $itemModel?->tax_percent ?? ($entry['tax_rate'] ?? 0),
+                    'quantity' => $entry['qty'] ?? ($entry['quantity'] ?? 0),
+                    'description' => $entry['description'] ?? ($itemModel?->description ?? ''),
+                    'color' => $entry['color_id'] ?? $entry['color'] ?? null,
+                    'sizes' => $sizesVal,
+                    'size_quantities' => $sizeQuantities,
+                ];
+            }
+            $data['pre_items'] = array_values($pre);
+        }
+
         // If a retailer/distributor is creating the order, default customer to themselves
         $preUser = null;
         try {

@@ -11,6 +11,17 @@
 <ul class="navbar-nav ml-auto align-items-center">
 
   <!-- User dropdown -->
+  <!-- Cart icon -->
+  <li class="nav-item ml-2">
+    <a href="{{ route('cart.index') }}" class="nav-link" title="Cart"
+       style="width:auto;display:flex;align-items:center;gap:8px;border-radius:7px;color:#62748E;">
+      <i class="fas fa-shopping-cart" style="font-size:.95rem;"></i>
+      <span id="cart-count" class="badge badge-pill badge-danger" style="font-size:.72rem;padding:.25rem .45rem;">
+        {{ collect(session('cart', []))->sum('qty') }}
+      </span>
+    </a>
+  </li>
+
   <li class="nav-item dropdown ml-1">
     <a class="navbar-user-pill" data-toggle="dropdown" href="#">
       <span class="user-avatar">
