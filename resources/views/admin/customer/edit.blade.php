@@ -80,7 +80,7 @@
                 @if(!empty($isDistributorPanel) && $isDistributorPanel)
                   <input type="text" class="form-control" value="Retailer" disabled>
                 @else
-                  <select name="role_id" class="form-control">
+                  <select id="role_id" name="role_id" class="form-control">
                     <option value="">-- Default (retailer) --</option>
                     @foreach($roles as $r)
                       <option value="{{ $r->id }}" data-name="{{ $r->name }}"
@@ -98,7 +98,7 @@
                 @if(!empty($isDistributorPanel) && $isDistributorPanel)
                   <input type="text" class="form-control" value="{{ optional($distributors->first())['company_name'] ?: optional($distributors->first())['name'] }}" disabled>
                 @else
-                  <select name="distributor_id" class="form-control">
+                  <select id="distributor_id" name="distributor_id" class="form-control">
                     <option value="">-- Select distributor --</option>
                     @foreach($distributors ?? [] as $d)
                       <option value="{{ $d->id }}" @selected(old('distributor_id', $customer->distributor_id ?? '') == $d->id)>{{ $d->company_name ?: $d->name }}</option>
