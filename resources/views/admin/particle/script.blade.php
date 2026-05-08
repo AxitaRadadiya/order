@@ -220,6 +220,7 @@ $(document).ready(function () {
             { data: 'order_number' },
             { data: 'name' },
             { data: 'date' },
+            { data: 'distributor_approved' },
             { data: 'total' },
             { data: 'status' },
             { data: 'action' }

@@ -95,6 +95,8 @@ class User extends Authenticatable
         'place_of_supply',
         'pan_number',
         'credit_limit',
+        'distributor_verified',
+        'distributor_verified_at',
     ];
 
     protected $hidden = ['password', 'remember_token'];
@@ -107,6 +109,8 @@ class User extends Authenticatable
             'status' => 'integer',
             'mobile' => 'string',
             'is_active' => 'boolean',
+            'distributor_verified' => 'boolean',
+            'distributor_verified_at' => 'datetime',
         ];
     }
 

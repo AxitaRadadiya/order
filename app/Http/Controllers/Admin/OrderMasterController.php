@@ -41,8 +41,7 @@ class OrderMasterController extends Controller
                     $ids = array_merge([$authUser->id], $retailerIds);
                     $query->whereIn('user_id', $ids);
                 } elseif ($authUser->hasRole(['super-admin','superadmin'])) {
-                    // Superadmin should only see orders that are visible to superadmin.
-                    $query->where('visible_to_superadmin', true);
+                    // Super-admin: no additional restrictions — show all retailer/distributor orders
                 }
             }
         } catch (\Throwable $e) {
@@ -122,7 +121,7 @@ class OrderMasterController extends Controller
             // their retailers and is awaiting distributor approval, show approve action.
             try {
                 $au = auth()->user();
-                if ($au && $au->hasRole('distributor') && !$order->distributor_approved && $order->distributor_id == $au->id && $order->user_id != $au->id) {
+                if ($au && $au->hasRole('distributor') && ($order->approval_level ?? 0) == 0 && $order->distributor_id == $au->id && $order->user_id != $au->id) {
                     $approveUrl = route('orders.approve.distributor', $order->id);
                     $actions = '<div class="btn-group">
                         <button type="button" class="btn btn-sm" data-toggle="dropdown">
@@ -143,6 +142,28 @@ class OrderMasterController extends Controller
                         </div>
                     </div>';
                 }
+                // Super-admin approval: allow super-admin to finalize orders (set approval_level = 2)
+                if ($au && $au->hasRole(['super-admin','superadmin']) && ($order->approval_level ?? 0) < 2) {
+                    $approveSuperUrl = route('orders.approve.superadmin', $order->id);
+                    $actions = '<div class="btn-group">
+                        <button type="button" class="btn btn-sm" data-toggle="dropdown">
+                            <i class="fas fa-ellipsis-v"></i>
+                        </button>
+                        <div class="dropdown-menu">
+                            <a class="dropdown-item" href="' . $viewUrl . '">View</a>
+                            <a class="dropdown-item" href="' . $editUrl . '">Edit</a>
+                            <form method="POST" action="' . $approveSuperUrl . '">
+                                <input type="hidden" name="_token" value="' . csrf_token() . '">
+                                <button type="submit" class="dropdown-item text-primary">Super Admin Approve</button>
+                            </form>
+                            <form method="POST" action="' . $deleteUrl . '">
+                                <input type="hidden" name="_token" value="' . csrf_token() . '">
+                                <input type="hidden" name="_method" value="DELETE">
+                                <button type="submit" class="dropdown-item text-danger deleteButton">Delete</button>
+                            </form>
+                        </div>
+                    </div>';
+                }
             } catch (\Throwable $e) {
                 // ignore
             }
@@ -153,6 +174,19 @@ class OrderMasterController extends Controller
                 'name'          => $customerName,
                 'date'          => $order->date ? Carbon::parse($order->date)->format('d/m/y') : '',
                 'total'         => $total,
+                'distributor_approved' => (function() use ($order) {
+                    if (empty($order->distributor_id)) {
+                        return '<span class="badge badge-secondary">N/A</span>';
+                    }
+                    $lvl = (int) ($order->approval_level ?? 0);
+                    if ($lvl >= 2) {
+                        return '<span class="badge badge-primary">Superadmin Approved</span>';
+                    }
+                    if ($lvl === 1) {
+                        return '<span class="badge badge-success">Distributor Approved</span>';
+                    }
+                    return '<span class="badge badge-warning">Not Approved</span>';
+                })(),
                 'status'        => $status,
                 'action'        => $actions,
             ];
@@ -259,6 +293,7 @@ class OrderMasterController extends Controller
             if ($authUser && $authUser->hasRole('retailer')) {
                 $fields['distributor_id'] = $authUser->distributor_id;
                 $fields['distributor_approved'] = false;
+                $fields['approval_level'] = 0;
                 $fields['visible_to_superadmin'] = false;
             }
             $order = OrderMaster::create($fields);
@@ -314,12 +349,12 @@ class OrderMasterController extends Controller
                 if ($order->user_id !== $user->id && !in_array($order->user_id, $retailerIds)) {
                     abort(403);
                 }
+                // Distributors cannot edit orders once super-admin has finalized them
+                if ((int)($order->approval_level ?? 0) >= 2) {
+                    return back()->with('error', 'Order has been finalized by super-admin and cannot be edited.');
+                }
             }
-            // Superadmin can only view orders that are approved by distributor
-            // if the order requires distributor approval (has distributor_id set).
-            if ($user->hasRole(['super-admin','superadmin']) && $order->distributor_id && !$order->distributor_approved) {
-                abort(403);
-            }
+            // Super-admin may view all orders including those pending distributor approval.
         }
 
         $colorsById = Color::pluck('name', 'id');
@@ -339,10 +374,18 @@ class OrderMasterController extends Controller
             if ($user->hasRole('retailer') && $order->user_id !== $user->id) {
                 abort(403);
             }
+            // If the order is approved at or above distributor level, retailer must not be able to edit it
+            if ($user->hasRole('retailer') && (($order->approval_level ?? 0) >= 1)) {
+                return back()->with('error', 'Order has been approved and cannot be edited.');
+            }
             if ($user->hasRole('distributor')) {
                 $retailerIds = User::where('distributor_id', $user->id)->pluck('id')->toArray();
                 if ($order->user_id !== $user->id && !in_array($order->user_id, $retailerIds)) {
                     abort(403);
+                }
+                // Distributors cannot update orders once super-admin has finalized them
+                if ((int)($order->approval_level ?? 0) >= 2) {
+                    return back()->with('error', 'Order has been finalized by super-admin and cannot be edited.');
                 }
             }
         }
@@ -359,6 +402,10 @@ class OrderMasterController extends Controller
         if ($user) {
             if ($user->hasRole('retailer') && $order->user_id !== $user->id) {
                 abort(403);
+            }
+            // Prevent retailer from updating an order that has already been approved at distributor level
+            if ($user->hasRole('retailer') && (($order->approval_level ?? 0) >= 1)) {
+                return back()->with('error', 'Order has been approved and cannot be edited.');
             }
             if ($user->hasRole('distributor')) {
                 $retailerIds = User::where('distributor_id', $user->id)->pluck('id')->toArray();
@@ -426,17 +473,40 @@ class OrderMasterController extends Controller
             abort(403);
         }
 
-        if ($order->distributor_approved) {
-            return redirect()->back()->with('info', 'Order already approved.');
+        if (($order->approval_level ?? 0) >= 1) {
+            return redirect()->back()->with('info', 'Order already approved by distributor.');
         }
 
         $order->update([
             'distributor_approved' => true,
             'distributor_approved_at' => now(),
+            'approval_level' => 1,
             'visible_to_superadmin' => true,
         ]);
 
         return redirect()->back()->with('success', 'Order approved and sent to superadmin.');
+    }
+
+    /**
+     * Super-admin finalizes an order (sets approval_level = 2).
+     */
+    public function approveBySuperAdmin(Request $request, OrderMaster $order)
+    {
+        $user = auth()->user();
+        if (!$user || !($user->hasRole('super-admin') || $user->hasRole('superadmin'))) {
+            abort(403);
+        }
+
+        if (($order->approval_level ?? 0) >= 2) {
+            return redirect()->back()->with('info', 'Order already finalized by super-admin.');
+        }
+
+        $order->update([
+            'approval_level' => 2,
+            'visible_to_superadmin' => true,
+        ]);
+
+        return redirect()->back()->with('success', 'Order finalized by super-admin.');
     }
 
     // -----------------------------------------------------------------------

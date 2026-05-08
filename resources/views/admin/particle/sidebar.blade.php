@@ -101,15 +101,16 @@
           $showSettings = collect($perms)->contains(fn($p) => str_starts_with($p, 'role-') || str_starts_with($p, 'permission-') || str_starts_with($p, 'setting-'));
         }
 
-        // Retailer / distributor always get catalog + orders only
-        if ($user->hasRole(['retailer', 'distributor'])) {
+        // Retailers get catalog/orders only if verified by their distributor. Distributors always get them.
+        if ($user->hasRole('distributor')) {
           $showCatalog = true;
           $showOrders  = true;
           $showItems   = false;
-        }
-
-        if ($user->hasRole('distributor')) {
           $showCustomers = true;
+        } elseif ($user->hasRole('retailer')) {
+          $showCatalog = !empty($user->distributor_verified);
+          $showOrders  = !empty($user->distributor_verified);
+          $showItems   = false;
         }
       @endphp
 

@@ -72,6 +72,7 @@ Route::group(['middleware' => ['auth']], function () {
     Route::get('activity-logs',       [ActivityLogController::class, 'index'])->name('activity-logs.index');
     Route::get('activity-logs/{activityLog}', [ActivityLogController::class, 'show'])->name('activity-logs.show');
     Route::get('customers-list', [CustomerController::class,'list'])->name('customers.list');
+    Route::post('customers/{customer}/verify-distributor', [CustomerController::class, 'verifyByDistributor'])->name('customers.verify.distributor');
     Route::resource('customers', CustomerController::class);
     // AJAX helper to fetch customer addresses for order form
     Route::get('/customer/{id}', [CustomerController::class, 'getCustomer'])->name('customer.get');
@@ -100,6 +101,7 @@ Route::group(['middleware' => ['auth']], function () {
     Route::get('customers/{user}/addresses', [OrderMasterController::class, 'customerAddresses'])->name('customers.addresses');
     Route::resource('orders', OrderMasterController::class);
     Route::post('orders/{order}/approve-distributor', [OrderMasterController::class, 'approveByDistributor'])->name('orders.approve.distributor');
+    Route::post('orders/{order}/approve-superadmin', [OrderMasterController::class, 'approveBySuperAdmin'])->name('orders.approve.superadmin');
     Route::post('order-items/{orderItem}/status', [OrderMasterController::class, 'updateItemStatus'])->name('order-items.status.update');
     Route::get('color-list', [ColorController::class,'list'])->name('color.list');
     Route::resource('color', ColorController::class);

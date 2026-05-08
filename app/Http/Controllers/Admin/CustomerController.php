@@ -95,6 +95,12 @@ class CustomerController extends Controller
         DB::beginTransaction();
         try {
             // 1. Create Customer and assign role
+            $currentUser = auth()->user();
+            $autoVerified = false;
+            if ($currentUser && ($currentUser->hasRole('distributor') || $currentUser->hasRole('super-admin') || $currentUser->hasRole('superadmin'))) {
+                $autoVerified = true;
+            }
+
             $customer = Customer::create([
                 'name'            => $request->name,
                 'company_name'    => $request->company_name,
@@ -111,6 +117,8 @@ class CustomerController extends Controller
                 'place_of_supply' => $request->place_of_supply,
                 'discount'        => $request->discount ?? 0,
                 'credit_limit'    => $request->credit_limit ?? 0,
+                'distributor_verified' => $autoVerified,
+                'distributor_verified_at' => $autoVerified ? now() : null,
             ]);
 
             // If a role was provided, ensure it's assigned via helper
@@ -444,6 +452,19 @@ class CustomerController extends Controller
 
             $actions .= '<a class="dropdown-item" href="' . $viewUrl . '">View</a>';
             $actions .= '<a class="dropdown-item" href="' . $editUrl . '">Edit</a>';
+            // If logged-in user is a distributor, allow verifying their retailer
+            try {
+                $u = auth()->user();
+                if ($u && $u->hasRole('distributor') && $customer->role_id && strtolower(optional($customer->role)->name ?? '') === 'retailer' && $customer->distributor_id == $u->id && empty($customer->distributor_verified)) {
+                    $verifyUrl = route('customers.verify.distributor', $customer->id);
+                    $actions .= '<form method="POST" action="' . $verifyUrl . '" style="display:inline;">
+                        <input type="hidden" name="_token" value="' . csrf_token() . '">
+                        <button type="submit" class="dropdown-item text-success">Verify Retailer</button>
+                    </form>';
+                }
+            } catch (\Throwable $e) {
+                // ignore
+            }
             $actions .= '
                 <form method="POST" action="' . $deleteUrl . '" style="display:inline;">
                     <input type="hidden" name="_token" value="' . csrf_token() . '">
@@ -504,5 +525,35 @@ class CustomerController extends Controller
             'billing_address' => $billing,
             'shipping_address' => $shipping,
         ]);
+    }
+
+    /**
+     * Distributor verifies a retailer so the retailer can place orders.
+     */
+    public function verifyByDistributor(Request $request, Customer $customer)
+    {
+        $user = auth()->user();
+        if (!$user || !$user->hasRole('distributor')) {
+            abort(403);
+        }
+
+        // Ensure target is a retailer assigned to this distributor
+        try {
+            if ($customer->distributor_id !== $user->id) {
+                abort(403);
+            }
+            if (! $customer->role || strtolower($customer->role->name) !== 'retailer') {
+                abort(403);
+            }
+        } catch (\Throwable $e) {
+            abort(403);
+        }
+
+        $customer->update([
+            'distributor_verified' => true,
+            'distributor_verified_at' => now(),
+        ]);
+
+        return redirect()->back()->with('success', 'Retailer verified.');
     }
 }

@@ -37,6 +37,7 @@
             <th>Order No.</th>
             <th>Customer</th>
             <th>Date</th>
+            <th>Approval Status</th>
             <th>Grand Total</th>
             <th>Status</th>
             <th style="width:110px">Actions</th>

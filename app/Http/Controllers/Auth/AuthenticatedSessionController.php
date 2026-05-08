@@ -57,11 +57,21 @@ class AuthenticatedSessionController extends Controller
                 $modules = [];
 
                 // Fixed permissions for retailer and distributor roles
-                if ($user->hasRole(['retailer', 'distributor'])) {
+                if ($user->hasRole('distributor')) {
                     $modules = ['catalog', 'orders'];
 
-                    // If the distributor/retailer role also has customer-* permissions,
-                    // include the customers module in allowed modules.
+                    // distributors see customers module by default if role has customer-* perms
+                    $rolePerms = $role ? $role->permissions()->pluck('name')->map(fn($n) => strtolower($n))->toArray() : [];
+                    if (collect($rolePerms)->contains(fn($p) => str_starts_with($p, 'customer-'))) {
+                        $modules[] = 'customers';
+                    }
+                } elseif ($user->hasRole('retailer')) {
+                    // Retailers only get catalog/orders after distributor verification
+                    if (! empty($user->distributor_verified)) {
+                        $modules = ['catalog', 'orders'];
+                    } else {
+                        $modules = [];
+                    }
                     $rolePerms = $role ? $role->permissions()->pluck('name')->map(fn($n) => strtolower($n))->toArray() : [];
                     if (collect($rolePerms)->contains(fn($p) => str_starts_with($p, 'customer-'))) {
                         $modules[] = 'customers';
@@ -120,9 +130,13 @@ class AuthenticatedSessionController extends Controller
             $request->session()->forget('allowed_modules');
         }
 
-        // If retailer or distributor logged in, send them to the catalog
+        // If distributor logged in, send to catalog. If retailer logged in, only redirect
+        // to catalog when distributor verification is present.
         try {
-            if ($user->hasRole(['retailer', 'distributor'])) {
+            if ($user->hasRole('distributor')) {
+                return redirect()->intended(route('catalog', absolute: false));
+            }
+            if ($user->hasRole('retailer') && ! empty($user->distributor_verified)) {
                 return redirect()->intended(route('catalog', absolute: false));
             }
         } catch (\Throwable $e) {

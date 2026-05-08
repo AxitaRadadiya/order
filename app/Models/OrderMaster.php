@@ -13,7 +13,7 @@ class OrderMaster extends Model
         'user_id','date','eway_bill_number','transport_number','lr_number',
         'billing_address','shipping_address','subtotal','discount','adjustment','grand_total',
         'terms','notes','status','expected_date',
-        'distributor_id','distributor_approved','distributor_approved_at','visible_to_superadmin'
+        'distributor_id','distributor_approved','distributor_approved_at','visible_to_superadmin','approval_level'
     ];
 
     protected $casts = [
@@ -22,6 +22,7 @@ class OrderMaster extends Model
         'distributor_approved' => 'boolean',
         'distributor_approved_at' => 'datetime',
         'visible_to_superadmin' => 'boolean',
+        'approval_level' => 'integer',
     ];
 
     public function items()
