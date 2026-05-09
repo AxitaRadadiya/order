@@ -56,16 +56,7 @@
                   <img src="{{ asset('storage/' . $img) }}" alt="Thumbnail {{ $idx+1 }}" class="img-thumbnail m-1 product-thumb" style="width: 60px; height: 60px; object-fit: cover; cursor: pointer; border:2px solid #eee;" onclick="setMainImage('{{ asset('storage/' . $img) }}', this)">
                 @endforeach
               </div>
-              <script>
-                function setMainImage(src, thumb) {
-                  document.getElementById('mainProductImage').src = src;
-                  // Optional: highlight selected thumbnail
-                  document.querySelectorAll('.product-thumb').forEach(function(img) {
-                    img.style.border = '2px solid #eee';
-                  });
-                  thumb.style.border = '2px solid #dcdfe1';
-                }
-              </script>
+              
             @else
               <div class="border rounded p-5 text-center text-muted">No image</div>
             @endif
@@ -109,3 +100,12 @@
 </div>
 
 @endsection
+<script>
+  function setMainImage(src, thumb) {
+    document.getElementById('mainProductImage').src = src;
+      document.querySelectorAll('.product-thumb').forEach(function(img) {
+      img.style.border = '2px solid #eee';
+      });
+  thumb.style.border = '2px solid #dcdfe1';
+  }
+</script>
