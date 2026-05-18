@@ -107,7 +107,7 @@ document.addEventListener('DOMContentLoaded', function () {
       return;
     }
     items.forEach(function (it) {
-      var col = document.createElement('div'); col.className = 'col-lg-3 col-md-4 col-6 mb-4';
+    var col = document.createElement('div'); col.className = 'col-md-4 mb-4';
       col.innerHTML = '\n        <div class="card product-card shadow-sm h-100">\n          <div class="product-img d-flex align-items-center justify-content-center bg-light" style="height:200px;">\n            <a href="' + (it.url||'#') + '" class="product-link"><img src="' + (it.image||'') + '" alt="' + (it.name||'') + '" style="max-height:180px; max-width:100%; object-fit:contain;"></a>\n          </div>\n          <div class="card-body text-center">\n            <small class="text-muted d-block">' + (it.category||'') + '</small>\n            <h6 class="product-title mt-1">' + (it.name||'') + '</h6>\n            <p class="text-danger font-weight-bold">₹' + (it.price||'') + '</p>\n          </div>\n        </div>';
       grid.appendChild(col);
     });
@@ -115,7 +115,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
   function loadCategory(id, name) {
     var title = document.getElementById('itemsTitle');
-    title.textContent = 'Products — ' + name;
+        if (title) title.textContent = 'Products — ' + name;
+
     var pag = document.getElementById('itemsPagination'); if (pag) pag.innerHTML = '';
     fetch("{{ url('/') }}" + '/api/category/' + id + '/items')
       .then(function (r) { return r.json(); })

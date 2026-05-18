@@ -32,13 +32,9 @@ use Illuminate\Support\Facades\Artisan;
 //});
 Route::get('/', [FrontendController::class, 'home'])->name('home');
 
-
 Route::get('/products', [FrontendController::class, 'products'])->name('products');
-Route::get('/category/{category}', [FrontendController::class, 'category'])->name('category.show');
-Route::get('/categories', [FrontendController::class, 'categories'])->name('categories');
 Route::get('/api/category/{category}/items', [FrontendController::class, 'categoryItems'])->name('api.category.items');
 Route::get('/products/{item}', [FrontendController::class, 'show'])->name('products.show');
-
 Route::view('/about', 'frontend.about')->name('about');
 Route::view('/contact', 'frontend.contact')->name('contact');
 //Route::get('/catalog', [ItemController::class, 'catalogs'])->name('catalog');
@@ -121,16 +117,9 @@ Route::group(['middleware' => ['auth']], function () {
     Route::patch('admin/profile', [AdminController::class, 'update'])->name('admin.profile.update');
     Route::post('admin/profile/password', [AdminController::class, 'updatePassword'])->name('admin.profile.updatePassword');
   //catalog routes (protected by module access middleware)
-  Route::get('/catalog', [ItemController::class, 'catalog'])
-    ->name('catalog')
-    ->middleware(\App\Http\Middleware\EnsureModuleAccess::class . ':catalog');
-
-  Route::get('/catalog/{item}', [ItemController::class, 'showCatalog'])
-    ->name('catalog.show')
-    ->middleware(\App\Http\Middleware\EnsureModuleAccess::class . ':catalog');
-
-  // Simple session-based cart for catalog (add/update/remove/view)
-
+    Route::get('/catalog', [ItemController::class, 'catalog'])->name('catalog');
+    Route::get('/catalog/{item}', [ItemController::class, 'showCatalog'])->name('catalog.show');
+ 
 
 });
 
