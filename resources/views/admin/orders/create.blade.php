@@ -133,20 +133,21 @@
 
           {{-- ── Normal Items Table ────────────────────────────────────── --}}
           <div id="normalTable">
-            <table class="table table-sm table-bordered" id="itemsTable">
+            <div class="table-responsive" style="overflow-x:auto;">
+              <table class="table table-sm table-bordered" id="itemTable">
               <thead class="thead-light">
                 <tr>
-                  <th width="160">Article Number</th>
-                  <th width="160">Item</th>
-                  <th width="160">Color</th>
-                  <th width="220">Size(s)</th>
+                  <th>Article Number</th>
+                  <th>Item</thh=>
+                  <th>Color</th>
+                  <th>Size(s)</th>
                   <th>Description</th>
-                  <th width="80">Qty</th>
-                  <th width="110">MRP</th>
-                  <th width="80">Tax %</th>
-                  <th width="110">Total</th>
-                  <th width="100">Status</th>
-                  <th width="40">Action</th>
+                  <th>Qty</th>
+                  <th>MRP</th>
+                  <th>Tax %</thwidth=>
+                  <th>Total</thwidth=>
+                  <th>Status</thdth=>
+                  <th>Action</thwidth=>
                 </tr>
               </thead>
               <tbody>
@@ -224,7 +225,7 @@
                       <span class="badge badge-secondary">{{ ucfirst($it['status'] ?? 'pending') }}</span>
                     @else
                       <select name="items[{{ $i }}][status]" class="form-control status-select">
-                        @foreach(['pending','draft','confirmed','shipped','delivered', 'cancelled'] as $st)
+                        @foreach(['pending','draft','confirmed','shipped','delivered'] as $st)
                           <option value="{{ $st }}" {{ (isset($it['status']) && $it['status'] == $st) ? 'selected' : '' }}>{{ ucfirst($st) }}</option>
                         @endforeach
                       </select>
@@ -233,63 +234,69 @@
                   <td><button type="button" class="btn btn-sm btn-danger remove-item"><i class="fas fa-trash"></i></button></td>
                 </tr>
                 @endforeach
-                @else
+                 @else
+                {{-- Default empty first row --}}
                 <tr>
                   <td>
                     <select name="items[0][article_number]" class="form-control article-select">
                       <option value="">--</option>
                       @foreach($items as $itm)
                       <option value="{{ $itm->article_number }}"
-                        data-id="{{ $itm->id }}"
-                        data-rate="{{ $itm->price }}"
-                        data-tax="{{ $itm->tax_percent ?? 0 }}"
-                        data-desc="{{ $itm->description ?? '' }}">
+                        data-id="{{ $itm->id }}" data-rate="{{ $itm->price }}"
+                        data-tax="{{ $itm->tax_percent??0 }}" data-desc="{{ $itm->description??'' }}">
                         {{ $itm->article_number }}
                       </option>
                       @endforeach
                     </select>
                     <input type="hidden" name="items[0][item_id]" class="item-id-hidden" value="">
                   </td>
-                  <td>
-                    <input type="text" name="items[0][item_name]" class="form-control item-name-input" value="" readonly>
-                  </td>
+                  <td><input type="text" name="items[0][item_name]" class="form-control item-name-input" value="" readonly></td>
                   <td>
                     <select name="items[0][color][]" class="form-control color-select select2" multiple>
                       @foreach($colors as $col)
-                        <option value="{{ $col->id }}">{{ $col->name }}</option>
+                      <option value="{{ $col->id }}">{{ $col->name }}</option>
                       @endforeach
                     </select>
                   </td>
                   <td>
-                    <select name="items[0][sizes][]" class="form-control size-select select2" multiple>
+                    <select name="items[0][sizes][]" class="size-select d-none" multiple>
                       @foreach($sizesJson as $sz)
-                        <option value="{{ $sz }}">{{ $sz }}</option>
+                      <option value="{{ $sz }}">{{ $sz }}</option>
                       @endforeach
                     </select>
-                    <div class="size-qty-wrapper mt-2"></div>
+                    <div class="size-chips-wrap">
+                      @foreach($sizesJson as $sz)
+                      <button type="button" class="size-chip" data-size="{{ $sz }}">{{ $sz }}</button>
+                      @endforeach
+                    </div>
+                    <div class="size-qty-wrapper size-qty-panel" style="display:none;"></div>
                   </td>
                   <td><input type="text" name="items[0][description]" class="form-control desc" readonly></td>
-                  <td><input type="number" step="0.01" name="items[0][quantity]" class="form-control qty" value="0" readonly></td>
+                  <td><input type="number" step="0.01" name="items[0][quantity]" class="form-control qty" value="0" readonly style="font-weight:800;color:var(--brand)!important;"></td>
                   <td><input type="number" step="0.01" name="items[0][rate]" class="form-control rate" value="0" readonly></td>
                   <td><input type="number" step="0.01" name="items[0][tax_rate]" class="form-control tax" value="0" readonly></td>
-                  <td><input type="number" step="0.01" name="items[0][total]" class="form-control total" value="0" readonly></td>
+                  <td>
+                      <input type="number" step="0.01" name="items[0][total]" class="form-control total" value="0" readonly>
+                    
+                  </td>
                   <td>
                     @if(auth()->user() && auth()->user()->hasRole('retailer'))
                       <input type="hidden" name="items[0][status]" value="pending">
                       <span class="badge badge-secondary">Pending</span>
                     @else
-                      <select name="items[0][status]" class="form-control status-select">
-                        @foreach(['pending','draft','confirmed','shipped','delivered', 'cancelled'] as $st)
-                          <option value="{{ $st }}">{{ ucfirst($st) }}</option>
+                      <select name="items[0][status]" class="form-control status-select" style="font-size:12px!important;">
+                        @foreach(['pending','draft','confirmed','shipped','delivered'] as $st)
+                        <option value="{{ $st }}">{{ ucfirst($st) }}</option>
                         @endforeach
                       </select>
                     @endif
                   </td>
-                  <td><button type="button" class="btn btn-sm btn-danger remove-item"><i class="fas fa-trash"></i></button></td>
+                  <td><button type="button" class="deleteButton btn btn-sm btn-danger border-0"><i class="fas fa-trash"></i></button></td>
                 </tr>
                 @endif
               </tbody>
-            </table>
+              </table>
+            </div>
             <div class="text-right mb-3">
               <button type="button" id="addItem" class="btn btn-sm btn-create">
                 <i class="fas fa-plus"></i> Add Row
@@ -442,7 +449,6 @@
                 <option value="confirmed" {{ old('status','pending') == 'confirmed' ? 'selected' : '' }}>Confirmed</option>
                 <option value="shipped" {{ old('status','pending') == 'shipped'   ? 'selected' : '' }}>Shipped</option>
                 <option value="delivered" {{ old('status','pending') == 'delivered' ? 'selected' : '' }}>Delivered</option>
-                <option value="cancelled" {{ old('status','pending') == 'cancelled' ? 'selected' : '' }}>Cancelled</option>
               </select>
             @endif
           </div>
@@ -461,530 +467,375 @@
     </form>
   </div>
 </section>
+
 @endsection
 
 @section('pageScript')
 <script>
-  $(function() {
+$(function () {
 
-    // ALL_SIZES comes from DB via controller → $sizesJson (array of label strings)
-    var ALL_SIZES = @json($sizesJson);
+  var ALL_SIZES  = @json($sizesJson);
+  var ITEMS      = @json($itemsJson);
+  var COLORS     = @json($colors);
+  var IS_RETAILER= @json(optional(auth()->user())->hasRole('retailer') ?? false);
 
-    var ITEMS  = @json($itemsJson);
-    var COLORS = @json($colors);
-    var IS_RETAILER = @json(optional(auth()->user())->hasRole('retailer') ?? false);
+  /* ── helpers ──────────────────────────────────────────────────────────── */
+  function itemByArticle(val) {
+    return ITEMS.find(function(i){ return i.article_number == val || i.id == val; });
+  }
+  function rowIndex($row) {
+    var name = $row.find('.qty').attr('name') || '';
+    var m = name.match(/items\[(\d+)\]/);
+    return m ? m[1] : 0;
+  }
+  function esc(v) {
+    return String(v).replace(/[&<>"']/g, function(c){
+      return({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'})[c];
+    });
+  }
+  function normalizeArr(v) {
+    if (!v) return [];
+    return Array.isArray(v) ? v.map(String) : String(v).split(',').map(function(x){ return x.trim(); });
+  }
+  function colorOpts(colors, sel) {
+    sel = normalizeArr(sel);
+    colors = (colors && colors.length) ? colors : COLORS;
+    return colors.map(function(c){
+      return '<option value="'+esc(c.id)+'"'+(sel.indexOf(String(c.id))!==-1?' selected':'')+'>'+esc(c.name)+'</option>';
+    }).join('');
+  }
+  function populateColorSelect($row, colors, sel) {
+    var $cs = $row.find('.color-select');
+    sel = sel || $cs.val() || [];
+    if ($cs.hasClass('select2-hidden-accessible')) $cs.select2('destroy');
+    $cs.html(colorOpts(colors, sel));
+    $cs.select2({ placeholder:'Colors…', width:'100%' });
+  }
 
+  /* ── Recalc totals ────────────────────────────────────────────────────── */
+  function recalc() {
+    var sub = 0;
+    $('#itemTable tbody tr').each(function(){
+      var $tr = $(this);
+      var qty  = parseFloat($tr.find('.qty').val()) || 0;
+      var rate = parseFloat($tr.find('.rate').val()) || 0;
+      var tax  = parseFloat($tr.find('.tax').val()) || 0;
+      var tot  = rate * qty * (1 + tax / 100);
+      $tr.find('.total').val(tot.toFixed(2));
+      sub += tot;
+    });
+    $('#subtotal').val(sub.toFixed(2));
+    var grand = sub - (parseFloat($('#discount').val())||0) + (parseFloat($('#adjustment').val())||0);
+    $('#grand_total').val(grand.toFixed(2));
+  }
 
-    function itemByArticle(val) {
-      return ITEMS.find(function(i) {
-        return i.article_number == val || i.id == val;
-      });
-    }
+  /* ── Size chip UI ─────────────────────────────────────────────────────── */
+  function rebuildSizePanel($row) {
+    var idx = rowIndex($row);
+    var $select = $row.find('.size-select');
+    var $panel  = $row.find('.size-qty-wrapper');
+    var selected = $select.val() || [];
 
-    function rowIndex($row) {
-      var name = $row.find('.qty').attr('name') || '';
-      var match = name.match(/items\[(\d+)\]/);
-      return match ? match[1] : 0;
-    }
+    // Sync chip active states
+    $row.find('.size-chip').each(function(){
+      var s = $(this).data('size');
+      $(this).toggleClass('active', selected.indexOf(String(s)) !== -1);
+    });
 
-    function escapeHtml(value) {
-      return String(value).replace(/[&<>"']/g, function(ch) {
-        return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' })[ch];
-      });
-    }
-
-    function normalizeSelected(value) {
-      if (!value) return [];
-      return Array.isArray(value) ? value.map(String) : String(value).split(',').map(function(v) { return v.trim(); });
-    }
-
-    function colorOptions(colors, selected) {
-      selected = normalizeSelected(selected);
-      colors = (colors && colors.length) ? colors : COLORS;
-
-      return colors.map(function(c) {
-        var id = String(c.id);
-        return '<option value="' + escapeHtml(id) + '"' +
-          (selected.indexOf(id) !== -1 ? ' selected' : '') +
-          '>' + escapeHtml(c.name) + '</option>';
-      }).join('');
-    }
-
-    function populateColorSelect($row, colors, selected) {
-      var $color = $row.find('.color-select');
-      selected = selected || $color.val() || [];
-      if ($color.hasClass('select2-hidden-accessible')) { $color.select2('destroy'); }
-      $color.html(colorOptions(colors, selected));
-      $color.select2({ placeholder: 'Colors', width: '100%' });
-    }
-
-    function syncSizeQtyInputs($row) {
-      var idx = rowIndex($row);
-      var sizes = $row.find('.size-select').val() || [];
-      var oldValues = {};
-
-      $row.find('.size-qty').each(function() {
-        oldValues[$(this).closest('.size-qty-row').data('size')] = $(this).val();
-      });
-
-      var html = sizes.map(function(size) {
-        var safeSize = escapeHtml(size);
-        var value = oldValues[size] || '';
-        return '<div class="input-group input-group-sm mb-1 size-qty-row" data-size="' + safeSize + '">' +
-          '<div class="input-group-prepend"><span class="input-group-text">' + safeSize + '</span></div>' +
-          '<input type="number" step="1" min="0" name="items[' + idx + '][size_quantities][' + safeSize + ']" class="form-control size-qty" value="' + escapeHtml(value) + '" placeholder="Qty">' +
-        '</div>';
-      }).join('');
-
-      $row.find('.size-qty-wrapper').html(html);
-      updateRowQty($row);
-    }
-
-    function updateRowQty($row) {
-      if (!$row.find('.size-qty').length) {
-        return;
-      }
-
-      var qty = 0;
-      $row.find('.size-qty').each(function() {
-        qty += parseFloat($(this).val()) || 0;
-      });
-      $row.find('.qty').val(qty);
-    }
-
-    // ── Recalculate totals ───────────────────────────────────────────────────
-    function recalc() {
-      var subtotal = 0;
-      $('#itemsTable tbody tr').each(function() {
-        updateRowQty($(this));
-        var qty = parseFloat($(this).find('.qty').val()) || 0;
-        var rate = parseFloat($(this).find('.rate').val()) || 0;
-        var tax = parseFloat($(this).find('.tax').val()) || 0;
-        var fp = rate + (rate * tax / 100);
-        var tot = fp * qty;
-        $(this).find('.total').val(tot.toFixed(2));
-        subtotal += tot;
-      });
-      $('#subtotal').val(subtotal.toFixed(2));
-      var grand = subtotal -
-        (parseFloat($('#discount').val()) || 0) +
-        (parseFloat($('#adjustment').val()) || 0);
-      $('#grand_total').val(grand.toFixed(2));
-    }
-
-    $(document).on('input', '.size-qty,.rate,.tax', recalc);
-    $(document).on('change', '.size-select', function() {
-      syncSizeQtyInputs($(this).closest('tr'));
+    if (!selected.length) {
+      $panel.hide().html('');
+      $row.find('.qty').val(0);
       recalc();
-    });
-    $('#discount,#adjustment').on('input', recalc);
-
-    // ── Auto-fill row when item selected ─────────────────────────────────────
-    $(document).on('change', '.article-select', function() {
-      var $row = $(this).closest('tr');
-      var val = $(this).val();
-      if (!val) return;
-
-      var found = itemByArticle(val);
-      if (!found) {
-        var $opt = $(this).find('option:selected');
-        found = {
-          id: $opt.data('id') || null,
-          article_number: $opt.text().trim(),
-          name: $opt.data('name') || '',
-          rate: parseFloat($opt.data('rate')) || 0,
-          tax: parseFloat($opt.data('tax')) || 0,
-          desc: $opt.data('desc') || ''
-        };
-      }
-
-      $row.find('.item-id-hidden').val(found.id || '');
-      $row.find('.item-name-input').val(found.name || found.article_number || '');
-      $row.find('.rate').val(found.rate || 0);
-      $row.find('.tax').val(found.tax || 0);
-      if (!$row.find('.desc').val()) {
-        $row.find('.desc').val(found.desc || '');
-      }
-      // populate color select from the selected article's colors
-      populateColorSelect($row, found.colors || []);
-
-      // populate size select (use item's sizes if present else ALL_SIZES)
-      var sizeChoices = (found.sizes && found.sizes.length) ? found.sizes : ALL_SIZES;
-      var sizeOpts = sizeChoices.map(function(s){
-        return '<option value="' + s + '">' + s + '</option>';
-      }).join('');
-      var $size = $row.find('.size-select');
-      if ($size.hasClass('select2-hidden-accessible')) { $size.select2('destroy'); }
-      $size.html(sizeOpts);
-      $size.select2({ placeholder: 'Sizes', width: '100%' });
-      syncSizeQtyInputs($row);
-      recalc();
-    });
-
-    // ── Build a new row ───────────────────────────────────────────────────────
-    function buildRow(idx, it) {
-      it = it || {};
-      var opts = '<option value="">--</option>' + ITEMS.map(function(m) {
-        return '<option value="' + (m.article_number || '') + '"' +
-          ' data-id="' + (m.id || '') + '"' +
-          ' data-rate="' + (m.rate || 0) + '"' +
-          ' data-tax="' + (m.tax || 0) + '"' +
-          ' data-desc="' + ((m.desc || '').replace(/"/g, '&quot;')) + '"' +
-          (it.item_id == m.id ? ' selected' : '') +
-          '>' + (m.article_number || '') + '</option>';
-      }).join('');
-
-      // color select options (article colors when available, otherwise global COLORS)
-      var colorOpts = colorOptions(it.colors || COLORS, it.color || it.color_id || []);
-
-      // size options (leave empty; will be populated on item-select change)
-      var sizeOpts = (it.sizes && it.sizes.length) ? it.sizes.map(function(s){ return '<option value="' + s + '" selected>' + s + '</option>'; }).join('') : '';
-
-      return '<tr>' +
-        '<td>' +
-        '<select name="items[' + idx + '][article_number]" class="form-control article-select">' + opts + '</select>' +
-        '<input type="hidden" name="items[' + idx + '][item_id]" class="item-id-hidden" value="' + (it.item_id || '') + '">' +
-        '</td>' +
-        '<td><input type="text" name="items[' + idx + '][item_name]" class="form-control item-name-input" value="' + (it.item_name || '') + '" readonly></td>' +
-        '<td><select name="items[' + idx + '][color][]" class="form-control color-select" multiple>' + colorOpts + '</select></td>' +
-        '<td><select name="items[' + idx + '][sizes][]" class="form-control size-select" multiple>' + sizeOpts + '</select><div class="size-qty-wrapper mt-2"></div></td>' +
-        '<td><input type="text"   name="items[' + idx + '][description]" class="form-control desc"        value="' + (it.description || '') + '" readonly></td>' +
-        '<td><input type="number" step="0.01" name="items[' + idx + '][quantity]"    class="form-control qty"         value="' + (it.quantity || 0) + '" readonly></td>' +
-        '<td><input type="number" step="0.01" name="items[' + idx + '][rate]"        class="form-control rate"        value="' + (it.rate || 0) + '" readonly></td>' +
-        '<td><input type="number" step="0.01" name="items[' + idx + '][tax_rate]"    class="form-control tax"         value="' + (it.tax_rate || 0) + '" readonly></td>' +
-        '<td><input type="number" step="0.01" name="items[' + idx + '][total]"       class="form-control total"       value="' + (it.total || 0) + '" readonly></td>' +
-        '<td>' +
-          '<select name="items[' + idx + '][status]" class="form-control status-select">' +
-            ['pending','draft','confirmed','shipped','delivered','cancelled'].map(function(s){
-              return '<option value="' + s + '"' + ((it.status && it.status == s) ? ' selected' : '') + '>' + (s.charAt(0).toUpperCase() + s.slice(1)) + '</option>';
-            }).join('') +
-          '</select>' +
-        '</td>' +
-        '<td><button type="button" class="btn btn-sm btn-danger remove-item"><i class="fas fa-trash"></i></button></td>' +
-        '</tr>';
+      return;
     }
 
-    var rowCounter = $('#itemsTable tbody tr').length;
-
-    if (IS_RETAILER) {
-      $('#itemsTable tbody tr').each(function() {
-        var $s = $(this).find('.status-select');
-        if ($s.length) {
-          var name = $s.attr('name');
-          var val = $s.val() || 'pending';
-          $s.after('<input type="hidden" name="' + name + '" value="' + val + '">');
-          $s.remove();
-        }
-      });
-    }
-
-    $('#addItem').on('click', function() {
-      $('#itemsTable tbody').append(buildRow(rowCounter));
-      // initialize select2 on newly appended row
-      var $new = $('#itemsTable tbody tr:last');
-      $new.find('.size-select').select2({ placeholder: 'Sizes', width: '100%' });
-      $new.find('.color-select').select2({ placeholder: 'Colors', width: '100%' });
-      syncSizeQtyInputs($new);
-      rowCounter++;
-      recalc();
-      if (IS_RETAILER) {
-        var $last = $('#itemsTable tbody tr:last');
-        var $s = $last.find('.status-select');
-        if ($s.length) {
-          var name = $s.attr('name');
-          var val = $s.val() || 'pending';
-          $s.after('<input type="hidden" name="' + name + '" value="' + val + '">');
-          // Add visible badge for retailer rows
-          $s.next('input[type=hidden]').after('<span class="badge badge-secondary">' + (val.charAt(0).toUpperCase() + val.slice(1)) + '</span>');
-          $s.remove();
-        }
-      }
+    // Preserve existing qty values
+    var oldQtys = {};
+    $panel.find('.size-qty').each(function(){
+      var sz = $(this).closest('.size-qty-item').data('size');
+      oldQtys[sz] = $(this).val();
     });
 
-    $(document).on('click', '.remove-item', function() {
-      $(this).closest('tr').remove();
-      recalc();
-    });
+    var html = selected.map(function(sz){
+      var q = oldQtys[sz] || 0;
+      return '<div class="size-qty-item" data-size="'+esc(sz)+'">'
+        +'<span class="size-qty-label">'+esc(sz)+'</span>'
+        +'<div class="size-stepper">'
+        +'<button type="button" class="stepper-btn minus">−</button>'
+        +'<input type="number" step="1" min="0" name="items['+idx+'][size_quantities]['+esc(sz)+']" class="size-qty" value="'+esc(q)+'">'
+        +'<button type="button" class="stepper-btn plus">+</button>'
+        +'</div>'
+        +'</div>';
+    }).join('');
+    html += '<div class="size-qty-total"><small>Total</small><span class="total-qty-badge">0</span></div>';
 
-    // ── Customer → address auto-fill (fetch from server)
-    $('#customer_id').on('change', function() {
-      var id = $(this).val();
-      if (!id) {
-        $('#billing_address').val('');
-        $('#shipping_address').val('');
-        return;
-      }
-
-      var customerUrl = "{{ url('customer') }}"; // /customer
-
-      fetch(customerUrl + '/' + id)
-        .then(function(res) {
-          if (!res.ok) throw new Error('Network response was not ok (' + res.status + ')');
-          return res.json();
-        })
-        .then(function(data) {
-          $('#billing_address').val(data.billing_address || '');
-          $('#shipping_address').val(data.shipping_address || '');
-        })
-        .catch(function(err) {
-          console.error('Failed to fetch customer addresses', err);
-          $('#billing_address').val('');
-          $('#shipping_address').val('');
-        });
-    });
-
-    // ── Mode toggle ──────────────────────────────────────────────────────────
-    // $('#modeNormal').on('click', function() {
-    //   $(this).addClass('active');
-    //   $('#modeSizeRange').removeClass('active');
-    //   $('#sizeRangePanel').hide();
-    //   $('#normalTable').show();
-    // });
-
-    // $('#modeSizeRange').on('click', function() {
-    //   $(this).addClass('active');
-    //   $('#modeNormal').removeClass('active');
-    //   $('#sizeRangePanel').show();
-    //   $('#normalTable').hide();
-    //   srRecalc();
-    // });
-
-    // ── Size Range helpers ───────────────────────────────────────────────────
-    // Uses index-based comparison so works with ANY label (XL, 2XL, 32 …)
-    function sizesInRange(from, to) {
-      var fi = ALL_SIZES.indexOf(from);
-      var ti = ALL_SIZES.indexOf(to);
-      if (fi === -1 || ti === -1 || ti < fi) return [];
-      return ALL_SIZES.slice(fi, ti + 1);
-    }
-
-    function srRecalc() {
-      var from = $('#sr_from').val();
-      var to = $('#sr_to').val();
-      var sets = parseInt($('#sr_sets').val()) || 1;
-      var rate = parseFloat($('#sr_rate').val()) || 0;
-
-      var sizes = sizesInRange(from, to);
-      var pcsSet = sizes.length;
-      var totalPcs = pcsSet * sets;
-      var amount = totalPcs * rate;
-
-      $('#sr_chips').html(sizes.map(function(s) {
-        return '<span class="badge badge-primary mr-1 mb-1">' + s + '</span>';
-      }).join(''));
-
-      if (sizes.length) {
-        $('#sr_summary').show().text(
-          'Sizes ' + from + ' → ' + to +
-          ' = [' + sizes.join(', ') + '] → ' +
-          pcsSet + ' pcs/set × ' + sets + ' sets = ' +
-          totalPcs + ' total pcs × ₹' + rate.toFixed(0) +
-          ' = ₹' + amount.toLocaleString('en-IN')
-        );
-      } else {
-        $('#sr_summary').hide();
-      }
-
-      $('#sr_pcs_set').text(pcsSet || '—');
-      $('#sr_total_pcs').text(totalPcs || '—');
-      $('#sr_amount').text(amount ? '₹' + amount.toLocaleString('en-IN') : '—');
-    }
-
-    $('#sr_from,#sr_to,#sr_sets,#sr_rate').on('change input', srRecalc);
-
-    $('#sr_item').on('change', function() {
-      var $opt = $(this).find('option:selected');
-      $('#sr_rate').val(parseFloat($opt.data('rate')) || 0);
-      srRecalc();
-    });
-
-    $('#sr_add').on('click', function() {
-      var $opt = $('#sr_item').find('option:selected');
-      var itemId = $('#sr_item').val();
-      if (!itemId) {
-        alert('Please select a product first.');
-        return;
-      }
-
-      var itemName = $opt.text().trim();
-      var from = $('#sr_from').val();
-      var to = $('#sr_to').val();
-      var sets = parseInt($('#sr_sets').val()) || 1;
-      var rate = parseFloat($('#sr_rate').val()) || 0;
-      var taxRate = parseFloat($opt.data('tax')) || 0;
-      var sizes = sizesInRange(from, to);
-
-      if (!sizes.length) {
-        alert('No valid sizes in that range. Please check Size From / Size To.');
-        return;
-      }
-
-      var totalPcs = sizes.length * sets;
-      var desc = 'Sizes ' + from + '-' + to + ' (' + sizes.join(', ') + ') × ' + sets + ' sets';
-
-      // Switch back to normal view
-      $('#modeNormal').trigger('click');
-
-      var idx = rowCounter++;
-
-      $('#itemsTable tbody').append(buildRow(idx, {
-        item_id: itemId,
-        item_name: itemName,
-        description: desc,
-        quantity: totalPcs,
-        rate: rate,
-        tax_rate: taxRate,
-      }));
-
-      // Set the select value and hidden size fields on the newly appended row
-      var $tr = $('#itemsTable tbody tr:last');
-      $tr.find('.item-name-input').val(itemName);
-      $tr.find('.item-id-hidden').val(itemId);
-      // set article-select value (find article_number from ITEMS by id)
-      var foundArticle = (function(){ var f = ITEMS.find(function(x){ return x.id == itemId; }); return f ? f.article_number : ''; })();
-      if (foundArticle) { $tr.find('.article-select').val(foundArticle).trigger('change'); }
-      $tr.find('.size-select').val(sizes).trigger('change');
-      $tr.find('.size-qty').val(sets);
-      $tr.append('<input type="hidden" name="items[' + idx + '][size_from]" value="' + from + '">');
-      $tr.append('<input type="hidden" name="items[' + idx + '][size_to]"   value="' + to + '">');
-      $tr.append('<input type="hidden" name="items[' + idx + '][sets]"      value="' + sets + '">');
-
-      recalc();
-    });
-
-    // Init
+    $panel.html(html).show();
+    updateTotalQtyBadge($row);
+    updateRowQty($row);
     recalc();
-    srRecalc();
+  }
 
-    // initialize Select2 on existing size-selects
-    if ($.fn.select2) {
-      $('.size-select').select2({ placeholder: 'Sizes', width: '100%' });
-      $('.color-select').select2({ placeholder: 'Colors', width: '100%' });
-    }
+  function updateTotalQtyBadge($row) {
+    var tot = 0;
+    $row.find('.size-qty').each(function(){ tot += parseFloat($(this).val())||0; });
+    $row.find('.total-qty-badge').text(tot);
+  }
 
-    // Prefill customer and item if provided by controller (from catalog Add Order)
-    var PRE_ITEM_ID = @json($pre_item_id ?? null);
-    var PRE_USER_ID = @json($pre_user_id ?? null);
-    var PRE_ITEMS = @json($pre_items ?? null);
+  function updateRowQty($row) {
+    var q = 0;
+    $row.find('.size-qty').each(function(){ q += parseFloat($(this).val())||0; });
+    $row.find('.qty').val(q);
+  }
 
-    if (PRE_USER_ID) {
-      $('#customer_id').val(PRE_USER_ID).trigger('change');
+  /* ── Size chip click ──────────────────────────────────────────────────── */
+  $(document).on('click', '.size-chip', function(){
+    var $chip = $(this);
+    var $row  = $chip.closest('tr');
+    var $sel  = $row.find('.size-select');
+    var size  = String($chip.data('size'));
+    var cur   = $sel.val() || [];
+
+    if ($chip.hasClass('active')) {
+      cur = cur.filter(function(s){ return s !== size; });
     } else {
-      // trigger customer change on load to auto-fill addresses for selected customer (old input)
-      $('#customer_id').trigger('change');
+      cur.push(size);
     }
+    $sel.val(cur);
+    rebuildSizePanel($row);
+  });
 
-    if (PRE_ITEM_ID) {
-      // try to select on first existing row
-      var $first = $('#itemsTable tbody tr').first();
-      if ($first.length) {
-        var $sel = $first.find('.article-select');
-        var $opt = $sel.find('option[data-id="' + PRE_ITEM_ID + '"]');
-        if ($opt.length) {
-          $sel.val($opt.val()).trigger('change');
-        } else {
-          // fallback: find article_number from ITEMS array by id
-          var found = ITEMS.find(function(i){ return i.id == PRE_ITEM_ID; });
-          if (found && found.article_number) {
-            $sel.val(found.article_number).trigger('change');
-          }
-        }
-      } else {
-        // no rows — append one and set
-        var idx = rowCounter++;
-        $('#itemsTable tbody').append(buildRow(idx));
-        var $sel = $('#itemsTable tbody tr:last').find('.article-select');
-        var $opt = $sel.find('option[data-id="' + PRE_ITEM_ID + '"]');
-        if ($opt.length) {
-          $sel.val($opt.val()).trigger('change');
-        } else {
-          var found = ITEMS.find(function(i){ return i.id == PRE_ITEM_ID; });
-          if (found && found.article_number) { $sel.val(found.article_number).trigger('change'); }
-        }
+  /* ── Stepper +/- ──────────────────────────────────────────────────────── */
+  $(document).on('click', '.stepper-btn', function(){
+    var $btn   = $(this);
+    var $input = $btn.siblings('input.size-qty');
+    var val    = parseFloat($input.val()) || 0;
+    $input.val($btn.hasClass('plus') ? val+1 : Math.max(0, val-1));
+    var $row = $btn.closest('tr');
+    updateTotalQtyBadge($row);
+    updateRowQty($row);
+    recalc();
+  });
+  $(document).on('input', '.size-qty', function(){
+    var $row = $(this).closest('tr');
+    updateTotalQtyBadge($row);
+    updateRowQty($row);
+    recalc();
+  });
+
+  $(document).on('input', '.rate,.tax', recalc);
+  $('#discount,#adjustment').on('input', recalc);
+
+  /* ── Article select → auto-fill row ──────────────────────────────────── */
+  $(document).on('change', '.article-select', function(){
+    var $row = $(this).closest('tr');
+    var val  = $(this).val();
+    if (!val) return;
+
+    var found = itemByArticle(val);
+    if (!found) {
+      var $opt = $(this).find('option:selected');
+      found = { id:$opt.data('id')||null, name:$opt.data('name')||'', rate:parseFloat($opt.data('rate'))||0, tax:parseFloat($opt.data('tax'))||0, desc:$opt.data('desc')||'' };
+    }
+    $row.find('.item-id-hidden').val(found.id||'');
+    $row.find('.item-name-input').val(found.name||found.article_number||'');
+    $row.find('.rate').val(found.rate||0);
+    $row.find('.tax').val(found.tax||0);
+    if (!$row.find('.desc').val()) $row.find('.desc').val(found.desc||'');
+
+    populateColorSelect($row, found.colors||[]);
+
+    var sizeChoices = (found.sizes && found.sizes.length) ? found.sizes : ALL_SIZES;
+    var $sz = $row.find('.size-select');
+    if ($sz.hasClass('select2-hidden-accessible')) $sz.select2('destroy');
+    $sz.html(sizeChoices.map(function(s){ return '<option value="'+s+'">'+s+'</option>'; }).join(''));
+
+    // rebuild chips
+    var $chips = $row.find('.size-chips-wrap');
+    $chips.html(sizeChoices.map(function(s){
+      return '<button type="button" class="size-chip" data-size="'+esc(s)+'">'+esc(s)+'</button>';
+    }).join(''));
+
+    rebuildSizePanel($row);
+    recalc();
+  });
+
+  /* ── Build new row HTML ──────────────────────────────────────────────── */
+  function buildRow(idx, it) {
+    it = it || {};
+    var artOpts = '<option value="">--</option>' + ITEMS.map(function(m){
+      return '<option value="'+esc(m.article_number||'')+'"'
+        +' data-id="'+(m.id||'')+'"'
+        +' data-rate="'+(m.rate||0)+'"'
+        +' data-tax="'+(m.tax||0)+'"'
+        +' data-desc="'+(String(m.desc||'').replace(/"/g,'&quot;'))+'"'
+        +(it.item_id==m.id?' selected':'')+'>'+esc(m.article_number||'')+'</option>';
+    }).join('');
+
+    var colOpts = colorOpts(it.colors||COLORS, it.color||it.color_id||[]);
+
+    var sizeChips = ALL_SIZES.map(function(s){
+      return '<button type="button" class="size-chip" data-size="'+esc(s)+'">'+esc(s)+'</button>';
+    }).join('');
+    var sizeOpts = ALL_SIZES.map(function(s){ return '<option value="'+s+'">'+s+'</option>'; }).join('');
+
+    var statusSel = IS_RETAILER
+      ? '<input type="hidden" name="items['+idx+'][status]" value="pending"><span class="badge badge-secondary">Pending</span>'
+      : '<select name="items['+idx+'][status]" class="form-control status-select" style="font-size:12px!important;">'
+        +['pending','draft','confirmed','shipped','delivered'].map(function(s){
+          return '<option value="'+s+'"'+(it.status&&it.status==s?' selected':'')+'>'+s.charAt(0).toUpperCase()+s.slice(1)+'</option>';
+        }).join('')+'</select>';
+
+    return '<tr>'
+      +'<td>'
+        +'<select name="items['+idx+'][article_number]" class="form-control article-select">'+artOpts+'</select>'
+        +'<input type="hidden" name="items['+idx+'][item_id]" class="item-id-hidden" value="'+(it.item_id||'')+'">'
+      +'</td>'
+      +'<td><input type="text" name="items['+idx+'][item_name]" class="form-control item-name-input" value="'+(it.item_name||'')+'" readonly></td>'
+      +'<td><select name="items['+idx+'][color][]" class="form-control color-select" multiple>'+colOpts+'</select></td>'
+      +'<td>'
+        +'<select name="items['+idx+'][sizes][]" class="size-select d-none" multiple>'+sizeOpts+'</select>'
+        +'<div class="size-chips-wrap">'+sizeChips+'</div>'
+        +'<div class="size-qty-wrapper size-qty-panel" style="display:none;"></div>'
+      +'</td>'
+      +'<td><input type="text" name="items['+idx+'][description]" class="form-control desc" value="'+(it.description||'')+'" readonly></td>'
+      +'<td><input type="number" step="0.01" name="items['+idx+'][quantity]" class="form-control qty" value="'+(it.quantity||0)+'" readonly style="font-weight:800;color:var(--brand)!important;"></td>'
+      +'<td><input type="number" step="0.01" name="items['+idx+'][rate]" class="form-control rate" value="'+(it.rate||0)+'" readonly></td>'
+      +'<td><input type="number" step="0.01" name="items['+idx+'][tax_rate]" class="form-control tax" value="'+(it.tax_rate||0)+'" readonly></td>'
+      +'<td><div style="background:linear-gradient(135deg,#ede9fe,#e0e7ff);border-radius:8px;padding:6px 10px;border:1.5px solid #c7d2fe;">'
+        +'<input type="number" step="0.01" name="items['+idx+'][total]" class="form-control total" value="'+(it.total||0)+'" readonly style="background:transparent!important;border:none!important;padding:0!important;text-align:right;font-weight:900;color:var(--brand)!important;width:100%;">'
+      +'</div></td>'
+      +'<td>'+statusSel+'</td>'
+      +'<td><button type="button" class="btn-del-row remove-item"><i class="fas fa-trash"></i></button></td>'
+      +'</tr>';
+  }
+
+  var rowCounter = $('#itemTable tbody tr').length;
+
+  /* ── Add Row ─────────────────────────────────────────────────────────── */
+  $('#addItem').on('click', function(){
+    $('#itemTable tbody').append(buildRow(rowCounter));
+    var $new = $('#itemTable tbody tr:last');
+    $new.find('.color-select').select2({ placeholder:'Colors…', width:'100%' });
+    rowCounter++;
+    recalc();
+    // Update all row numbers
+    updateRowNumbers();
+  });
+
+  /* ── Remove Row ─────────────────────────────────────────────────────── */
+  $(document).on('click', '.remove-item', function(){
+    if ($('#itemTable tbody tr').length <= 1) return;
+    $(this).closest('tr').remove();
+    updateRowNumbers();
+    recalc();
+  });
+
+  function updateRowNumbers() {
+    $('#itemTable tbody tr').each(function(i){
+      $(this).find('.row-num').text(String(i+1).padStart(2,'0'));
+    });
+  }
+
+  /* ── Customer → addresses ────────────────────────────────────────────── */
+  $('#customer_id').on('change', function(){
+    var id = $(this).val();
+    if (!id) { $('#billing_address,#shipping_address').val(''); return; }
+    fetch("{{ url('customer') }}/" + id)
+      .then(function(r){ return r.ok ? r.json() : Promise.reject(r.status); })
+      .then(function(d){
+        $('#billing_address').val(d.billing_address||'');
+        $('#shipping_address').val(d.shipping_address||'');
+      })
+      .catch(function(){ $('#billing_address,#shipping_address').val(''); });
+  });
+
+  /* ── Init Select2 on existing rows ──────────────────────────────────── */
+  if ($.fn.select2) {
+    $('.color-select').select2({ placeholder:'Colors…', width:'100%' });
+  }
+
+  // Init size chip states for old() data rows
+  $('#itemTable tbody tr').each(function(){
+    var $row = $(this);
+    var selected = $row.find('.size-select').val() || [];
+    if (selected.length) {
+      $row.find('.size-chip').each(function(){
+        $(this).toggleClass('active', selected.indexOf(String($(this).data('size'))) !== -1);
+      });
+      // Ensure panel is visible (it was rendered server-side)
+      if ($row.find('.size-qty-wrapper .size-qty-item').length) {
+        $row.find('.size-qty-wrapper').show();
+        updateTotalQtyBadge($row);
       }
-    }
-
-    // If multiple items are provided (from cart), append them
-    if (Array.isArray(PRE_ITEMS) && PRE_ITEMS.length) {
-      // remove any placeholder empty row that was rendered by the server
-      $('#itemsTable tbody tr').each(function() {
-        var $r = $(this);
-        var art = $r.find('.article-select').val();
-        var iid = $r.find('.item-id-hidden').val();
-        var name = $r.find('.item-name-input').val();
-        if ((!art || art === '') && (!iid || iid === '') && (!name || name === '')) {
-          $r.remove();
-        }
-      });
-      // recalculate rowCounter after removing placeholders
-      rowCounter = $('#itemsTable tbody tr').length;
-      PRE_ITEMS.forEach(function(it) {
-        var idx = rowCounter++;
-        // Map our pre-item fields to the expected 'it' shape used by buildRow
-        var rowData = {
-          item_id: it.item_id || it.id || null,
-          item_name: it.item_name || it.name || '',
-          rate: it.rate || 0,
-          tax_rate: it.tax_rate || 0,
-          quantity: it.quantity || it.qty || 0,
-          description: it.description || '',
-          color: it.color || it.color_id || null,
-          sizes: it.sizes || it.size || null,
-          size_quantities: it.size_quantities || null
-        };
-
-        $('#itemsTable tbody').append(buildRow(idx, rowData));
-        var $tr = $('#itemsTable tbody tr:last');
-
-        // set article-select value if we can find the article by item id
-        if (rowData.item_id) {
-          var foundArticle = (function(){ var f = ITEMS.find(function(x){ return x.id == rowData.item_id; }); return f ? f.article_number : ''; })();
-          if (foundArticle) { $tr.find('.article-select').val(foundArticle).trigger('change'); }
-        }
-
-        // initialize Select2 on the new row selects
-        if ($.fn.select2) {
-          $tr.find('.size-select').select2({ placeholder: 'Sizes', width: '100%' });
-          $tr.find('.color-select').select2({ placeholder: 'Colors', width: '100%' });
-        }
-
-        // set color (supports single id or comma-separated)
-        if (rowData.color) {
-          try {
-            var colorVal = Array.isArray(rowData.color) ? rowData.color.map(String) : String(rowData.color).split(',').map(function(s){ return s.trim(); });
-            $tr.find('.color-select').val(colorVal).trigger('change');
-          } catch (e) { /* ignore */ }
-        }
-
-        // set sizes and per-size quantities if present
-        if (rowData.sizes) {
-          var sizesVal = Array.isArray(rowData.sizes) ? rowData.sizes : String(rowData.sizes).split(',').map(function(s){ return s.trim(); });
-          // set the select value and synchronously build qty inputs
-          $tr.find('.size-select').val(sizesVal);
-          // build size-qty inputs based on selected sizes
-          try { syncSizeQtyInputs($tr); } catch (e) { $tr.find('.size-select').trigger('change'); }
-
-          if (rowData.size_quantities && typeof rowData.size_quantities === 'object') {
-            // populate per-size qty inputs immediately
-            Object.keys(rowData.size_quantities).forEach(function(sz){
-              var $inp = $tr.find('.size-qty-row[data-size="' + sz + '"]').find('.size-qty');
-              if ($inp.length) { $inp.val(rowData.size_quantities[sz]); }
-            });
-            updateRowQty($tr);
-            recalc();
-          } else {
-            recalc();
-          }
-        } else {
-          // set rate/qty explicitly when no sizes
-          $tr.find('.rate').val(rowData.rate || 0);
-          $tr.find('.qty').val(rowData.quantity || 0);
-          $tr.find('.size-select').trigger('change');
-        }
-
-      });
-      recalc();
     }
   });
+
+  /* ── PRE-FILL from controller ─────────────────────────────────────────── */
+  var PRE_ITEM_ID = @json($pre_item_id ?? null);
+  var PRE_USER_ID = @json($pre_user_id ?? null);
+  var PRE_ITEMS   = @json($pre_items ?? null);
+
+  if (PRE_USER_ID) {
+    $('#customer_id').val(PRE_USER_ID).trigger('change');
+  } else {
+    $('#customer_id').trigger('change');
+  }
+
+  if (PRE_ITEM_ID) {
+    var $first = $('#itemTable tbody tr').first();
+    if ($first.length) {
+      var $sel  = $first.find('.article-select');
+      var found = ITEMS.find(function(i){ return i.id == PRE_ITEM_ID; });
+      if (found) $sel.val(found.article_number).trigger('change');
+    }
+  }
+
+  if (Array.isArray(PRE_ITEMS) && PRE_ITEMS.length) {
+    $('#itemTable tbody tr').each(function(){
+      var $r = $(this);
+      if (!$r.find('.article-select').val() && !$r.find('.item-id-hidden').val() && !$r.find('.item-name-input').val()) $r.remove();
+    });
+    rowCounter = $('#itemTable tbody tr').length;
+
+    PRE_ITEMS.forEach(function(it){
+      var idx = rowCounter++;
+      var rd = {
+        item_id: it.item_id||it.id||null, item_name: it.item_name||it.name||'',
+        rate: it.rate||0, tax_rate: it.tax_rate||0,
+        quantity: it.quantity||it.qty||0, description: it.description||'',
+        color: it.color||it.color_id||null,
+        sizes: it.sizes||it.size||null, size_quantities: it.size_quantities||null
+      };
+      $('#itemTable tbody').append(buildRow(idx, rd));
+      var $tr = $('#itemTable tbody tr:last');
+
+      if ($.fn.select2) $tr.find('.color-select').select2({ placeholder:'Colors…', width:'100%' });
+
+      if (rd.item_id) {
+        var fa = (function(){ var f=ITEMS.find(function(x){ return x.id==rd.item_id; }); return f?f.article_number:''; })();
+        if (fa) $tr.find('.article-select').val(fa).trigger('change');
+      }
+      if (rd.color) {
+        try { $tr.find('.color-select').val(normalizeArr(rd.color)).trigger('change.select2'); } catch(e){}
+      }
+      if (rd.sizes) {
+        var sv = Array.isArray(rd.sizes) ? rd.sizes : String(rd.sizes).split(',').map(function(s){ return s.trim(); });
+        $tr.find('.size-select').val(sv);
+        rebuildSizePanel($tr);
+        if (rd.size_quantities && typeof rd.size_quantities==='object') {
+          Object.keys(rd.size_quantities).forEach(function(sz){
+            $tr.find('.size-qty-item[data-size="'+sz+'"] .size-qty').val(rd.size_quantities[sz]);
+          });
+          updateTotalQtyBadge($tr);
+          updateRowQty($tr);
+        }
+      }
+    });
+    updateRowNumbers();
+    recalc();
+  }
+
+  recalc();
+});
 </script>
 @endsection
