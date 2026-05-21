@@ -285,11 +285,8 @@
                         </select>
                       @endif
                     </td>
-                    @if(auth()->user() && auth()->user()->hasRole('super-admin'))
                       <td><button type="button" class="btn btn-sm btn-danger remove-item"><i class="fas fa-trash"></i></button></td>
-                    @else
-                      <td></td>
-                    @endif
+                    
                   </tr>
                 @endforeach
 
