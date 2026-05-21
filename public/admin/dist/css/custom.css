@@ -3,6 +3,9 @@
     background: #fff !important;
     border-radius: 40px;
     margin-right: 5px;
+    position:sticky;
+    top:0px;
+    z-index: 10px;
 }
 .main-card-body {
     background-color: #fff;
@@ -344,7 +347,7 @@ input.perm-all:checked{ accent-color: #2b207a; }
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
-  margin-bottom: 8px;
+  /* margin-bottom: 8px; */
 }
 .size-chip {
   border: none;
@@ -368,7 +371,7 @@ input.perm-all:checked{ accent-color: #2b207a; }
   max-width: 340px;
 }
 .size-qty-item {
-  display: flex;
+  /* display: flex; */
   align-items: center;
   margin-bottom: 10px;
   gap: 10px;
@@ -379,7 +382,7 @@ input.perm-all:checked{ accent-color: #2b207a; }
   border: 1px solid #e5e7eb;
   border-radius: 10px;
   overflow: hidden;
-  background: #fff;
+  background: #fff; 
 }
 .stepper-btn {
   width: 36px;

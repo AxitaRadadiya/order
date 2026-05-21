@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Item;
+use App\Models\Color;
+use App\Models\Size;
 
 class CartController extends Controller
 {
@@ -13,8 +15,21 @@ class CartController extends Controller
     {
         $cart = session()->get('cart', []);
 
-        $items = collect($cart)->map(function ($entry, $id) {
-            return array_merge(['id' => $id], $entry);
+        // preload color and size names to display in cart
+        $colorIds = array_values(array_filter(array_map(function($e){ return $e['color_id'] ?? null; }, $cart)));
+        $colors = Color::whereIn('id', $colorIds)->get()->keyBy('id');
+
+        $items = collect($cart)->map(function ($entry, $id) use ($colors) {
+            $out = array_merge(['id' => $id], $entry);
+            if (!empty($entry['color_id'])) {
+                $c = $colors->get($entry['color_id']);
+                $out['color_name'] = $c ? $c->name : null;
+            }
+            // size may be stored as string or array; try to keep a human-friendly label
+            if (!empty($entry['size'])) {
+                $out['size_name'] = is_array($entry['size']) ? implode(', ', $entry['size']) : $entry['size'];
+            }
+            return $out;
         })->values();
 
         $subtotal = $items->reduce(function ($carry, $i) {

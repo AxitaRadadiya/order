@@ -35,6 +35,9 @@
 
     <form action="{{ route('orders.store') }}" method="POST">
       @csrf
+      @if(!empty($pre_items))
+        <input type="hidden" name="from_cart" value="1">
+      @endif
 
       <div class="card"style="padding:10px;">
         <div class="card-body">
@@ -154,7 +157,7 @@
                 @if(old('items'))
                 @foreach(old('items') as $i => $it)
                 <tr>
-                  <td>
+                  <td class="color-cell">
                     <select name="items[{{ $i }}][article_number]" class="form-control article-select">
                       <option value="">--</option>
                       @foreach($items as $itm)
@@ -170,11 +173,11 @@
                     </select>
                     <input type="hidden" name="items[{{ $i }}][item_id]" class="item-id-hidden" value="{{ $it['item_id'] ?? '' }}">
                   </td>
-                  <td>
+                  <td class="color-cell">
                     <input type="text" name="items[{{ $i }}][item_name]" class="form-control item-name-input" value="{{ $it['item_name'] ?? '' }}" readonly>
                   </td>
                   <td>
-                    {{-- Color select --}}
+                    {{-- Color select / readonly for non-super-admin --}}
                     @php
                       $selectedColors = $it['color'] ?? $it['color_id'] ?? [];
                       if (!is_array($selectedColors)) {
@@ -184,11 +187,24 @@
                       $rowItem = !empty($it['item_id'] ?? null) ? $items->firstWhere('id', $it['item_id']) : null;
                       $rowColors = ($rowItem && $rowItem->colors->isNotEmpty()) ? $rowItem->colors : $colors;
                     @endphp
-                    <select name="items[{{ $i }}][color][]" class="form-control color-select select2" multiple>
-                      @foreach($rowColors as $col)
-                      <option value="{{ $col->id }}" {{ in_array((string) $col->id, $selectedColors) ? 'selected' : '' }}>{{ $col->name }}</option>
+                    @if(auth()->user() && auth()->user()->hasRole('super-admin'))
+                      <select name="items[{{ $i }}][color][]" class="form-control color-select select2" multiple>
+                        @foreach($rowColors as $col)
+                        <option value="{{ $col->id }}" {{ in_array((string) $col->id, $selectedColors) ? 'selected' : '' }}>{{ $col->name }}</option>
+                        @endforeach
+                      </select>
+                    @else
+                      @php
+                        $selectedNames = [];
+                        foreach($rowColors as $col) {
+                          if (in_array((string)$col->id, $selectedColors)) $selectedNames[] = $col->name;
+                        }
+                      @endphp
+                      <input type="text" class="form-control color-read" readonly value="{{ implode(', ', $selectedNames) }}">
+                      @foreach($selectedColors as $sc)
+                        <input type="hidden" name="items[{{ $i }}][color][]" value="{{ $sc }}">
                       @endforeach
-                    </select>
+                    @endif
                   </td>
                   <td>
                     {{-- Size multi-select --}}
@@ -209,7 +225,7 @@
                       @foreach($selectedSizes as $selectedSize)
                         <div class="input-group input-group-sm mb-1 size-qty-row" data-size="{{ $selectedSize }}">
                           <div class="input-group-prepend"><span class="input-group-text">{{ $selectedSize }}</span></div>
-                          <input type="number" step="1" min="0" name="items[{{ $i }}][size_quantities][{{ $selectedSize }}]" class="form-control size-qty" value="{{ $sizeQuantities[$selectedSize] ?? '' }}" placeholder="Qty">
+                          <input type="text" step="1" min="0" name="items[{{ $i }}][size_quantities][{{ $selectedSize }}]" class="form-control size-qty" value="{{ $sizeQuantities[$selectedSize] ?? '' }}" placeholder="Qty">
                         </div>
                       @endforeach
                     </div>
@@ -252,11 +268,15 @@
                   </td>
                   <td><input type="text" name="items[0][item_name]" class="form-control item-name-input" value="" readonly></td>
                   <td>
-                    <select name="items[0][color][]" class="form-control color-select select2" multiple>
-                      @foreach($colors as $col)
-                      <option value="{{ $col->id }}">{{ $col->name }}</option>
-                      @endforeach
-                    </select>
+                    @if(auth()->user() && auth()->user()->hasRole('super-admin'))
+                      <select name="items[0][color][]" class="form-control color-select select2" multiple>
+                        @foreach($colors as $col)
+                        <option value="{{ $col->id }}">{{ $col->name }}</option>
+                        @endforeach
+                      </select>
+                    @else
+                      <input type="text" class="form-control color-read" readonly value="">
+                    @endif
                   </td>
                   <td>
                     <select name="items[0][sizes][]" class="size-select d-none" multiple>
@@ -272,7 +292,7 @@
                     <div class="size-qty-wrapper size-qty-panel" style="display:none;"></div>
                   </td>
                   <td><input type="text" name="items[0][description]" class="form-control desc" readonly></td>
-                  <td><input type="number" step="0.01" name="items[0][quantity]" class="form-control qty" value="0" readonly style="font-weight:800;color:var(--brand)!important;"></td>
+                  <td><input type="number" step="0.01" name="items[0][quantity]" class="form-control qty" value="0" readonly></td>
                   <td><input type="number" step="0.01" name="items[0][rate]" class="form-control rate" value="0" readonly></td>
                   <td><input type="number" step="0.01" name="items[0][tax_rate]" class="form-control tax" value="0" readonly></td>
                   <td>
@@ -297,11 +317,13 @@
               </tbody>
               </table>
             </div>
+            @if(auth()->user() && auth()->user()->hasRole('super-admin'))
             <div class="text-right mb-3">
               <button type="button" id="addItem" class="btn btn-sm btn-create">
                 <i class="fas fa-plus"></i> Add Row
               </button>
             </div>
+            @endif
           </div>
 
           {{-- ── Size Range Panel (dynamic from DB) ──────────────────── --}}
@@ -478,6 +500,7 @@ $(function () {
   var ITEMS      = @json($itemsJson);
   var COLORS     = @json($colors);
   var IS_RETAILER= @json(optional(auth()->user())->hasRole('retailer') ?? false);
+  var IS_SUPER_ADMIN = @json(optional(auth()->user())->hasRole('super-admin') ?? false);
 
   /* ── helpers ──────────────────────────────────────────────────────────── */
   function itemByArticle(val) {
@@ -506,10 +529,28 @@ $(function () {
   }
   function populateColorSelect($row, colors, sel) {
     var $cs = $row.find('.color-select');
-    sel = sel || $cs.val() || [];
-    if ($cs.hasClass('select2-hidden-accessible')) $cs.select2('destroy');
-    $cs.html(colorOpts(colors, sel));
-    $cs.select2({ placeholder:'Colors…', width:'100%' });
+    sel = sel || ($cs.length ? $cs.val() : []) || [];
+    if ($cs.length) {
+      if ($cs.hasClass('select2-hidden-accessible')) $cs.select2('destroy');
+      $cs.html(colorOpts(colors, sel));
+      $cs.select2({ placeholder:'Colors…', width:'100%' });
+    } else {
+      // no select present (non-super-admin) — show readonly text and hidden inputs
+      var selArr = normalizeArr(sel);
+      var names = selArr.map(function(id){ var c = COLORS.find(function(x){ return String(x.id) == String(id); }); return c?c.name : ''; }).filter(Boolean).join(', ');
+      var $rd = $row.find('.color-read');
+      if ($rd.length) $rd.val(names);
+      // locate color cell (closest td containing color-read or color-select), fallback to index 2
+      var $cell = $row.find('td').has('.color-read');
+      if (!$cell.length) $cell = $row.find('td').has('.color-select');
+      if (!$cell.length) $cell = $row.find('td').eq(2);
+      if ($cell.length) {
+        $cell.find('input[type=hidden][name$="[color][]"]').remove();
+        selArr.forEach(function(id){
+          $cell.append('<input type="hidden" name="items['+rowIndex($row)+'][color][]" value="'+esc(id)+'">');
+        });
+      }
+    }
   }
 
   /* ── Recalc totals ────────────────────────────────────────────────────── */
@@ -561,14 +602,19 @@ $(function () {
       return '<div class="size-qty-item" data-size="'+esc(sz)+'">'
         +'<span class="size-qty-label">'+esc(sz)+'</span>'
         +'<div class="size-stepper">'
-        +'<button type="button" class="stepper-btn minus">−</button>'
-        +'<input type="number" step="1" min="0" name="items['+idx+'][size_quantities]['+esc(sz)+']" class="size-qty" value="'+esc(q)+'">'
-        +'<button type="button" class="stepper-btn plus">+</button>'
-        +'</div>'
+        +(IS_SUPER_ADMIN
+                ? '<button type="button" class="stepper-btn minus">−</button>'
+                : '')
+        +(IS_SUPER_ADMIN ?'<input type="text" step="1" min="0" name="items['+idx+'][size_quantities]['+esc(sz)+']" class="size-qty" value="'+esc(q)+'" readonly>': '')
+        +(IS_SUPER_ADMIN
+                ? '<button type="button" class="stepper-btn plus">+</button>'
+                : '')
+        +'</input>'
         +'</div>';
     }).join('');
+    if (IS_SUPER_ADMIN) {
     html += '<div class="size-qty-total"><small>Total</small><span class="total-qty-badge">0</span></div>';
-
+    }
     $panel.html(html).show();
     updateTotalQtyBadge($row);
     updateRowQty($row);
@@ -594,6 +640,10 @@ $(function () {
     var $sel  = $row.find('.size-select');
     var size  = String($chip.data('size'));
     var cur   = $sel.val() || [];
+
+    if (!IS_SUPER_ADMIN) {
+      return;
+    }
 
     if ($chip.hasClass('active')) {
       cur = cur.filter(function(s){ return s !== size; });
@@ -651,9 +701,13 @@ $(function () {
 
     // rebuild chips
     var $chips = $row.find('.size-chips-wrap');
+    if (IS_SUPER_ADMIN) {
     $chips.html(sizeChoices.map(function(s){
       return '<button type="button" class="size-chip" data-size="'+esc(s)+'">'+esc(s)+'</button>';
     }).join(''));
+    } else {
+      $chips.empty();
+    }
 
     rebuildSizePanel($row);
     recalc();
@@ -673,9 +727,13 @@ $(function () {
 
     var colOpts = colorOpts(it.colors||COLORS, it.color||it.color_id||[]);
 
-    var sizeChips = ALL_SIZES.map(function(s){
-      return '<button type="button" class="size-chip" data-size="'+esc(s)+'">'+esc(s)+'</button>';
-    }).join('');
+    var sizeChips = '';
+
+    if (IS_SUPER_ADMIN) {
+      sizeChips = ALL_SIZES.map(function(s){
+        return '<button type="button" class="size-chip" data-size="'+esc(s)+'">'+esc(s)+'</button>';
+      }).join('');
+    }
     var sizeOpts = ALL_SIZES.map(function(s){ return '<option value="'+s+'">'+s+'</option>'; }).join('');
 
     var statusSel = IS_RETAILER
@@ -687,25 +745,59 @@ $(function () {
 
     return '<tr>'
       +'<td>'
-        +'<select name="items['+idx+'][article_number]" class="form-control article-select">'+artOpts+'</select>'
+        +(
+            IS_SUPER_ADMIN
+            ? '<select name="items['+idx+'][article_number]" class="form-control article-select">'
+                + artOpts +
+              '</select>'
+            : '<input type="text" class="form-control" value="'+esc(
+              (function () {
+                  var found = ITEMS.find(function(i){
+                      return i.id == it.item_id;
+                  });
+                  return found ? found.article_number : '';
+              })()
+          )+'" readonly>'
+          + '<input type="hidden" name="items['+idx+'][article_number]" value="'+esc(
+              (function () {
+                  var found = ITEMS.find(function(i){
+                      return i.id == it.item_id;
+                  });
+                  return found ? found.article_number : '';
+              })()
+          )+'">'
+        )
         +'<input type="hidden" name="items['+idx+'][item_id]" class="item-id-hidden" value="'+(it.item_id||'')+'">'
       +'</td>'
       +'<td><input type="text" name="items['+idx+'][item_name]" class="form-control item-name-input" value="'+(it.item_name||'')+'" readonly></td>'
-      +'<td><select name="items['+idx+'][color][]" class="form-control color-select" multiple>'+colOpts+'</select></td>'
+      +(
+        IS_SUPER_ADMIN
+        ? '<td class="color-cell"><select name="items['+idx+'][color][]" class="form-control color-select" multiple>'+colOpts+'</select></td>'
+        : (function(){
+            var sel = normalizeArr(it.color||it.color_id||[]);
+            var names = sel.map(function(id){ var c = COLORS.find(function(x){ return String(x.id)==String(id); }); return c?c.name:''; }).filter(Boolean).join(', ');
+            var hidden = sel.map(function(id){ return '<input type="hidden" name="items['+idx+'][color][]" value="'+esc(id)+'">'; }).join('');
+            return '<td class="color-cell"><input type="text" class="form-control color-read" readonly value="'+esc(names)+'">'+hidden+'</td>';
+          })()
+      )
       +'<td>'
         +'<select name="items['+idx+'][sizes][]" class="size-select d-none" multiple>'+sizeOpts+'</select>'
         +'<div class="size-chips-wrap">'+sizeChips+'</div>'
-        +'<div class="size-qty-wrapper size-qty-panel" style="display:none;"></div>'
+        +(
+            IS_SUPER_ADMIN
+            ? '<div class="size-qty-wrapper size-qty-panel" style="display:none;"></div>'
+            : '<div class="form-control size-readonly-box" readonly>'
+                + (it.sizes ? normalizeArr(it.sizes).join(', ') : '')
+              + '</div>'
+          )
       +'</td>'
       +'<td><input type="text" name="items['+idx+'][description]" class="form-control desc" value="'+(it.description||'')+'" readonly></td>'
-      +'<td><input type="number" step="0.01" name="items['+idx+'][quantity]" class="form-control qty" value="'+(it.quantity||0)+'" readonly style="font-weight:800;color:var(--brand)!important;"></td>'
+      +'<td><input type="number" step="0.01" name="items['+idx+'][quantity]" class="form-control qty" value="'+(it.quantity||0)+'" readonly color:var(--brand)!important;"></td>'
       +'<td><input type="number" step="0.01" name="items['+idx+'][rate]" class="form-control rate" value="'+(it.rate||0)+'" readonly></td>'
       +'<td><input type="number" step="0.01" name="items['+idx+'][tax_rate]" class="form-control tax" value="'+(it.tax_rate||0)+'" readonly></td>'
-      +'<td><div style="background:linear-gradient(135deg,#ede9fe,#e0e7ff);border-radius:8px;padding:6px 10px;border:1.5px solid #c7d2fe;">'
-        +'<input type="number" step="0.01" name="items['+idx+'][total]" class="form-control total" value="'+(it.total||0)+'" readonly style="background:transparent!important;border:none!important;padding:0!important;text-align:right;font-weight:900;color:var(--brand)!important;width:100%;">'
-      +'</div></td>'
+      +'<td><input type="number" step="0.01" name="items['+idx+'][total]" class="form-control total" value="'+(it.total||0)+'" readonly></td>'
       +'<td>'+statusSel+'</td>'
-      +'<td><button type="button" class="btn-del-row remove-item"><i class="fas fa-trash"></i></button></td>'
+      +'<td><button type="button" class="btn btn-sm btn-danger remove-item"><i class="fas fa-trash"></i></button></td>'
       +'</tr>';
   }
 
@@ -713,6 +805,10 @@ $(function () {
 
   /* ── Add Row ─────────────────────────────────────────────────────────── */
   $('#addItem').on('click', function(){
+    if (!IS_SUPER_ADMIN) {
+      alert('Not allowed');
+      return;
+    }
     $('#itemTable tbody').append(buildRow(rowCounter));
     var $new = $('#itemTable tbody tr:last');
     $new.find('.color-select').select2({ placeholder:'Colors…', width:'100%' });
@@ -736,7 +832,7 @@ $(function () {
     });
   }
 
-  /* ── Customer → addresses ────────────────────────────────────────────── */
+  /* ── Customer → addresses*/
   $('#customer_id').on('change', function(){
     var id = $(this).val();
     if (!id) { $('#billing_address,#shipping_address').val(''); return; }
@@ -829,6 +925,19 @@ $(function () {
           updateTotalQtyBadge($tr);
           updateRowQty($tr);
         }
+      }
+
+      try {
+        var finalQty = 0;
+        if (rd.size_quantities && typeof rd.size_quantities === 'object') {
+          Object.keys(rd.size_quantities).forEach(function(sz){ finalQty += parseFloat(rd.size_quantities[sz])||0; });
+        }
+        if (!finalQty) {
+          finalQty = parseFloat(rd.quantity)||parseFloat(rd.qty)||0;
+        }
+        $tr.find('.qty').val(finalQty);
+      } catch(e) {
+        // ignore
       }
     });
     updateRowNumbers();

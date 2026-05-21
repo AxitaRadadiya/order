@@ -318,6 +318,11 @@ class OrderMasterController extends Controller
             $order->update(array_merge($this->calculatedTotals($request, $subtotal), ['status' => $orderStatus]));
             DB::commit();
 
+            // If this order was created from cart, clear the session cart
+            if ($request->input('from_cart')) {
+                session()->forget('cart');
+            }
+
             return redirect()->route('orders.index')
                 ->with('success', 'Order created successfully.');
         } catch (\Exception $e) {
