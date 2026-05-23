@@ -46,7 +46,7 @@
           <div class="col-md-6 mb-3"><strong>Shipping Address:</strong><br>{{ $order->shipping_address }}</div>
         </div>
         <h5>Items</h5>
-        <table class="table table-sm table-bordered"><thead><tr><th width="100">Article No.</th><th width="100">Item</th><th width="140">Color</th><th width="140">Size</th><th>Desc</th><th width="80">Qty</th><th width="100">MRP</th><th width="100">Total</th></tr></thead><tbody>
+        <table class="table table-sm table-bordered"><thead><tr><th width="100">Article No.</th><th width="100">Item</th><th width="140">Color</th><th width="140">Size</th><th>Desc</th><th width="80">Qty</th><th width="100">MRP</th><th width="100">Total</th><th>Status</th></tr></thead><tbody>
           @foreach($order->items as $it)
             @php
               $sizeText = $it->size;
@@ -61,7 +61,7 @@
                 ->map(fn($color) => $colorsById[$color] ?? $color)
                 ->implode(', ');
             @endphp
-            <tr><td>{{ $it->article_number }}</td><td>{{ $it->item_name }}</td><td>{{ $colorText }}</td><td>{{ $sizeText }}</td><td>{{ $it->description }}</td><td>{{ $it->quantity }}</td><td>{{ number_format($it->rate,2) }}</td><td>{{ number_format($it->total,2) }}</td></tr>
+            <tr><td>{{ $it->article_number }}</td><td>{{ $it->item_name }}</td><td>{{ $colorText }}</td><td>{{ $sizeText }}</td><td>{{ $it->description }}</td><td>{{ $it->quantity }}</td><td>{{ number_format($it->rate,2) }}</td><td>{{ number_format($it->total,2) }}</td><td>{{ $it->status }}</td></tr>
           @endforeach
         </tbody></table>
         <div class="row mb-2 mt-5">

@@ -295,6 +295,10 @@ class OrderMasterController extends Controller
                 $fields['distributor_approved'] = false;
                 $fields['approval_level'] = 0;
                 $fields['visible_to_superadmin'] = false;
+            } elseif ($authUser && $authUser->hasRole('distributor')) {
+                // If a distributor creates an order, mark themselves as the distributor
+                $fields['distributor_id'] = $authUser->id;
+                $fields['approval_level'] = $fields['approval_level'] ?? 0;
             }
             $order = OrderMaster::create($fields);
             $subtotal = $this->syncItems($order, $request->input('items', []));
@@ -355,9 +359,9 @@ class OrderMasterController extends Controller
                     abort(403);
                 }
                 // Distributors cannot edit orders once super-admin has finalized them
-                if ((int)($order->approval_level ?? 0) >= 2) {
-                    return back()->with('error', 'Order has been finalized by super-admin and cannot be edited.');
-                }
+                // if ((int)($order->approval_level ?? 0) >= 2) {
+                //     return back()->with('error', 'Order has been finalized by super-admin and cannot be edited.');
+                // }
             }
             // Super-admin may view all orders including those pending distributor approval.
         }
@@ -428,6 +432,11 @@ class OrderMasterController extends Controller
         DB::beginTransaction();
         try {
             $order->update($this->orderFields($request));
+            $authUser = auth()->user();
+            if ($authUser && $authUser->hasRole('distributor') && empty($order->distributor_id)) {
+                $order->distributor_id = $authUser->id;
+                $order->save();
+            }
             $order->items()->delete();
             $subtotal = $this->syncItems($order, $request->input('items', []));
 
