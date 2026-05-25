@@ -103,7 +103,7 @@
                     <label>Size</label>
                     <div id="sizeOptions" class="d-flex flex-wrap gap-2 align-items-center">
                       @foreach($item->sizes as $s)
-                        <button type="button" class="btn size-option mr-2" data-size="{{ $s }}" aria-pressed="false">
+                        <button type="button" class="btn size-option mr-2 mb-2" data-size="{{ $s }}" aria-pressed="false">
                           <div class="size-label">{{ $s }}</div>
                         </button>
                       @endforeach

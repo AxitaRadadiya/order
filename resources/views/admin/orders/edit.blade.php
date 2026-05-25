@@ -135,17 +135,17 @@
             <table class="table table-sm table-bordered" id="itemsTable">
               <thead class="thead-light">
                 <tr>
-                  <th width="160">Article Number</th>
-                  <th width="160">Item</th>
-                  <th width="160">Color</th>
-                  <th width="220">Size(s)</th>
+                  <th>Article Number</th>
+                  <th>Item</th>
+                  <th>Color</th>
+                  <th>Size(s)</th>
                   <th>Description</th>
-                  <th width="80">Qty</th>
-                  <th width="110">MRP</th>
-                  <th width="80">Tax %</th>
-                  <th width="110">Total</th>
-                  <th width="100">Status</th>
-                  <th width="40">Action</th>
+                  <th>Qty</th>
+                  <th>MRP</th>
+                  <th>Tax %</th>
+                  <th>Total</th>
+                  <th>Status</th>
+                  <th>Action</th>
                 </tr>
               </thead>
               <tbody>
@@ -169,7 +169,7 @@
                   @endphp
                   <tr>
                     <td>
-                      @if(auth()->user() && auth()->user()->hasRole('super-admin'))
+                      @if(auth()->user() && auth()->user()->hasRole(['super-admin', 'superadmin']))
                         <select name="items[{{ $i }}][article_number]" class="form-control article-select">
                           <option value="">--</option>
                           @foreach($items as $itm)
@@ -211,7 +211,7 @@
                           if ($cobj) { $selectedColorNames[] = $cobj->name; }
                         }
                       @endphp
-                      @if(auth()->user() && auth()->user()->hasRole('super-admin'))
+                      @if(auth()->user() && auth()->user()->hasRole(['super-admin', 'superadmin']))
                         <select name="items[{{ $i }}][color][]" class="form-control color-select select2" multiple>
                           @foreach($rowColors as $col)
                             <option value="{{ $col->id }}" {{ in_array((string) $col->id, $selectedColors) ? 'selected' : '' }}>{{ $col->name }}</option>
@@ -235,8 +235,11 @@
                           $selectedSizes = array_map('trim', explode(',', $size));
                         }
                         $sizeQuantities = $isArr ? ($it['size_quantities'] ?? []) : ($it->size_quantities ?? []);
+                        $fallbackSizeQty = count($selectedSizes) && (float) $qty > 0
+                          ? round(((float) $qty) / count($selectedSizes), 2)
+                          : 1;
                       @endphp
-                      @if(auth()->user() && auth()->user()->hasRole('super-admin'))
+                      @if(auth()->user() && auth()->user()->hasRole(['super-admin', 'superadmin']))
                         <select name="items[{{ $i }}][sizes][]" class="size-select d-none" multiple>
                           @foreach($sizesJson as $sz)
                             <option value="{{ $sz }}" {{ in_array($sz, $selectedSizes) ? 'selected' : '' }}>{{ $sz }}</option>
@@ -247,14 +250,18 @@
                             <button type="button" class="size-chip {{ in_array($sz, $selectedSizes) ? 'active' : '' }}" data-size="{{ $sz }}">{{ $sz }}</button>
                           @endforeach
                         </div>
-                        <div class="size-qty-wrapper size-qty-panel" style="{{ count($selectedSizes) ? 'display:block;' : '' }}">
+                        <div class="size-qty-wrapper size-qty-panel" style="display:none;">
                           @foreach($selectedSizes as $selectedSize)
+                            @php
+                              $savedSizeQty = $sizeQuantities[$selectedSize] ?? null;
+                              $displaySizeQty = ((float) $savedSizeQty > 0) ? $savedSizeQty : $fallbackSizeQty;
+                            @endphp
                             <div class="size-qty-row" data-size="{{ $selectedSize }}">
                               <div class="input-group input-group-sm mb-1">
                                 <div class="input-group-prepend"><span class="input-group-text">{{ $selectedSize }}</span></div>
                                 <div class="size-stepper">
                                   <button type="button" class="stepper-btn minus">−</button>
-                                  <input type="text" step="1" min="0" name="items[{{ $i }}][size_quantities][{{ $selectedSize }}]" class="size-qty" value="{{ $sizeQuantities[$selectedSize] ?? 0 }}" readonly>
+                                  <input type="text" step="1" min="0" name="items[{{ $i }}][size_quantities][{{ $selectedSize }}]" class="size-qty" value="{{ $displaySizeQty }}" readonly>
                                   <button type="button" class="stepper-btn plus">+</button>
                                 </div>
                               </div>
@@ -293,7 +300,7 @@
                 @if($rowItems->isEmpty())
                   <tr>
                     <td>
-                      @if(auth()->user() && auth()->user()->hasRole('super-admin'))
+                      @if(auth()->user() && auth()->user()->hasRole(['super-admin', 'superadmin']))
                         <select name="items[0][article_number]" class="form-control article-select">
                           <option value="">--</option>
                           @foreach($items as $itm)
@@ -317,7 +324,7 @@
                       <input type="text" name="items[0][item_name]" class="form-control item-name-input" value="" readonly>
                     </td>
                     <td>
-                      @if(auth()->user() && auth()->user()->hasRole('super-admin'))
+                      @if(auth()->user() && auth()->user()->hasRole(['super-admin', 'superadmin']))
                         <select name="items[0][color][]" class="form-control color-select select2" multiple>
                           @foreach($colors as $col)
                             <option value="{{ $col->id }}">{{ $col->name }}</option>
@@ -328,7 +335,7 @@
                       @endif
                     </td>
                     <td>
-                      @if(auth()->user() && auth()->user()->hasRole('super-admin'))
+                      @if(auth()->user() && auth()->user()->hasRole(['super-admin', 'superadmin']))
                         <select name="items[0][sizes][]" class="size-select d-none" multiple>
                           @foreach($sizesJson as $sz)
                             <option value="{{ $sz }}">{{ $sz }}</option>
@@ -361,7 +368,7 @@
                         </select>
                       @endif
                     </td>
-                    @if(auth()->user() && auth()->user()->hasRole('super-admin'))
+                    @if(auth()->user() && auth()->user()->hasRole(['super-admin', 'superadmin']))
                       <td><button type="button" class="btn btn-sm btn-danger remove-item"><i class="fas fa-trash"></i></button></td>
                     @else
                       <td></td>
@@ -371,7 +378,7 @@
               </tbody>
             </table>
             <div class="text-right mb-3">
-              @if(auth()->user() && auth()->user()->hasRole('super-admin'))
+              @if(auth()->user() && auth()->user()->hasRole(['super-admin', 'superadmin']))
                 <button type="button" id="addItem" class="btn-create">
                   <i class="fas fa-plus"></i> Add Row
                 </button>
@@ -538,6 +545,35 @@
     </form>
   </div>
 </section>
+@if(auth()->user() && auth()->user()->hasRole(['super-admin', 'superadmin']))
+<div class="variant-drawer-backdrop" id="variantDrawerBackdrop" aria-hidden="true">
+  <div class="variant-drawer" role="dialog" aria-modal="true" aria-labelledby="variantDrawerTitle">
+    <div class="variant-drawer-header">
+      <div>
+        <div class="variant-drawer-meta" id="variantDrawerItem">-</div>
+      </div>
+      <button type="button" class="variant-drawer-close" data-variant-close aria-label="Close">&times;</button>
+    </div>
+    <div class="variant-drawer-body">
+      <span class="variant-drawer-label">Choose Sizes</span>
+      <div class="variant-drawer-sizes" id="variantDrawerSizes"></div>
+      <div class="d-flex align-items-center justify-content-between mb-2">
+        <span class="variant-drawer-label mb-0">Selected Size</span>
+        <button type="button" class="btn btn-link btn-sm p-0 text-danger" id="variantClearAll">Clear All</button>
+      </div>
+      <div class="variant-selected-list" id="variantSelectedList"></div>
+      <div class="variant-total-row">
+        Total Quantity
+        <span class="variant-total-badge" id="variantDrawerTotal"><strong>0</strong></span>
+      </div>
+    </div>
+    <div class="variant-drawer-footer">
+      <button type="button" class="btn-cancel flex-fill" data-variant-close>Cancel</button>
+      <button type="button" class="btn-submit flex-fill" id="variantSaveBtn">Save Variants</button>
+    </div>
+  </div>
+</div>
+@endif
 @endsection
 
 @section('pageScript')
@@ -550,7 +586,7 @@ $(function () {
   var ITEMS = @json($itemsJson);
   var COLORS = @json($colors);
   var IS_RETAILER = @json(optional(auth()->user())->hasRole('retailer') ?? false);
-  var IS_SUPER_ADMIN = @json(optional(auth()->user())->hasRole('super-admin') ?? false);
+  var IS_SUPER_ADMIN = @json(optional(auth()->user())->hasRole(['super-admin', 'superadmin']) ?? false);
   var IS_DISTRIBUTOR = @json(optional(auth()->user())->hasRole('distributor') ?? false);
 
   function itemByArticle(val) {
@@ -887,8 +923,6 @@ $(function () {
   }
 
   var rowCounter = $('#itemsTable tbody tr').length;
-
-  // If the current user is a retailer, ensure status inputs are not editable and
   // replace selects with hidden fields so the server receives a controlled value.
   if (IS_RETAILER) {
     $('#itemsTable tbody tr').each(function() {
@@ -1073,6 +1107,184 @@ $(function () {
     recalc();
   });
 
+  var activeVariantRow = null;
+  var drawerSizes = [];
+  var drawerQtys = {};
+
+  function variantEscape(value) {
+    return String(value).replace(/[&<>"']/g, function(ch) {
+      return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' })[ch];
+    });
+  }
+
+  function variantRowLabel($row) {
+    var article = $row.find('.article-select').val() || $row.find('input[name$="[article_number]"]').val() || '';
+    var item = $row.find('.item-name-input').val() || 'Selected item';
+    return article ? item + ' (' + article + ')' : item;
+  }
+
+  function variantSizeOptions($row) {
+    var opts = [];
+    $row.find('.size-select option').each(function() {
+      opts.push(String($(this).val()));
+    });
+    return opts.length ? opts : ALL_SIZES.map(String);
+  }
+
+  function variantSelectedSizes($row) {
+    return ($row.find('.size-select').val() || []).map(String);
+  }
+
+  function variantQtyMap($row) {
+    var qtys = {};
+    $row.find('.size-qty').each(function() {
+      var size = $(this).closest('[data-size]').data('size');
+      if (size !== undefined) {
+        qtys[String(size)] = parseFloat($(this).val()) || 0;
+      }
+    });
+    return qtys;
+  }
+
+  function refreshVariantCell($row) {
+    if (!IS_SUPER_ADMIN) return;
+
+    var $cell = $row.find('td').has('.size-select').first();
+    if (!$cell.length) return;
+
+    var sizes = variantSelectedSizes($row);
+    var qtys = variantQtyMap($row);
+    var totalQty = sizes.reduce(function(sum, size) {
+      return sum + (parseFloat(qtys[size]) || 0);
+    }, 0);
+    var chips = sizes.map(function(size) {
+      var qty = qtys[size] || 0;
+      return '<span class="variant-mini-chip">' + variantEscape(size) + ' x ' + variantEscape(qty) + '</span>';
+    }).join('');
+    var summary = sizes.length
+      ? '<span class="variant-count-pill">' + sizes.length + ' Variants Added</span><div class="variant-chip-list">' + chips + '</div>'
+      : '<span class="variant-empty-text">No Variants Added</span>';
+    var buttonText = sizes.length ? 'Edit Variants' : 'Add Variants';
+
+    if ($row.find('.size-select').hasClass('select2-hidden-accessible')) {
+      $row.find('.size-select').select2('destroy');
+    }
+    $row.find('.size-select').addClass('d-none').hide();
+    $row.find('.size-chips-wrap,.size-qty-wrapper').hide();
+    $cell.find('.variant-table-summary').remove();
+    $cell.prepend(
+      '<div class="variant-table-summary">' + summary +
+      '<button type="button" class="variant-edit-btn"><i class="fas fa-pencil-alt mr-1"></i>' + buttonText + '</button></div>'
+    );
+  }
+
+  function refreshAllVariantCells() {
+    $('#itemsTable tbody tr').each(function() {
+      refreshVariantCell($(this));
+    });
+  }
+
+  function renderVariantDrawer() {
+    $('#variantDrawerSizes').html(variantSizeOptions(activeVariantRow).map(function(size) {
+      var active = drawerSizes.indexOf(String(size)) !== -1 ? ' active' : '';
+      return '<button type="button" class="variant-drawer-size' + active + '" data-size="' + variantEscape(size) + '">' + variantEscape(size) + '</button>';
+    }).join(''));
+
+    $('#variantSelectedList').html(drawerSizes.map(function(size) {
+      var qty = drawerQtys[size] || 1;
+      return '<div class="variant-selected-row" data-size="' + variantEscape(size) + '">' +
+        '<span class="variant-selected-name">' + variantEscape(size) + '</span>' +
+        '<div class="size-stepper">' +
+          '<button type="button" class="stepper-btn variant-drawer-minus">-</button>' +
+          '<input type="text" class="size-qty variant-drawer-qty" value="' + variantEscape(qty) + '" readonly>' +
+          '<button type="button" class="stepper-btn variant-drawer-plus">+</button>' +
+        '</div>' +
+      '</div>';
+    }).join('') || '<div class="variant-selected-empty">Select sizes from above</div>');
+
+    var total = drawerSizes.reduce(function(sum, size) {
+      return sum + (parseFloat(drawerQtys[size]) || 0);
+    }, 0);
+    $('#variantDrawerTotal').text(total);
+  }
+
+  function openVariantDrawer($row) {
+    if (!IS_SUPER_ADMIN) return;
+    activeVariantRow = $row;
+    drawerSizes = variantSelectedSizes($row);
+    drawerQtys = variantQtyMap($row);
+    drawerSizes.forEach(function(size) {
+      if (!drawerQtys[size]) drawerQtys[size] = 1;
+    });
+    $('#variantDrawerItem').text(variantRowLabel($row));
+    renderVariantDrawer();
+    $('#variantDrawerBackdrop').addClass('show').attr('aria-hidden', 'false');
+    $('body').addClass('variant-drawer-open');
+  }
+
+  function closeVariantDrawer() {
+    $('#variantDrawerBackdrop').removeClass('show').attr('aria-hidden', 'true');
+    $('body').removeClass('variant-drawer-open');
+    activeVariantRow = null;
+    drawerSizes = [];
+    drawerQtys = {};
+  }
+
+  function applyVariantDrawer() {
+    if (!activeVariantRow) return;
+    activeVariantRow.find('.size-select').val(drawerSizes);
+    rebuildSizePanel(activeVariantRow);
+    drawerSizes.forEach(function(size) {
+      activeVariantRow.find('[data-size]').filter(function() {
+        return String($(this).data('size')) === String(size);
+      }).find('.size-qty').val(drawerQtys[size] || 1);
+    });
+    updateTotalQtyBadge(activeVariantRow);
+    updateRowQty(activeVariantRow);
+    recalc();
+    refreshVariantCell(activeVariantRow);
+    closeVariantDrawer();
+  }
+
+  $(document).on('click', '.variant-edit-btn', function() {
+    openVariantDrawer($(this).closest('tr'));
+  });
+  $(document).on('click', '[data-variant-close]', closeVariantDrawer);
+  $('#variantDrawerBackdrop').on('click', function(event) {
+    if (event.target === this) closeVariantDrawer();
+  });
+  $(document).on('click', '.variant-drawer-size', function() {
+    var size = String($(this).data('size'));
+    if (drawerSizes.indexOf(size) === -1) {
+      drawerSizes.push(size);
+      drawerQtys[size] = drawerQtys[size] || 1;
+    } else {
+      drawerSizes = drawerSizes.filter(function(item) { return item !== size; });
+      delete drawerQtys[size];
+    }
+    renderVariantDrawer();
+  });
+  $(document).on('click', '.variant-drawer-plus,.variant-drawer-minus', function() {
+    var size = String($(this).closest('.variant-selected-row').data('size'));
+    var qty = parseFloat(drawerQtys[size]) || 0;
+    drawerQtys[size] = $(this).hasClass('variant-drawer-plus') ? qty + 1 : Math.max(1, qty - 1);
+    renderVariantDrawer();
+  });
+  $('#variantClearAll').on('click', function() {
+    drawerSizes = [];
+    drawerQtys = {};
+    renderVariantDrawer();
+  });
+  $('#variantSaveBtn').on('click', applyVariantDrawer);
+  $(document).on('change', '.article-select', function() {
+    var $row = $(this).closest('tr');
+    setTimeout(function() { refreshVariantCell($row); }, 0);
+  });
+  $('#addItem').on('click', function() {
+    setTimeout(refreshAllVariantCells, 0);
+  });
+
+  refreshAllVariantCells();
   recalc();
   srRecalc();
 
@@ -1088,9 +1300,9 @@ $(function () {
       $row.find('.size-chip').each(function(){
         $(this).toggleClass('active', selected.indexOf(String($(this).data('size'))) !== -1);
       });
-      // Ensure panel is visible (it may be rendered server-side)
+      // Keep the per-size inputs hidden; the drawer summary is the visible UI.
       if ($row.find('.size-qty-wrapper .size-qty-row').length) {
-        $row.find('.size-qty-wrapper').show();
+        $row.find('.size-qty-wrapper').hide();
         updateTotalQtyBadge($row);
       }
     }

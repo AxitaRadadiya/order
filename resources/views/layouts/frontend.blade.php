@@ -14,17 +14,17 @@
 <body class="frontend">
   <nav class="navbar navbar-expand-lg navbar-light fixed-top border-bottom">
     <div class="container">
-      <a class="navbar-brand font-weight-bold" href="{{ route('home') }}">My Store</a>
+      <a class="navbar-brand font-weight-bold" href="{{ url('/') }}">My Store</a>
       <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navMain">
         <span class="navbar-toggler-icon"></span>
       </button>
 
       <div class="collapse navbar-collapse" id="navMain">
         <ul class="navbar-nav mr-auto">
-          <li class="nav-item"><a class="nav-link" href="{{ route('home') }}">Home</a></li>
+          <li class="nav-item"><a class="nav-link" href="{{ url('/') }}">Home</a></li>
           <li class="nav-item"><a class="nav-link" href="{{ route('products') }}">Products</a></li>
-          <li class="nav-item"><a class="nav-link" href="{{ route('about') }}">About</a></li>
-          <li class="nav-item"><a class="nav-link" href="{{ route('contact') }}">Contact</a></li>
+          <li class="nav-item"><a class="nav-link" href="{{ url('/about') }}">About</a></li>
+          <li class="nav-item"><a class="nav-link" href="{{ url('/contact') }}">Contact</a></li>
         </ul>
 
         <ul class="navbar-nav">
@@ -64,7 +64,7 @@
           <h5 class="footer-title">Quick Links</h5>
           <ul class="list-unstyled">
             <li><a href="{{ route('products') }}">Products</a></li>
-            <li><a href="{{ route('contact') }}">Contact</a></li>
+            <li><a href="#contact">Contact</a></li>
             <li><a href="#">FAQ</a></li>
           </ul>
         </div>
@@ -97,7 +97,8 @@
 
   <button id="backToTop" title="Back to top">↑</button>
 
-
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
   <script>
     document.addEventListener('DOMContentLoaded', function(){
       // Accordion behavior

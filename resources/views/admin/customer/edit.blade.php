@@ -37,7 +37,7 @@
 
     @php $addr = $customer->address; $bank = $customer->bankDetail; @endphp
 
-    <form action="{{ route('customers.update', $customer) }}" method="POST">
+    <form id="customerForm" action="{{ route('customers.update', $customer) }}" method="POST">
       @csrf @method('PUT')
 
       @if(!empty($isDistributorPanel) && $isDistributorPanel)
@@ -94,7 +94,7 @@
             </div>
             <div class="col-md-3" id="distributor_field" style="display:none;">
               <div class="form-group">
-                <label>Distributor</label>
+                <label>Distributor <span class="text-danger">*</span></label>
                 @if(!empty($isDistributorPanel) && $isDistributorPanel)
                   <input type="text" class="form-control" value="{{ optional($distributors->first())['company_name'] ?: optional($distributors->first())['name'] }}" disabled>
                 @else
@@ -110,7 +110,7 @@
             <div class="col-md-3">
               <div class="form-group">
                 <label>Email <span class="text-danger">*</span></label>
-                <input type="email" class="form-control @error('email') is-invalid @enderror"
+                <input id="email" type="email" class="form-control @error('email') is-invalid @enderror"
                        name="email" value="{{ old('email', $customer->email) }}"
                        placeholder="Email address" required>
                 @error('email')<div class="invalid-feedback">{{ $message }}</div>@enderror
@@ -120,8 +120,8 @@
             {{-- Mobile: type=tel + inputmode=numeric --}}
             <div class="col-md-3">
               <div class="form-group">
-                <label>Mobile Number</label>
-                <input type="tel" inputmode="numeric" pattern="[0-9]{10}"
+                <label>Mobile Number <span class="text-danger">*</span></label>
+                <input id="mobile" type="tel" inputmode="numeric" pattern="[0-9]{10}"
                        class="form-control phone-only @error('mobile') is-invalid @enderror"
                        name="mobile" value="{{ old('mobile', $customer->mobile) }}"
                        placeholder="10-digit mobile number" maxlength="10">
@@ -246,7 +246,7 @@
 
                 <div class="col-md-6">
                   <div class="form-group"><label>City</label>
-                    <select class="form-control bf" id="b_ctr" name="billing_city">
+                    <select class="form-control bf" id="b_cty" name="billing_city">
                       <option value="">-- Select City --</option>
                       @foreach($cities as $city)
                         <option value="{{ $city->name }}"
@@ -349,7 +349,7 @@
 
                 <div class="col-md-6">
                   <div class="form-group"><label>City</label>
-                    <select class="form-control" id="s_ctr" name="shipping_city">
+                    <select class="form-control" id="s_cty" name="shipping_city">
                       <option value="">-- Select City --</option>
                       @foreach($cities as $city)
                         <option value="{{ $city->name }}"
@@ -398,7 +398,7 @@
 </section>
 @endsection
 
-@push('scripts')
+@section('pageScript')
 <script>
 $(function () {
 
@@ -511,8 +511,57 @@ $(function () {
     if (!/[0-9]/.test(String.fromCharCode(e.which))) e.preventDefault();
   });
 
+  /* ── Client-side validation for mobile & email ───────────────────── */
+  var mobileInput = document.getElementById('mobile');
+  var emailInput = document.getElementById('email');
+
+  var mobilePattern = /^\d{10}$/;
+  var emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+  function validateMobile() {
+    if (!mobileInput) return true;
+    var value = mobileInput.value.trim();
+
+    if (!value) {
+      toastr.error('Mobile number is required.', 'Validation Error');
+      mobileInput.focus();
+      return false;
+    }
+
+    if (!mobilePattern.test(value)) {
+      toastr.error('Mobile number must be exactly 10 digits.', 'Validation Error');
+      mobileInput.focus();
+      return false;
+    }
+    return true;
+  }
+
+  function validateEmail() {
+    if (!emailInput) return true;
+    var value = emailInput.value.trim();
+    if (!value) {
+      toastr.error('Email is required.', 'Validation Error');
+      emailInput.focus();
+      return false;
+    }
+    if (!emailPattern.test(value)) {
+      toastr.error('Enter a valid email address.', 'Validation Error');
+      emailInput.focus();
+      return false;
+    }
+    return true;
+  }
+
+  // Validate on submit
+  $('#customerForm').on('submit', function (e) {
+    if (!validateMobile() || !validateEmail()) {
+      e.preventDefault();
+      return false;
+    }
+  });
+
   /* ── Show/hide distributor when role is retailer ───────────────────── */
-  function toggleDistributor() {
+  /* function toggleDistributor() {
     var $opt = $('select[name="role_id"] option:selected');
     var selName = $opt.data('name');
     var text = $opt.text() || '';
@@ -527,8 +576,8 @@ $(function () {
   }
   $('select[name="role_id"]').on('change', toggleDistributor);
   // init on load
-  toggleDistributor();
+  toggleDistributor(); */
 
 });
 </script>
-@endpush
+@endsection
