@@ -51,45 +51,45 @@
   </main>
 
   <!-- Site-level interactive footer (moved from home.blade.php) -->
-  <footer class="site-footer">
+  <footer class="site-footer text-white pt-5 pb-4">
     <div class="container">
       <div class="row">
         <div class="col-md-4 mb-4">
-          <h5 class="footer-title">About My Store</h5>
-          <p class="text-muted">We offer quality products, fast shipping and excellent support. Build trust with your customers and scale your store.</p>
-          <p><strong>Trust:</strong> Secure payments • Easy returns • 24/7 support</p>
+          <a class="d-inline-block mb-2" href="{{ url('/') }}" aria-label="My Store logo">
+            <svg viewBox="0 0 24 24" width="72" height="72" fill="#fff"><path d="M12 2L2 7l10 5 10-5-10-5zm0 5.236L5.618 7 12 3.764 18.382 7 12 7.236zM2 17l10 5 10-5-10-5-10 5z"/></svg>
+          </a>
+          <p class="mb-0 text-muted">My Store — quality products, delivered with care.</p>
         </div>
 
-        <div class="col-md-2 mb-4">
+        <div class="col-md-3 mb-4">
           <h5 class="footer-title">Quick Links</h5>
           <ul class="list-unstyled">
-            <li><a href="{{ route('products') }}">Products</a></li>
-            <li><a href="#contact">Contact</a></li>
-            <li><a href="#">FAQ</a></li>
+            <li><a class="text-white-50" href="{{ url('/') }}">Home</a></li>
+            <li><a class="text-white-50" href="{{ route('products') }}">Products</a></li>
+            <li><a class="text-white-50" href="{{ route('about') }}">About</a></li>
+            <li><a class="text-white-50" href="{{ route('contact') }}">Contact</a></li>
           </ul>
         </div>
 
         <div class="col-md-3 mb-4">
-          <h5 class="footer-title">How to build the best store</h5>
-          <div class="footer-accordion" id="howToAccordion">
-            <div class="item" data-key="plan"><strong>1. Plan</strong><div class="content">Define niche, products, and customer journey.</div></div>
-            <div class="item" data-key="design"><strong>2. Design</strong><div class="content">Use clear CTAs, product images, and fast layout.</div></div>
-            <div class="item" data-key="optimize"><strong>3. Optimize</strong><div class="content">Mobile-first, compress images, and reduce JS/CSS bloat.</div></div>
-            <div class="item" data-key="seo"><strong>4. SEO & Content</strong><div class="content">Add clear product descriptions and structured data.</div></div>
-          </div>
+          <h5 class="footer-title">Contact</h5>
+          <p class="mb-1 text-white-50">support@mystore.example</p>
+          <p class="mb-0 text-white-50">+91 89769 76567</p>
         </div>
 
-        <div class="col-md-3 mb-4">
-
-          <h6 class="footer-title">Contact</h6>
-          <p class="mb-0">support@mystore.example</p>
-          <p>+91 89769 76567</p>
+        <div class="col-md-2 mb-4">
+          <h5 class="footer-title">Follow</h5>
+          <ul class="list-unstyled d-flex">
+            <li class="mr-2"><a class="text-white-50" href="#" aria-label="Follow on Facebook"><i class="fab fa-facebook fa-lg"></i></a></li>
+            <li class="mr-2"><a class="text-white-50" href="#" aria-label="Follow on Instagram"><i class="fab fa-instagram fa-lg"></i></a></li>
+            <li><a class="text-white-50" href="#" aria-label="Follow on Twitter"><i class="fab fa-twitter fa-lg"></i></a></li>
+          </ul>
         </div>
       </div>
 
       <div class="row mt-3">
-        <div class="col-12 text-center text-muted">
-          © {{ date('Y') }} My Store — Built with care. Follow the steps above to improve your site.
+        <div class="col-12 text-center text-white-50 small">
+          &copy; {{ date('Y') }} My Store. All rights reserved.
         </div>
       </div>
     </div>

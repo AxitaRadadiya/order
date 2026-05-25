@@ -229,7 +229,7 @@ div.dataTables_wrapper {
 
 body.frontend { padding-top: 70px; background: #F4F7FE; }
 .hero { padding: 60px 0; background-color: #F4F7FE !important; }
-.container.front { background: #FFFFFF !important; padding: 10px; border-radius: 12px; }
+.container.front {padding: 10px; border-radius: 12px; }
 .product-card { border-radius: 12px; overflow: hidden; transition: 0.3s; }
 .product-img { height: 220px; position:relative; background:#f8f9fa; overflow:hidden; display:block; }
 .product-img a.product-link, .product-img img { display:block; width:100%; height:100%; }
@@ -713,7 +713,7 @@ body.variant-drawer-open {
         margin: 10px 20px;
     margin-left: 1rem !important;
     background: #ffffff;
-    padding: 6px;
+    /*padding: 6px;*/
     border-radius: 12px;
 }
 .select2-container--default .select2-selection--multiple {

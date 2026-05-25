@@ -486,15 +486,27 @@
                   </div>
                   <div class="d-flex justify-content-between py-1">
                     <strong>Discount</strong>
-                    <input type="number" step="0.01" name="discount" id="discount"
-                           class="form-control form-control-sm w-50 text-right"
-                           value="{{ old('discount', $order->discount ?? 0) }}">
+                    @if(auth()->user() && auth()->user()->hasRole(['super-admin', 'superadmin']))
+                      <input type="number" step="0.01" name="discount" id="discount"
+                             class="form-control form-control-sm w-50 text-right"
+                             value="{{ old('discount', $order->discount ?? 0) }}">
+                    @else
+                      <input type="number" step="0.01" name="discount" id="discount"
+                             class="form-control form-control-sm w-50 text-right" readonly
+                             value="{{ old('discount', $order->discount ?? 0) }}">
+                    @endif
                   </div>
                   <div class="d-flex justify-content-between py-1">
                     <strong>Adjustment</strong>
-                    <input type="number" step="0.01" name="adjustment" id="adjustment"
-                           class="form-control form-control-sm w-50 text-right"
-                           value="{{ old('adjustment', $order->adjustment ?? 0) }}">
+                    @if(auth()->user() && auth()->user()->hasRole(['super-admin', 'superadmin']))
+                      <input type="number" step="0.01" name="adjustment" id="adjustment"
+                             class="form-control form-control-sm w-50 text-right"
+                             value="{{ old('adjustment', $order->adjustment ?? 0) }}">
+                    @else
+                      <input type="number" step="0.01" name="adjustment" id="adjustment"
+                             class="form-control form-control-sm w-50 text-right" readonly
+                             value="{{ old('adjustment', $order->adjustment ?? 0) }}">
+                    @endif
                   </div>
                   <hr class="my-2">
                   <div class="d-flex justify-content-between py-1">

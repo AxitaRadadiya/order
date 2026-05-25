@@ -35,6 +35,9 @@
 
     <form action="{{ route('orders.store') }}" method="POST">
       @csrf
+      @php
+        $lockedStatus = auth()->check() && auth()->user()->hasRole(['retailer','distributor','super-admin','superadmin']);
+      @endphp
       @if(!empty($pre_items))
         <input type="hidden" name="from_cart" value="1">
       @endif
@@ -236,7 +239,7 @@
                   <td><input type="number" step="0.01" name="items[{{ $i }}][tax_rate]" class="form-control tax" value="{{ $it['tax_rate'] ?? 0 }}" readonly></td>
                   <td><input type="number" step="0.01" name="items[{{ $i }}][total]" class="form-control total" value="{{ $it['total'] ?? 0 }}" readonly></td>
                   <td>
-                    @if(auth()->user() && auth()->user()->hasRole('retailer'))
+                    @if($lockedStatus)
                       <input type="hidden" name="items[{{ $i }}][status]" value="{{ $it['status'] ?? 'pending' }}">
                       <span class="badge badge-secondary">{{ ucfirst($it['status'] ?? 'pending') }}</span>
                     @else
@@ -300,7 +303,7 @@
                     
                   </td>
                   <td>
-                    @if(auth()->user() && auth()->user()->hasRole('retailer'))
+                    @if($lockedStatus)
                       <input type="hidden" name="items[0][status]" value="pending">
                       <span class="badge badge-secondary">Pending</span>
                     @else
@@ -426,15 +429,27 @@
                   </div>
                   <div class="d-flex justify-content-between py-1">
                     <strong>Discount</strong>
-                    <input type="number" step="0.01" name="discount" id="discount"
-                      class="form-control form-control-sm w-50 text-right"
-                      value="{{ old('discount', 0) }}">
+                    @if(auth()->user() && auth()->user()->hasRole(['super-admin', 'superadmin']))
+                      <input type="number" step="0.01" name="discount" id="discount"
+                        class="form-control form-control-sm w-50 text-right"
+                        value="{{ old('discount', 0) }}">
+                    @else
+                      <input type="number" step="0.01" name="discount" id="discount"
+                        class="form-control form-control-sm w-50 text-right" readonly
+                        value="{{ old('discount', 0) }}">
+                    @endif
                   </div>
                   <div class="d-flex justify-content-between py-1">
                     <strong>Adjustment</strong>
-                    <input type="number" step="0.01" name="adjustment" id="adjustment"
-                      class="form-control form-control-sm w-50 text-right"
-                      value="{{ old('adjustment', 0) }}">
+                    @if(auth()->user() && auth()->user()->hasRole(['super-admin', 'superadmin']))
+                      <input type="number" step="0.01" name="adjustment" id="adjustment"
+                        class="form-control form-control-sm w-50 text-right"
+                        value="{{ old('adjustment', 0) }}">
+                    @else
+                      <input type="number" step="0.01" name="adjustment" id="adjustment"
+                        class="form-control form-control-sm w-50 text-right" readonly
+                        value="{{ old('adjustment', 0) }}">
+                    @endif
                   </div>
                   <hr class="my-2">
                   <div class="d-flex justify-content-between py-1">
@@ -461,7 +476,7 @@
           
           <div class="form-group col-md-3">
             <label>Status</label>
-            @if(auth()->user() && auth()->user()->hasRole('retailer'))
+            @if($lockedStatus)
               <input type="hidden" name="status" value="pending">
               <div><span class="badge badge-secondary">Pending</span></div>
             @else
@@ -531,6 +546,8 @@ $(function () {
   var COLORS     = @json($colors);
   var IS_RETAILER= @json(optional(auth()->user())->hasRole('retailer') ?? false);
   var IS_SUPER_ADMIN = @json(optional(auth()->user())->hasRole(['super-admin', 'superadmin']) ?? false);
+  var IS_DISTRIBUTOR = @json(optional(auth()->user())->hasRole('distributor') ?? false);
+  var IS_LOCKED_STATUS = @json($lockedStatus ?? false);
 
   /* ── helpers ──────────────────────────────────────────────────────────── */
   function itemByArticle(val) {
@@ -766,7 +783,7 @@ $(function () {
     }
     var sizeOpts = ALL_SIZES.map(function(s){ return '<option value="'+s+'">'+s+'</option>'; }).join('');
 
-    var statusSel = IS_RETAILER
+    var statusSel = IS_LOCKED_STATUS
       ? '<input type="hidden" name="items['+idx+'][status]" value="pending"><span class="badge badge-secondary">Pending</span>'
       : '<select name="items['+idx+'][status]" class="form-control status-select" style="font-size:12px!important;">'
         +['pending','draft','confirmed','shipped','delivered'].map(function(s){

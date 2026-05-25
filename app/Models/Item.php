@@ -50,6 +50,16 @@ class Item extends Model
         return $this->belongsTo(Group::class);
     }
 
+    public function subCategory()
+    {
+        return $this->belongsTo(SubCategory::class, 'sub_category');
+    }
+
+    public function subGroup()
+    {
+        return $this->belongsTo(SubGroup::class, 'sub_group');
+    }
+
     public function colors()
     {
         return $this->belongsToMany(Color::class)->withTimestamps();

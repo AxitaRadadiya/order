@@ -311,7 +311,8 @@ class OrderMasterController extends Controller
 
             // Retailers are not allowed to set the overall order status.
             $authUser = auth()->user();
-            if ($authUser && $authUser->hasRole('retailer')) {
+            // Prevent certain roles from setting order/item status: retailer, distributor, super-admin
+            if ($authUser && $authUser->hasRole(['retailer','distributor','super-admin','superadmin'])) {
                 $orderStatus = 'pending';
             }
 
@@ -441,9 +442,10 @@ class OrderMasterController extends Controller
                 $orderStatus = $request->input('status', $order->status ?? 'pending');
             }
 
-            // Retailers are not allowed to set the overall order status.
+            // Prevent certain roles from setting overall order status on update.
             $authUser = auth()->user();
-            if ($authUser && $authUser->hasRole('retailer')) {
+            if ($authUser && $authUser->hasRole(['retailer','distributor','super-admin','superadmin'])) {
+                // keep existing order status or force to pending if none
                 $orderStatus = $order->status ?? 'pending';
             }
 
@@ -678,9 +680,9 @@ class OrderMasterController extends Controller
             $total = round(($rate + ($rate * $taxRate / 100)) * $quantity, 2);
             $subtotal += $total;
 
-            // If the current user is a retailer, they are not allowed to set item status.
+            // If the current user belongs to any locked role, they are not allowed to set item status.
             $status = $it['status'] ?? 'pending';
-            if ($authUser && $authUser->hasRole('retailer')) {
+            if ($authUser && $authUser->hasRole(['retailer','distributor','super-admin','superadmin'])) {
                 $status = 'pending';
             }
 
