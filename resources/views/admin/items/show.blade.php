@@ -80,16 +80,22 @@
               <dd class="col-sm-8">{{ optional($item->category)->name ?? '-' }}</dd>
 
               <dt class="col-sm-4">Sub Category</dt>
-              <dd class="col-sm-8">{{ $item->sub_category ?? '-' }}</dd>
+              <dd class="col-sm-8">{{ optional($item->subCategory)->name ?? '-' }}</dd>
 
               <dt class="col-sm-4">Group</dt>
               <dd class="col-sm-8">{{ optional($item->group)->name ?? '-' }}</dd>
 
               <dt class="col-sm-4">Sub Group</dt>
-              <dd class="col-sm-8">{{ $item->sub_group ?? '-' }}</dd>
+              <dd class="col-sm-8">{{ optional($item->subGroup)->name ?? '-' }}</dd>
 
-              <dt class="col-sm-4">Unit</dt>
-              <dd class="col-sm-8">{{ $item->unit ?? '-' }}</dd>
+              <!-- <dt class="col-sm-4">Unit</dt>
+              <dd class="col-sm-8">{{ $item->unit ?? '-' }}</dd> -->
+
+              <dt class="col-sm-4">Sizes</dt>
+              <dd class="col-sm-8">{{ is_array($item->sizes) && count($item->sizes) ? implode(', ', $item->sizes) : '-' }}</dd>
+
+              <dt class="col-sm-4">Colors</dt>
+              <dd class="col-sm-8">{{ ($item->colors && $item->colors->count()) ? $item->colors->pluck('name')->join(', ') : '-' }}</dd>
 
               <dt class="col-sm-4">Price</dt>
               <dd class="col-sm-8">{{ number_format($item->price,2) }}</dd>
@@ -99,6 +105,9 @@
 
               <dt class="col-sm-4">Status</dt>
               <dd class="col-sm-8">{{ $item->status ? 'Active' : 'Inactive' }}</dd>
+
+              <dt class="col-sm-4">Show On Web</dt>
+              <dd class="col-sm-8">{{ $item->show_item_on_web ? 'Yes' : 'No' }}</dd>
             </dl>
           </div>
         </div>

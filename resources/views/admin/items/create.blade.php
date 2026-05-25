@@ -46,7 +46,8 @@
 						<div class="col-md-4">
 							<div class="form-group">
 								<label>Item Code</label>
-								<input type="text" name="item_code" value="{{ old('item_code', $generatedItemCode ?? '') }}" class="form-control" readonly>
+								<input type="text" name="item_code" value="{{ old('item_code', $generatedItemCode ?? '') }}" class="form-control @error('item_code') is-invalid @enderror" readonly>
+								@error('item_code')<div class="invalid-feedback">{{ $message }}</div>@enderror
 							</div>
 						</div>
 

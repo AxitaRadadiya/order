@@ -101,6 +101,24 @@
                 </div>
               </div>
             </div>
+
+            <div class="col-md-6">
+              <div class="form-group">
+                <label class="font-weight-bold">Confirm Password <span class="text-danger">*</span></label>
+                <div class="input-group">
+                  <input id="password_confirmation" name="password_confirmation" type="password"
+                         class="form-control @error('password_confirmation') is-invalid @enderror"
+                         placeholder="Repeat password" required>
+                  <div class="input-group-append">
+                    <button type="button" class="btn btn-outline-secondary"
+                            onclick="togglePw('password_confirmation','eye2')">
+                      <i id="eye2" class="fas fa-eye"></i>
+                    </button>
+                  </div>
+                  @error('password_confirmation')<span class="invalid-feedback">{{ $message }}</span>@enderror
+                </div>
+              </div>
+            </div>
           </div>
 
       </div>

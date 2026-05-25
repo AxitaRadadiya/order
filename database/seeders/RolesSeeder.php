@@ -43,7 +43,7 @@ class RolesSeeder extends Seeder
         }
 
         // Ensure retailer/distributor have catalog permission by default
-        $catalogPerm = Permission::where('name', 'catalog')->first();
+        $catalogPerm = Permission::where('name', 'catalog-view')->first();
         if ($catalogPerm) {
             $retailer = Role::where('name', 'retailer')->first();
             $distributor = Role::where('name', 'distributor')->first();

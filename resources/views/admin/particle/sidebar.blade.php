@@ -53,7 +53,7 @@
 
         <ul class="nav nav-treeview">
           <li class="nav-item">
-            <a href="{{ route('roles.index') }}" class="nav-link {{ Request::routeIs('roles.*', 'users.*') ? 'active' : '' }}">
+            <a href="{{ route('users.index') }}" class="nav-link {{ Request::routeIs('roles.*', 'users.*') ? 'active' : '' }}">
               <span class="nav-icon">👥</span>
               <p>User & Role</p>
             </a>

@@ -57,7 +57,7 @@ class OrderMasterController extends Controller
 
         if (!empty($search)) {
             $query->where(function ($q) use ($search) {
-                $q->where('order_number', 'like', "%{$search}%")
+                $q->where('id', 'like', "%{$search}%")
                 ->orWhere('date', 'like', "%{$search}%")
                 ->orWhereHas('customer', function ($q2) use ($search) {
                     $q2->where('name', 'like', "%{$search}%")
@@ -286,6 +286,11 @@ class OrderMasterController extends Controller
             'date'    => 'required|date',
         ]);
 
+        // Prevent updating once order is delivered for any user
+        if (isset($order->status) && strtolower($order->status) === 'delivered') {
+            return back()->withInput()->with('error', 'Order has been delivered and cannot be edited.')->with(array_merge($this->viewData(), compact('order')));
+        }
+
         DB::beginTransaction();
         try {
             $fields = $this->orderFields($request);
@@ -319,6 +324,17 @@ class OrderMasterController extends Controller
                 $orderStatus = 'pending';
             }
 
+            // New rule: if not all article-wise statuses are 'delivered', the overall
+            // order status cannot be set to 'delivered'. Reject the request with validation.
+            $allDelivered = !empty($itemStatuses) && count(array_filter($itemStatuses, fn($s) => $s !== 'delivered')) === 0;
+            if ($orderStatus === 'delivered' && !$allDelivered) {
+                DB::rollBack();
+                return back()
+                    ->withInput()
+                    ->withErrors(['status' => 'Cannot set overall order status to Delivered unless all article statuses are Delivered.'])
+                    ->with($this->viewData());
+            }
+
             $order->update(array_merge($this->calculatedTotals($request, $subtotal), ['status' => $orderStatus]));
             DB::commit();
 
@@ -326,9 +342,7 @@ class OrderMasterController extends Controller
             if ($request->input('from_cart')) {
                 session()->forget('cart');
             }
-
-            return redirect()->route('orders.index')
-                ->with('success', 'Order created successfully.');
+            return redirect()->route('orders.index')->with('success', 'Order created successfully.');
         } catch (\Exception $e) {
             DB::rollBack();
 
@@ -399,6 +413,10 @@ class OrderMasterController extends Controller
             }
         }
 
+        // Prevent editing once order is delivered for any user
+        if (isset($order->status) && strtolower($order->status) === 'delivered') {
+            return back()->with('error', 'Order has been delivered and cannot be edited.');
+        }
         return view('admin.orders.edit', array_merge(
             $this->viewData(),
             compact('order')
@@ -456,11 +474,22 @@ class OrderMasterController extends Controller
                 $orderStatus = $order->status ?? 'pending';
             }
 
+            // New rule: if not all article-wise statuses are 'delivered', the overall
+            // order status cannot be set to 'delivered'. Reject the request with validation.
+            $allDelivered = !empty($itemStatuses) && count(array_filter($itemStatuses, fn($s) => $s !== 'delivered')) === 0;
+            if ($orderStatus === 'delivered' && !$allDelivered) {
+                DB::rollBack();
+                $order->load('items');
+                return back()
+                    ->withInput()
+                    ->withErrors(['status' => 'Cannot set overall order status to Delivered unless all article statuses are Delivered.'])
+                    ->with(array_merge($this->viewData(), compact('order')));
+            }
+
             $order->update(array_merge($this->calculatedTotals($request, $subtotal), ['status' => $orderStatus]));
             DB::commit();
 
-            return redirect()->route('orders.index')
-                ->with('success', 'Order updated successfully.');
+            return redirect()->route('orders.index')->with('success', 'Order updated successfully.');
         } catch (\Exception $e) {
             DB::rollBack();
             $order->load('items');

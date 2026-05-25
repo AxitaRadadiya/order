@@ -66,7 +66,7 @@
                             <th>#</th>
                             <th>Name</th>
                             <th>Email</th>
-                            <th>Mobile</th>
+                            <!-- <th>Mobile</th> -->
                             <th>Role</th>
                             <th>Status</th>
                             <th>Actions</th>

@@ -56,7 +56,7 @@ class PermissionsSeeder extends Seeder
             ],
             'Catalog' => [
                 'Catalog' => [
-                    ['name' => 'catalog'],
+                    ['name' => 'catalog-view'],
                 ],
             ],
             'System' => [

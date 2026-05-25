@@ -35,7 +35,7 @@ class UserController extends Controller
     public function create(): View
     {
         return view('admin.users.create', [
-            'roles' => Role::whereNotIn('name', ['distributor'])->orderBy('name')->get(),
+            'roles' => Role::whereNotIn('name', ['retailer', 'distributor'])->orderBy('name')->get(),
         ]);
     }
 
@@ -250,7 +250,7 @@ class UserController extends Controller
             'email' => ['required', 'email', 'unique:users,email'],
             'role_id' => ['required', 'exists:roles,id'],
             'status' => ['required', 'in:0,1'],
-            'password' => ['required', 'string', 'min:8'],
+            'password' => ['required', 'string', 'min:8', 'confirmed'],
         ];
     }
 

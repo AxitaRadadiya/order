@@ -160,44 +160,65 @@ class ItemController extends Controller
             'show_item_on_web' => 'nullable|in:0,1',
         ]);
 
-        // Handle new image uploads
-        $imagePaths = [];
+        // Handle images: keep existing unless removed, append newly uploaded images
+        $MAX_FILES = 5;
+        $prevImages = is_array($item->images) ? $item->images : ($item->image ? [$item->image] : []);
+
+        // Which existing images the client wants to keep (hidden inputs 'existing_images[]')
+        $keptExisting = $request->input('existing_images', $prevImages);
+        if (!is_array($keptExisting)) {
+            $keptExisting = [$keptExisting];
+        }
+
+        // Delete any previously stored images that the user removed
+        $toDelete = array_diff($prevImages, $keptExisting);
+        foreach ($toDelete as $d) {
+            Storage::disk('public')->delete($d);
+        }
+
+        // Start final images list with kept existing
+        $finalImages = array_values($keptExisting);
+
+        // Handle new uploads and append (respect MAX_FILES)
+        $uploadedPaths = [];
         if ($request->hasFile('images')) {
-            // Delete old images only if user uploaded new ones and intends to replace
-            $oldImages = is_array($item->images) ? $item->images : ($item->image ? [$item->image] : []);
-            foreach ($oldImages as $old) {
-                Storage::disk('public')->delete($old);
-            }
-
             foreach ($request->file('images') as $file) {
-                $imagePaths[] = $file->store('items', 'public');
+                if (count($finalImages) >= $MAX_FILES) {
+                    // skip extra uploads beyond limit
+                    continue;
+                }
+                $path = $file->store('items', 'public');
+                $uploadedPaths[] = $path;
+                $finalImages[] = $path;
             }
+        }
 
-            // determine primary image
-            $primary = $request->input('primary_image');
-            $primaryPath = null;
-            if ($primary && str_starts_with($primary, 'new-')) {
+        // determine primary image
+        $primary = $request->input('primary_image');
+        $primaryPath = null;
+        if ($primary) {
+            if (str_starts_with($primary, 'new-')) {
                 $idx = (int) Str::after($primary, 'new-');
-                if (isset($imagePaths[$idx])) {
-                    $primaryPath = $imagePaths[$idx];
+                if (isset($uploadedPaths[$idx])) {
+                    $primaryPath = $uploadedPaths[$idx];
+                }
+            } else {
+                // existing image path selected
+                if (in_array($primary, $finalImages)) {
+                    $primaryPath = $primary;
                 }
             }
+        }
 
-            $primaryPath = $primaryPath ?? ($imagePaths[0] ?? null);
+        // fallback to first image if none explicitly selected
+        $primaryPath = $primaryPath ?? ($finalImages[0] ?? null);
 
-            if ($primaryPath) {
-                $validated['image'] = $primaryPath;
-            }
+        if ($primaryPath) {
+            $validated['image'] = $primaryPath;
+        }
 
-            if (Schema::hasColumn('items', 'images')) {
-                $validated['images'] = $imagePaths;
-            }
-        } else {
-            // no new uploads — allow selecting primary among existing images
-            $primary = $request->input('primary_image');
-            if ($primary && !str_starts_with($primary, 'new-')) {
-                $validated['image'] = $primary;
-            }
+        if (Schema::hasColumn('items', 'images')) {
+            $validated['images'] = $finalImages;
         }
 
         // Extract colors (pivot) before updating — no `colors` column on items table

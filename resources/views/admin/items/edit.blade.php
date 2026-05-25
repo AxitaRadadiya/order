@@ -158,40 +158,40 @@
 							<div class="form-group">
 								<label>
 									Images
-									<small class="text-muted">(Max 5 images &bull; JPG / PNG only &bull; Max 2 MB each &bull; Uploading new images replaces all existing ones)</small>
+									<small class="text-muted">(Max 5 images • JPG / PNG only • Max 2 MB each • You can add new images to existing ones or remove existing images)</small>
 								</label>
 
-								{{-- Existing images --}}
 								@php
 								$existingImages = [];
 								if (!empty($item->images) && is_array($item->images)) {
-								    $existingImages = $item->images;
+									$existingImages = $item->images;
 								} elseif (!empty($item->image)) {
-								    $existingImages = [$item->image];
+									$existingImages = [$item->image];
 								}
 								@endphp
-								@if(!empty($existingImages))
-								<div class="d-flex flex-wrap mb-2" style="gap:8px;">
-									@foreach($existingImages as $ei => $img)
-									<div style="position:relative;display:inline-block;">
-										<input type="radio" name="primary_exist" value="{{ $img }}" id="primary_exist_{{ $ei }}"
-											{{ ($item->image == $img) ? 'checked' : '' }} style="position:absolute;bottom:4px;left:6px;z-index:2;">
-										<img src="{{ asset('storage/' . $img) }}" alt=""
-										 style="width:90px;height:90px;object-fit:cover;border-radius:6px;border:1px solid #ddd;">
-									</div>
-									@endforeach
-								</div>
-								@endif
 
-								<div class="custom-file">
-									<input type="file"
-										   id="itemImages"
-										   name="images[]"
-										   class="custom-file-input @error('images') is-invalid @enderror @error('images.*') is-invalid @enderror"
-										   multiple
-										   accept=".jpg,.jpeg,.png">
-									<label class="custom-file-label" for="itemImages">Choose new images&hellip;</label>
+								<input type="file" id="itemImages" name="images[]" multiple accept=".jpg,.jpeg,.png" style="display:none">
+
+								<div id="uploadDropzone" class="d-flex align-items-center p-3 mb-2" style="border:2px dashed #e6d9fb;border-radius:10px;min-height:140px;gap:16px;background:#fff;">
+									<div id="uploadTile" style="width:110px;height:110px;border:2px dashed #caa7f0;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#6b3fa8;cursor:pointer;flex-shrink:0;">
+										<div style="text-align:center;font-size:16px;font-weight:600;">+ Upload</div>
+									</div>
+
+									<div id="imagePreviewContainer" class="d-flex flex-wrap" style="gap:8px;flex:1;">
+										<div id="existingThumbs" class="d-flex flex-wrap" style="gap:8px;">
+											@foreach($existingImages as $ei => $img)
+											<div class="existing-image-item" data-src="{{ $img }}" style="position:relative;display:inline-block;">
+												<input type="radio" name="primary_exist" value="{{ $img }}" id="primary_exist_{{ $ei }}" {{ ($item->image == $img) ? 'checked' : '' }} style="position:absolute;bottom:4px;left:6px;z-index:2;">
+												<button type="button" class="remove-existing" title="Remove" style="position:absolute;top:2px;right:2px;width:22px;height:22px;line-height:18px;text-align:center;border-radius:50%;border:none;background:rgba(220,53,69,.85);color:#fff;font-size:14px;cursor:pointer;padding:0;z-index:3;">&times;</button>
+												<img src="{{ asset('storage/' . $img) }}" alt="" style="width:90px;height:90px;object-fit:cover;border-radius:6px;border:1px solid #ddd;">
+											</div>
+											@endforeach
+										</div>
+										<div id="newThumbs" class="d-flex flex-wrap" style="gap:8px;"></div>
+									</div>
 								</div>
+
+								<div id="existingImagesInputs"></div>
 								@error('images')
 									<div class="text-danger small mt-1">{{ $message }}</div>
 								@enderror
@@ -199,7 +199,6 @@
 									<div class="text-danger small mt-1">{{ $message }}</div>
 								@enderror
 								<input type="hidden" name="primary_image" id="primary_image" value="{{ old('primary_image', $item->image ?? '') }}">
-								<div id="imagePreviewContainer" class="d-flex flex-wrap mt-2" style="gap:8px;"></div>
 								<div id="imageError" class="text-danger small mt-1" style="display:none;"></div>
 							</div>
 						</div>
@@ -237,66 +236,149 @@
 </div>
 @endsection
 
-@push('pageScript')
+@section('pageScript')
 <script>
-(function () {
-    const input     = document.getElementById('itemImages');
-    const preview   = document.getElementById('imagePreviewContainer');
-    const errorBox  = document.getElementById('imageError');
-    const MAX_FILES = 5;
-    const MAX_MB    = 2;
-    let   accepted  = [];
+;(function () {
+	const input     = document.getElementById('itemImages');
+	const dropzone  = document.getElementById('uploadDropzone');
+	const uploadTile = document.getElementById('uploadTile');
+	const existingThumbs = document.getElementById('existingThumbs');
+	const newThumbs = document.getElementById('newThumbs');
+	const errorBox  = document.getElementById('imageError');
+	const existingInputsContainer = document.getElementById('existingImagesInputs');
+	const MAX_FILES = 5;
+	const MAX_MB    = 2;
+	let   accepted  = []; // { file: File, id: number }
+	let   newFileId = 0;
+	let   existing  = @json($existingImages ?? []);
 
-    input.addEventListener('change', function () {
-        errorBox.style.display = 'none';
-        errorBox.textContent   = '';
+	function updateUploadVisibility() {
+		if (!uploadTile) return;
+		uploadTile.style.display = (existing.length + accepted.length) >= MAX_FILES ? 'none' : 'flex';
+	}
 
-        const newFiles = Array.from(this.files);
-        const errors   = [];
+	function updateExistingInputs() {
+		existingInputsContainer.innerHTML = '';
+		existing.forEach(function (p) {
+			const inp = document.createElement('input');
+			inp.type = 'hidden';
+			inp.name = 'existing_images[]';
+			inp.value = p;
+			existingInputsContainer.appendChild(inp);
+		});
+	}
 
-        newFiles.forEach(function (file) {
-            const ext = file.name.split('.').pop().toLowerCase();
+	function attachExistingRemoveHandlers() {
+		if (!existingThumbs) return;
+		existingThumbs.querySelectorAll('.remove-existing').forEach(function (btn) {
+			btn.removeEventListener('click', handleRemoveExisting);
+			btn.addEventListener('click', handleRemoveExisting);
+		});
+	}
 
-            if (!['jpg', 'jpeg', 'png'].includes(ext)) {
-                errors.push(file.name + ': only JPG / PNG allowed.');
-                return;
-            }
-            if (file.size > MAX_MB * 1024 * 1024) {
-                errors.push(file.name + ': exceeds ' + MAX_MB + ' MB limit.');
-                return;
-            }
-            if (accepted.length >= MAX_FILES) {
-                errors.push('Maximum ' + MAX_FILES + ' images allowed. "' + file.name + '" skipped.');
-                return;
-            }
-            accepted.push(file);
-        });
+	function handleRemoveExisting(e) {
+		const item = e.currentTarget.closest('.existing-image-item');
+		if (!item) return;
+		const src = item.getAttribute('data-src');
+		existing = existing.filter(function (p) { return p !== src; });
+		const primary = document.getElementById('primary_image');
+		if (primary && primary.value === src) primary.value = '';
+		item.parentNode && item.parentNode.removeChild(item);
+		updateExistingInputs();
+		updateUploadVisibility();
+	}
 
-        if (errors.length) {
-            errorBox.textContent   = errors.join(' ');
-            errorBox.style.display = 'block';
-        }
+	// initial setup
+	updateExistingInputs();
+	attachExistingRemoveHandlers();
+	updateUploadVisibility();
 
-        syncInput();
-        renderPreviews();
-    });
+	// click tile opens file dialog
+	if (uploadTile) uploadTile.addEventListener('click', function () { input.click(); });
 
-    function syncInput() {
-        const dt = new DataTransfer();
-        accepted.forEach(function (f) { dt.items.add(f); });
-        input.files = dt.files;
+	// drag & drop
+	if (dropzone) {
+		['dragenter','dragover'].forEach(function(ev){
+			dropzone.addEventListener(ev, function(e){ e.preventDefault(); dropzone.style.background = '#fbf7ff'; });
+		});
+		['dragleave','drop'].forEach(function(ev){
+			dropzone.addEventListener(ev, function(e){ e.preventDefault(); dropzone.style.background = '#fff'; });
+		});
+		dropzone.addEventListener('drop', function(e){
+			e.preventDefault();
+			errorBox.style.display = 'none';
+			const files = Array.from(e.dataTransfer.files || []);
+			if (!files.length) return;
 
-        const label = input.nextElementSibling;
-        if (label && label.classList.contains('custom-file-label')) {
-            label.textContent = accepted.length
-                ? accepted.length + ' file(s) selected'
-                : 'Choose new images\u2026';
-        }
-    }
+			const newFiles = files.filter(function(f){
+				const ext = f.name.split('.').pop().toLowerCase();
+				return ['jpg','jpeg','png'].includes(ext);
+			});
+
+			newFiles.forEach(function(f){ if ((existing.length + accepted.length) < MAX_FILES) accepted.push({ file: f, id: newFileId++ }); });
+			syncInput(); renderPreviews();
+		});
+	}
+
+	input.addEventListener('change', function () {
+		errorBox.style.display = 'none';
+		errorBox.textContent   = '';
+
+		const newFiles = Array.from(this.files);
+		const errors   = [];
+
+		newFiles.forEach(function (file) {
+			const ext = file.name.split('.').pop().toLowerCase();
+
+			if (!['jpg', 'jpeg', 'png'].includes(ext)) {
+				errors.push(file.name + ': only JPG / PNG allowed.');
+				return;
+			}
+			if (file.size > MAX_MB * 1024 * 1024) {
+				errors.push(file.name + ': exceeds ' + MAX_MB + ' MB limit.');
+				return;
+			}
+			const totalNow = existing.length + accepted.length;
+			if (totalNow >= MAX_FILES) {
+				errors.push('Maximum ' + MAX_FILES + ' images allowed. "' + file.name + '" skipped.');
+				return;
+			}
+			accepted.push({ file: file, id: newFileId++ });
+		});
+
+		if (errors.length) {
+			errorBox.textContent   = errors.join(' ');
+			errorBox.style.display = 'block';
+		}
+
+		syncInput();
+		renderPreviews();
+	});
+
+	function syncInput() {
+		const dt = new DataTransfer();
+		accepted.forEach(function (a) { dt.items.add(a.file); });
+		input.files = dt.files;
+
+		// Update custom-file label if present
+		const label = input.nextElementSibling;
+		if (label && label.classList && label.classList.contains('custom-file-label')) {
+			label.textContent = (existing.length + accepted.length)
+				? (existing.length + accepted.length) + ' file(s) total'
+				: 'Choose new images\u2026';
+		}
+		updateExistingInputs();
+		updateUploadVisibility();
+	}
 
 	function renderPreviews() {
-		preview.innerHTML = '';
-		accepted.forEach(function (file, idx) {
+		// existingThumbs are server-rendered; ensure handlers are attached
+		attachExistingRemoveHandlers();
+		attachExistingRadios();
+
+		// render new thumbnails into newThumbs
+		newThumbs.innerHTML = '';
+		accepted.forEach(function (entry, idx) {
 			const reader = new FileReader();
 			reader.onload = function (e) {
 				const wrapper = document.createElement('div');
@@ -306,14 +388,12 @@
 				img.src   = e.target.result;
 				img.style.cssText = 'width:90px;height:90px;object-fit:cover;border-radius:6px;border:1px solid #ddd;cursor:pointer;';
 
-				// primary marker for new uploads
 				const radio = document.createElement('input');
 				radio.type = 'radio';
 				radio.name = 'primary_select_new';
 				radio.style.cssText = 'position:absolute;bottom:4px;left:6px;z-index:2;';
 				radio.addEventListener('change', function () {
-					document.getElementById('primary_image').value = 'new-' + idx;
-					// clear any existing-image radios
+					document.getElementById('primary_image').value = 'new-' + entry.id;
 					const exist = document.getElementsByName('primary_exist');
 					exist.forEach ? exist.forEach(function (e) { e.checked = false; }) : Array.from(exist).forEach(function (e) { e.checked = false; });
 				});
@@ -327,7 +407,8 @@
 					'text-align:center;border-radius:50%;border:none;background:rgba(220,53,69,.85);' +
 					'color:#fff;font-size:14px;cursor:pointer;padding:0;';
 				btn.addEventListener('click', function () {
-					accepted.splice(idx, 1);
+					const pos = accepted.findIndex(function (a) { return a.id === entry.id; });
+					if (pos !== -1) accepted.splice(pos, 1);
 					syncInput();
 					renderPreviews();
 				});
@@ -335,25 +416,32 @@
 				wrapper.appendChild(img);
 				wrapper.appendChild(radio);
 				wrapper.appendChild(btn);
-				preview.appendChild(wrapper);
+				newThumbs.appendChild(wrapper);
 			};
-			reader.readAsDataURL(file);
+			reader.readAsDataURL(entry.file);
 		});
+		updateUploadVisibility();
 	}
 
 	// Sync existing-image radios into the hidden `primary_image` field
-	const existingRadios = document.querySelectorAll('input[name="primary_exist"]');
-	existingRadios.forEach(function (r) {
-		r.addEventListener('change', function () {
-			if (this.checked) {
-				// set hidden primary value to existing path
-				document.getElementById('primary_image').value = this.value;
-				// clear any new-upload radios
-				const newRadios = document.getElementsByName('primary_select_new');
-				newRadios.forEach ? newRadios.forEach(function (nr) { nr.checked = false; }) : Array.from(newRadios).forEach(function (nr) { nr.checked = false; });
-			}
+	function attachExistingRadios() {
+		const existingRadios = document.querySelectorAll('input[name="primary_exist"]');
+		existingRadios.forEach(function (r) {
+			r.removeEventListener('change', existingRadioChange);
+			r.addEventListener('change', existingRadioChange);
 		});
-	});
+	}
+
+	function existingRadioChange() {
+		if (this.checked) {
+			document.getElementById('primary_image').value = this.value;
+			const newRadios = document.getElementsByName('primary_select_new');
+			newRadios.forEach ? newRadios.forEach(function (nr) { nr.checked = false; }) : Array.from(newRadios).forEach(function (nr) { nr.checked = false; });
+		}
+	}
+
+	// initial attach
+	attachExistingRadios();
 })();
 </script>
-@endpush
+@endsection

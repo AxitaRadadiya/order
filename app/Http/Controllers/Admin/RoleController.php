@@ -84,6 +84,8 @@ class RoleController extends Controller
         // Anyone authenticated can access role creation (removed super-admin restriction)
         // Group permissions by prefix (e.g. "user-list" → group "User")
         $permissions = Permission::orderBy('name')->get()
+            // exclude the catch-all 'all-modules' permission from UI groups
+            ->reject(function($p) { return strtolower($p->name) === 'all-modules'; })
             ->groupBy(function ($p) {
                 // Take first segment before "-" as the group label
                 $parts = explode('-', $p->name);
@@ -129,7 +131,9 @@ class RoleController extends Controller
     public function edit(Role $role)
     {
         // removed super-admin only restriction for editing roles
-        $permissions = Permission::orderBy('name')->get()
+        $permissions = Permission::orderBy('name')
+            ->get()
+            ->reject(function($p) { return strtolower($p->name) === 'all-modules'; })
             ->groupBy(function ($p) {
                 $parts = explode('-', $p->name);
                 return ucfirst($parts[0]);

@@ -35,7 +35,7 @@
 
           <div class="d-flex justify-content-center mb-3">
             <span class="badge badge-{{ $user->status ? 'success' : 'secondary' }} mr-2">{{ $user->status ? 'Active' : 'Inactive' }}</span>
-            <span class="badge badge-{{ $user->is_active ? 'info' : 'warning' }}">{{ $user->is_active ? 'Enabled' : 'Disabled' }}</span>
+            <!-- <span class="badge badge-{{ $user->is_active ? 'info' : 'warning' }}">{{ $user->is_active ? 'Enabled' : 'Disabled' }}</span> -->
           </div>
           <div class="d-flex">
             <a href="{{ route('users.edit', $user->id) }}" class="btn-submit mr-2 w-50">
@@ -61,8 +61,8 @@
                   <dt class="col-sm-4">Email</dt>
                   <dd class="col-sm-8">{{ $user->email }}</dd>
 
-                  <dt class="col-sm-4">Mobile</dt>
-                  <dd class="col-sm-8">{{ $user->mobile ?? '-' }}</dd>
+                  <!-- <dt class="col-sm-4">Mobile</dt>
+                  <dd class="col-sm-8">{{ $user->mobile ?? '-' }}</dd> -->
 
                   <dt class="col-sm-4">Role</dt>
                   <dd class="col-sm-8">{{ $user->role->name ?? '-' }}</dd>
@@ -74,8 +74,8 @@
                   <dt class="col-sm-4">Status</dt>
                   <dd class="col-sm-8">{{ $user->status ? 'Active' : 'Inactive' }}</dd>
 
-                  <dt class="col-sm-4">Account</dt>
-                  <dd class="col-sm-8">{{ $user->is_active ? 'Enabled' : 'Disabled' }}</dd>
+                  <!-- <dt class="col-sm-4">Account</dt>
+                  <dd class="col-sm-8">{{ $user->is_active ? 'Enabled' : 'Disabled' }}</dd> -->
 
                   <dt class="col-sm-4">Created</dt>
                   <dd class="col-sm-8">{{ optional($user->created_at)->format('d M Y, H:i') ?? '-' }}</dd>
@@ -88,8 +88,8 @@
 
             <hr>
 
-            <h6>Notes</h6>
-            <p class="text-muted">{{ $user->note ?: 'No notes available.' }}</p>
+            <!-- <h6>Notes</h6>
+            <p class="text-muted">{{ $user->note ?: 'No notes available.' }}</p> -->
           </div>
         </div>
       </div>

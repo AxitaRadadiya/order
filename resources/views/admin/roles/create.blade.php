@@ -70,24 +70,28 @@
                   @foreach($permissions as $group => $perms)
                     <tr>
                       <td class="text-left font-weight-bold">{{ $group }}</td>
-                      @php $actions = ['view','create','edit','delete']; @endphp
-                      @foreach($actions as $action)
-                        <td>
-                          @php
-                            $perm = $perms->firstWhere('name', $action . ' ' . strtolower($group));
-                            if (! $perm) {
-                              $perm = $perms->first(function($p) use($action, $group) {
-                                return str_contains(strtolower($p->name), $action) && str_contains(strtolower($p->name), strtolower($group));
-                              });
-                            }
-                          @endphp
-
-                          @if($perm)
-                            <input type="checkbox" class="perm-chk" name="permissions[]" value="{{ $perm->id }}" id="perm_{{ $perm->id }}" {{ in_array($perm->id, old('permissions', [])) ? 'checked' : '' }}>
+                        @php $actions = ['view','create','edit','delete']; @endphp
+                        @foreach($actions as $action)
+                          @if($group === 'Catalog' && in_array($action, ['create','edit','delete']))
+                            <td></td>
                           @else
-                            <input type="checkbox" disabled>
+                            <td>
+                              @php
+                                $perm = $perms->firstWhere('name', $action . ' ' . strtolower($group));
+                                if (! $perm) {
+                                  $perm = $perms->first(function($p) use($action, $group) {
+                                    return str_contains(strtolower($p->name), $action) && str_contains(strtolower($p->name), strtolower($group));
+                                  });
+                                }
+                              @endphp
+
+                              @if($perm)
+                                <input type="checkbox" class="perm-chk" name="permissions[]" value="{{ $perm->id }}" id="perm_{{ $perm->id }}" {{ in_array($perm->id, old('permissions', [])) ? 'checked' : '' }}>
+                              @else
+                                <input type="checkbox" disabled>
+                              @endif
+                            </td>
                           @endif
-                        </td>
                       @endforeach
                       <td>
                         <input type="checkbox" class="perm-all" onchange="toggleRow(this)">

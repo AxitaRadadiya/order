@@ -103,6 +103,11 @@
         <div class="main-card-body">
           @if($permissions->isNotEmpty())
 
+            @php
+              $fixedCatalogRoles = ['retailer', 'distributor'];
+              $isFixedCatalogRole = in_array(strtolower($role->name), $fixedCatalogRoles, true);
+            @endphp
+
             <div class="table-responsive">
               <table class="table table-bordered text-center align-middle">
                 <thead class="bg-light">
@@ -122,22 +127,32 @@
                       <td class="text-left font-weight-bold">{{ $group }}</td>
                       @php $actions = ['view','create','edit','delete']; @endphp
                       @foreach($actions as $action)
-                        <td>
-                          @php
-                            $perm = $perms->firstWhere('name', $action . ' ' . strtolower($group));
-                            if (! $perm) {
-                              $perm = $perms->first(function($p) use($action, $group) {
-                                return str_contains(strtolower($p->name), $action) && str_contains(strtolower($p->name), strtolower($group));
-                              });
-                            }
-                          @endphp
+                        @if($group === 'Catalog' && in_array($action, ['create','edit','delete']))
+                          <td></td>
+                        @else
+                          <td>
+                            @php
+                              $perm = $perms->firstWhere('name', $action . ' ' . strtolower($group));
+                              if (! $perm) {
+                                $perm = $perms->first(function($p) use($action, $group) {
+                                  return str_contains(strtolower($p->name), $action) && str_contains(strtolower($p->name), strtolower($group));
+                                });
+                              }
+                            @endphp
 
-                          @if($perm)
-                            <input type="checkbox" class="perm-chk" name="permissions[]" value="{{ $perm->id }}" id="perm_{{ $perm->id }}" {{ in_array($perm->id, old('permissions', $assignedIds)) ? 'checked' : '' }}>
-                          @else
-                            <input type="checkbox" disabled>
-                          @endif
-                        </td>
+                            @if($perm)
+                              @php $checked = in_array($perm->id, old('permissions', $assignedIds)); @endphp
+                              @if($group === 'Catalog' && $isFixedCatalogRole)
+                                <input type="checkbox" class="perm-chk" name="permissions[]" value="{{ $perm->id }}" id="perm_{{ $perm->id }}" checked disabled>
+                                <input type="hidden" name="permissions[]" value="{{ $perm->id }}">
+                              @else
+                                <input type="checkbox" class="perm-chk" name="permissions[]" value="{{ $perm->id }}" id="perm_{{ $perm->id }}" {{ $checked ? 'checked' : '' }}>
+                              @endif
+                            @else
+                              <input type="checkbox" disabled>
+                            @endif
+                          </td>
+                        @endif
                       @endforeach
                       <td>
                         <input type="checkbox" class="perm-all" onchange="toggleRow(this)">
