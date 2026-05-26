@@ -25,7 +25,7 @@
       <div class="main-card-head d-flex justify-content-between align-items-center">
         <!--<div class="main-card-title"><i class="fas fa-eye"></i> {{ $item->name }}</div>-->
         <div>
-          <a href="{{ route('items.index') }}" class="btn btn-secondary">Back</a>
+          <a href="{{ route('catalog') }}" class="btn btn-secondary">Back</a>
         </div>
       </div>
       <div class="main-card-body">
@@ -103,7 +103,7 @@
                     <label>Size</label>
                     <div id="sizeOptions" class="d-flex flex-wrap gap-2 align-items-center">
                       @foreach($item->sizes as $s)
-                        <button type="button" class="btn size-option mr-2" data-size="{{ $s }}" aria-pressed="false">
+                        <button type="button" class="btn size-option mr-2 mb-2" data-size="{{ $s }}" aria-pressed="false">
                           <div class="size-label">{{ $s }}</div>
                         </button>
                       @endforeach
@@ -132,16 +132,16 @@
               <dd class="col-sm-8">{{ optional($item->category)->name ?? '-' }}</dd>
 
               <dt class="col-sm-4">Sub Category</dt>
-              <dd class="col-sm-8">{{ $item->sub_category ?? '-' }}</dd>
+              <dd class="col-sm-8">{{ optional($item->subCategory)->name ?? '-' }}</dd>
 
               <dt class="col-sm-4">Group</dt>
               <dd class="col-sm-8">{{ optional($item->group)->name ?? '-' }}</dd>
 
               <dt class="col-sm-4">Sub Group</dt>
-              <dd class="col-sm-8">{{ $item->sub_group ?? '-' }}</dd>
+              <dd class="col-sm-8">{{ optional($item->subGroup)->name ?? '-' }}</dd>
 
-              <dt class="col-sm-4">Unit</dt>
-              <dd class="col-sm-8">{{ $item->unit ?? '-' }}</dd>
+              <!--<dt class="col-sm-4">Unit</dt>
+              <dd class="col-sm-8">{{ $item->unit ?? '-' }}</dd>-->
 
               <dt class="col-sm-4">Price</dt>
               <dd class="col-sm-8">{{ number_format($item->price,2) }}</dd>
@@ -237,15 +237,22 @@ document.addEventListener('DOMContentLoaded', function(){
   var buyBtn = document.getElementById('buyNowBtn');
   if (buyBtn) {
     buyBtn.addEventListener('click', function(){
-      buyBtn.disabled = true;
       var itemId = (document.getElementById('item_id') ? document.getElementById('item_id').value : null);
       var colorId = (document.getElementById('selected_color') ? document.getElementById('selected_color').value : null) || null;
       var size = (document.getElementById('selected_size') ? document.getElementById('selected_size').value : null) || null;
       var qty = 1;
       try { qty = parseInt((document.getElementById('qty') && document.getElementById('qty').value) || 1, 10); if (!isFinite(qty) || qty < 1) qty = 1; } catch(e) { qty = 1; }
 
-      var feedback = document.getElementById('add_feedback'); if (feedback) { feedback.style.display='none'; feedback.textContent=''; }
+      var feedback = document.getElementById('add_feedback');
+      if (feedback) { feedback.style.display='none'; feedback.textContent=''; feedback.classList.remove('text-success','text-danger'); }
 
+      // Require color/size selection just like Add to Cart
+      var requireColor = document.getElementById('selected_color') !== null && document.getElementById('selected_color').value === '' && document.getElementById('colorOptions');
+      var requireSize = document.getElementById('selected_size') !== null && document.getElementById('selected_size').value === '' && document.getElementById('sizeOptions');
+      if (requireColor) { if (feedback) { feedback.style.display='block'; feedback.classList.add('text-danger'); feedback.textContent='Please select a color.'; } return; }
+      if (requireSize) { if (feedback) { feedback.style.display='block'; feedback.classList.add('text-danger'); feedback.textContent='Please select a size.'; } return; }
+
+      buyBtn.disabled = true;
       fetch('{{ route('cart.store') }}', {
         method: 'POST',
         headers: {

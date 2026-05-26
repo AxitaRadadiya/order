@@ -35,6 +35,9 @@
 
     <form action="{{ route('orders.store') }}" method="POST">
       @csrf
+      @php
+        $lockedStatus = auth()->check() && auth()->user()->hasRole(['retailer','distributor','super-admin','superadmin']);
+      @endphp
       @if(!empty($pre_items))
         <input type="hidden" name="from_cart" value="1">
       @endif
@@ -187,7 +190,7 @@
                       $rowItem = !empty($it['item_id'] ?? null) ? $items->firstWhere('id', $it['item_id']) : null;
                       $rowColors = ($rowItem && $rowItem->colors->isNotEmpty()) ? $rowItem->colors : $colors;
                     @endphp
-                    @if(auth()->user() && auth()->user()->hasRole('super-admin'))
+                    @if(auth()->user() && auth()->user()->hasRole(['super-admin', 'superadmin']))
                       <select name="items[{{ $i }}][color][]" class="form-control color-select select2" multiple>
                         @foreach($rowColors as $col)
                         <option value="{{ $col->id }}" {{ in_array((string) $col->id, $selectedColors) ? 'selected' : '' }}>{{ $col->name }}</option>
@@ -236,7 +239,7 @@
                   <td><input type="number" step="0.01" name="items[{{ $i }}][tax_rate]" class="form-control tax" value="{{ $it['tax_rate'] ?? 0 }}" readonly></td>
                   <td><input type="number" step="0.01" name="items[{{ $i }}][total]" class="form-control total" value="{{ $it['total'] ?? 0 }}" readonly></td>
                   <td>
-                    @if(auth()->user() && auth()->user()->hasRole('retailer'))
+                    @if($lockedStatus)
                       <input type="hidden" name="items[{{ $i }}][status]" value="{{ $it['status'] ?? 'pending' }}">
                       <span class="badge badge-secondary">{{ ucfirst($it['status'] ?? 'pending') }}</span>
                     @else
@@ -268,7 +271,7 @@
                   </td>
                   <td><input type="text" name="items[0][item_name]" class="form-control item-name-input" value="" readonly></td>
                   <td>
-                    @if(auth()->user() && auth()->user()->hasRole('super-admin'))
+                    @if(auth()->user() && auth()->user()->hasRole(['super-admin', 'superadmin']))
                       <select name="items[0][color][]" class="form-control color-select select2" multiple>
                         @foreach($colors as $col)
                         <option value="{{ $col->id }}">{{ $col->name }}</option>
@@ -300,7 +303,7 @@
                     
                   </td>
                   <td>
-                    @if(auth()->user() && auth()->user()->hasRole('retailer'))
+                    @if($lockedStatus)
                       <input type="hidden" name="items[0][status]" value="pending">
                       <span class="badge badge-secondary">Pending</span>
                     @else
@@ -317,7 +320,7 @@
               </tbody>
               </table>
             </div>
-            @if(auth()->user() && auth()->user()->hasRole('super-admin'))
+            @if(auth()->user() && auth()->user()->hasRole(['super-admin', 'superadmin']))
             <div class="text-right mb-3">
               <button type="button" id="addItem" class="btn btn-sm btn-create">
                 <i class="fas fa-plus"></i> Add Row
@@ -426,15 +429,27 @@
                   </div>
                   <div class="d-flex justify-content-between py-1">
                     <strong>Discount</strong>
-                    <input type="number" step="0.01" name="discount" id="discount"
-                      class="form-control form-control-sm w-50 text-right"
-                      value="{{ old('discount', 0) }}">
+                    @if(auth()->user() && auth()->user()->hasRole(['super-admin', 'superadmin']))
+                      <input type="number" step="0.01" name="discount" id="discount"
+                        class="form-control form-control-sm w-50 text-right"
+                        value="{{ old('discount', 0) }}">
+                    @else
+                      <input type="number" step="0.01" name="discount" id="discount"
+                        class="form-control form-control-sm w-50 text-right" readonly
+                        value="{{ old('discount', 0) }}">
+                    @endif
                   </div>
                   <div class="d-flex justify-content-between py-1">
                     <strong>Adjustment</strong>
-                    <input type="number" step="0.01" name="adjustment" id="adjustment"
-                      class="form-control form-control-sm w-50 text-right"
-                      value="{{ old('adjustment', 0) }}">
+                    @if(auth()->user() && auth()->user()->hasRole(['super-admin', 'superadmin']))
+                      <input type="number" step="0.01" name="adjustment" id="adjustment"
+                        class="form-control form-control-sm w-50 text-right"
+                        value="{{ old('adjustment', 0) }}">
+                    @else
+                      <input type="number" step="0.01" name="adjustment" id="adjustment"
+                        class="form-control form-control-sm w-50 text-right" readonly
+                        value="{{ old('adjustment', 0) }}">
+                    @endif
                   </div>
                   <hr class="my-2">
                   <div class="d-flex justify-content-between py-1">
@@ -461,7 +476,7 @@
           
           <div class="form-group col-md-3">
             <label>Status</label>
-            @if(auth()->user() && auth()->user()->hasRole('retailer'))
+            @if($lockedStatus)
               <input type="hidden" name="status" value="pending">
               <div><span class="badge badge-secondary">Pending</span></div>
             @else
@@ -490,6 +505,36 @@
   </div>
 </section>
 
+@if(auth()->user() && auth()->user()->hasRole(['super-admin', 'superadmin']))
+<div class="variant-drawer-backdrop" id="variantDrawerBackdrop" aria-hidden="true">
+  <div class="variant-drawer" role="dialog" aria-modal="true" aria-labelledby="variantDrawerTitle">
+    <div class="variant-drawer-header">
+      <div>
+        <div class="variant-drawer-meta" id="variantDrawerItem">-</div>
+      </div>
+      <button type="button" class="variant-drawer-close" data-variant-close aria-label="Close">&times;</button>
+    </div>
+    <div class="variant-drawer-body">
+      <span class="variant-drawer-label">Choose Sizes</span>
+      <div class="variant-drawer-sizes" id="variantDrawerSizes"></div>
+      <div class="d-flex align-items-center justify-content-between mb-2">
+        <span class="variant-drawer-label mb-0">Selected Size</span>
+        <button type="button" class="btn btn-link btn-sm p-0 text-danger" id="variantClearAll">Clear All</button>
+      </div>
+      <div class="variant-selected-list" id="variantSelectedList"></div>
+      <div class="variant-total-row">
+        Total Quantity
+        <span class="variant-total-badge" id="variantDrawerTotal">0</span>
+      </div>
+    </div>
+    <div class="variant-drawer-footer">
+      <button type="button" class="btn-cancel flex-fill" data-variant-close>Cancel</button>
+      <button type="button" class="btn-submit flex-fill" id="variantSaveBtn">Save Variants</button>
+    </div>
+  </div>
+</div>
+@endif
+
 @endsection
 
 @section('pageScript')
@@ -500,7 +545,9 @@ $(function () {
   var ITEMS      = @json($itemsJson);
   var COLORS     = @json($colors);
   var IS_RETAILER= @json(optional(auth()->user())->hasRole('retailer') ?? false);
-  var IS_SUPER_ADMIN = @json(optional(auth()->user())->hasRole('super-admin') ?? false);
+  var IS_SUPER_ADMIN = @json(optional(auth()->user())->hasRole(['super-admin', 'superadmin']) ?? false);
+  var IS_DISTRIBUTOR = @json(optional(auth()->user())->hasRole('distributor') ?? false);
+  var IS_LOCKED_STATUS = @json($lockedStatus ?? false);
 
   /* ── helpers ──────────────────────────────────────────────────────────── */
   function itemByArticle(val) {
@@ -736,7 +783,7 @@ $(function () {
     }
     var sizeOpts = ALL_SIZES.map(function(s){ return '<option value="'+s+'">'+s+'</option>'; }).join('');
 
-    var statusSel = IS_RETAILER
+    var statusSel = IS_LOCKED_STATUS
       ? '<input type="hidden" name="items['+idx+'][status]" value="pending"><span class="badge badge-secondary">Pending</span>'
       : '<select name="items['+idx+'][status]" class="form-control status-select" style="font-size:12px!important;">'
         +['pending','draft','confirmed','shipped','delivered'].map(function(s){
@@ -944,6 +991,184 @@ $(function () {
     recalc();
   }
 
+  var activeVariantRow = null;
+  var drawerSizes = [];
+  var drawerQtys = {};
+
+  function variantEscape(value) {
+    return String(value).replace(/[&<>"']/g, function(ch) {
+      return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' })[ch];
+    });
+  }
+
+  function variantRowLabel($row) {
+    var article = $row.find('.article-select').val() || $row.find('input[name$="[article_number]"]').val() || '';
+    var item = $row.find('.item-name-input').val() || 'Selected item';
+    return article ? item + ' (' + article + ')' : item;
+  }
+
+  function variantSizeOptions($row) {
+    var opts = [];
+    $row.find('.size-select option').each(function() {
+      opts.push(String($(this).val()));
+    });
+    return opts.length ? opts : ALL_SIZES.map(String);
+  }
+
+  function variantSelectedSizes($row) {
+    return ($row.find('.size-select').val() || []).map(String);
+  }
+
+  function variantQtyMap($row) {
+    var qtys = {};
+    $row.find('.size-qty').each(function() {
+      var size = $(this).closest('[data-size]').data('size');
+      if (size !== undefined) {
+        qtys[String(size)] = parseFloat($(this).val()) || 0;
+      }
+    });
+    return qtys;
+  }
+
+  function refreshVariantCell($row) {
+    if (!IS_SUPER_ADMIN) return;
+
+    var $cell = $row.find('td').has('.size-select').first();
+    if (!$cell.length) return;
+
+    var sizes = variantSelectedSizes($row);
+    var qtys = variantQtyMap($row);
+    var totalQty = sizes.reduce(function(sum, size) {
+      return sum + (parseFloat(qtys[size]) || 0);
+    }, 0);
+    var chips = sizes.map(function(size) {
+      var qty = qtys[size] || 0;
+      return '<span class="variant-mini-chip">' + variantEscape(size) + ' x ' + variantEscape(qty) + '</span>';
+    }).join('');
+    var summary = sizes.length
+      ? '<span class="variant-count-pill">' + sizes.length + ' Variants Added</span><div class="variant-chip-list">' + chips + '</div>'
+      : '<span class="variant-empty-text">No Variants Added</span>';
+    var buttonText = sizes.length ? 'Edit Variants' : 'Add Variants';
+
+    if ($row.find('.size-select').hasClass('select2-hidden-accessible')) {
+      $row.find('.size-select').select2('destroy');
+    }
+    $row.find('.size-select').addClass('d-none').hide();
+    $row.find('.size-chips-wrap,.size-qty-wrapper').hide();
+    $cell.find('.variant-table-summary').remove();
+    $cell.prepend(
+      '<div class="variant-table-summary">' + summary +
+      '<button type="button" class="variant-edit-btn"><i class="fas fa-pencil-alt mr-1"></i>' + buttonText + '</button></div>'
+    );
+  }
+
+  function refreshAllVariantCells() {
+    $('#itemTable tbody tr').each(function() {
+      refreshVariantCell($(this));
+    });
+  }
+
+  function renderVariantDrawer() {
+    $('#variantDrawerSizes').html(variantSizeOptions(activeVariantRow).map(function(size) {
+      var active = drawerSizes.indexOf(String(size)) !== -1 ? ' active' : '';
+      return '<button type="button" class="variant-drawer-size' + active + '" data-size="' + variantEscape(size) + '">' + variantEscape(size) + '</button>';
+    }).join(''));
+
+    $('#variantSelectedList').html(drawerSizes.map(function(size) {
+      var qty = drawerQtys[size] || 1;
+      return '<div class="variant-selected-row" data-size="' + variantEscape(size) + '">' +
+        '<span class="variant-selected-name">' + variantEscape(size) + '</span>' +
+        '<div class="size-stepper">' +
+          '<button type="button" class="stepper-btn variant-drawer-minus">-</button>' +
+          '<input type="text" class="size-qty variant-drawer-qty" value="' + variantEscape(qty) + '" readonly>' +
+          '<button type="button" class="stepper-btn variant-drawer-plus">+</button>' +
+        '</div>' +
+      '</div>';
+    }).join('') || '<div class="variant-selected-empty">Select sizes from above</div>');
+
+    var total = drawerSizes.reduce(function(sum, size) {
+      return sum + (parseFloat(drawerQtys[size]) || 0);
+    }, 0);
+    $('#variantDrawerTotal').text(total);
+  }
+
+  function openVariantDrawer($row) {
+    if (!IS_SUPER_ADMIN) return;
+    activeVariantRow = $row;
+    drawerSizes = variantSelectedSizes($row);
+    drawerQtys = variantQtyMap($row);
+    drawerSizes.forEach(function(size) {
+      if (!drawerQtys[size]) drawerQtys[size] = 1;
+    });
+    $('#variantDrawerItem').text(variantRowLabel($row));
+    renderVariantDrawer();
+    $('#variantDrawerBackdrop').addClass('show').attr('aria-hidden', 'false');
+    $('body').addClass('variant-drawer-open');
+  }
+
+  function closeVariantDrawer() {
+    $('#variantDrawerBackdrop').removeClass('show').attr('aria-hidden', 'true');
+    $('body').removeClass('variant-drawer-open');
+    activeVariantRow = null;
+    drawerSizes = [];
+    drawerQtys = {};
+  }
+
+  function applyVariantDrawer() {
+    if (!activeVariantRow) return;
+    activeVariantRow.find('.size-select').val(drawerSizes);
+    rebuildSizePanel(activeVariantRow);
+    drawerSizes.forEach(function(size) {
+      activeVariantRow.find('[data-size]').filter(function() {
+        return String($(this).data('size')) === String(size);
+      }).find('.size-qty').val(drawerQtys[size] || 1);
+    });
+    updateTotalQtyBadge(activeVariantRow);
+    updateRowQty(activeVariantRow);
+    recalc();
+    refreshVariantCell(activeVariantRow);
+    closeVariantDrawer();
+  }
+
+  $(document).on('click', '.variant-edit-btn', function() {
+    openVariantDrawer($(this).closest('tr'));
+  });
+  $(document).on('click', '[data-variant-close]', closeVariantDrawer);
+  $('#variantDrawerBackdrop').on('click', function(event) {
+    if (event.target === this) closeVariantDrawer();
+  });
+  $(document).on('click', '.variant-drawer-size', function() {
+    var size = String($(this).data('size'));
+    if (drawerSizes.indexOf(size) === -1) {
+      drawerSizes.push(size);
+      drawerQtys[size] = drawerQtys[size] || 1;
+    } else {
+      drawerSizes = drawerSizes.filter(function(item) { return item !== size; });
+      delete drawerQtys[size];
+    }
+    renderVariantDrawer();
+  });
+  $(document).on('click', '.variant-drawer-plus,.variant-drawer-minus', function() {
+    var size = String($(this).closest('.variant-selected-row').data('size'));
+    var qty = parseFloat(drawerQtys[size]) || 0;
+    drawerQtys[size] = $(this).hasClass('variant-drawer-plus') ? qty + 1 : Math.max(1, qty - 1);
+    renderVariantDrawer();
+  });
+  $('#variantClearAll').on('click', function() {
+    drawerSizes = [];
+    drawerQtys = {};
+    renderVariantDrawer();
+  });
+  $('#variantSaveBtn').on('click', applyVariantDrawer);
+  $(document).on('change', '.article-select', function() {
+    var $row = $(this).closest('tr');
+    setTimeout(function() { refreshVariantCell($row); }, 0);
+  });
+  $('#addItem').on('click', function() {
+    setTimeout(refreshAllVariantCells, 0);
+  });
+
+  refreshAllVariantCells();
   recalc();
 });
 </script>
