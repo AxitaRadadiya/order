@@ -64,17 +64,6 @@ class Item extends Model
     {
         return $this->belongsToMany(Color::class)->withTimestamps();
     }
-
-    public function subCategory()
-    {
-        return $this->belongsTo(SubCategory::class, 'sub_category');
-    }
-
-    public function subGroup()
-    {
-        return $this->belongsTo(SubGroup::class, 'sub_group');
-    }
-
     
     public function scopeActive($query)
     {
