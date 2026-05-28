@@ -213,7 +213,14 @@ class CustomerController extends Controller
         } catch (\Throwable $e) {
             // ignore
         }
-
+        
+        try {
+            if (! is_null($customer->status)) {
+                $customer->status = $customer->status ? '1' : '0';
+            }
+        } catch (\Throwable $e) {
+            // ignore
+        }
         return view('admin.customer.edit', compact('customer', 'countries', 'states', 'cities', 'roles', 'distributors', 'isDistributorPanel', 'currentDistributorId'));
     }
 
@@ -247,6 +254,7 @@ class CustomerController extends Controller
             'password'     => 'nullable|min:6',
             'distributor_id' => 'nullable|exists:users,id',
             'role_id'      => 'nullable|exists:roles,id',
+            'status'       => 'required|in:0,1',
             'gst_number'   => 'nullable|string|max:20',
             'pan_number'   => 'nullable|string|max:15',
             'credit_limit' => 'nullable|numeric|min:0',
@@ -271,6 +279,7 @@ class CustomerController extends Controller
                 'distributor_id'  => $request->filled('distributor_id') ? $request->distributor_id : ($customer->distributor_id ?? null),
                 'website'         => $request->website,
                 'role_id'         => $request->filled('role_id') ? $request->role_id : ($customer->role_id ?? null),
+                'status'          => $request->status === '1' ? 1 : 0,
                 'payment_terms'   => $request->payment_terms,
                 'gst_treatment'   => $request->gst_treatment,
                 'gst_number'      => $request->gst_number,
