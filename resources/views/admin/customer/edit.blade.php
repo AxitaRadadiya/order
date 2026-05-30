@@ -152,6 +152,15 @@
             </div>
             <div class="col-md-3">
               <div class="form-group">
+                <label>Status <span class="text-danger">*</span></label>
+                <select class="form-control" name="status" required>
+                  <option value="1" {{ old('status', $customer->status ?? '') == '1' ? 'selected' : '' }}>Active</option>
+                  <option value="0" {{ old('status', $customer->status ?? '') == '0' ? 'selected' : '' }}>Inactive</option>
+                </select>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="form-group">
                 <label>Payment Terms</label>
                 <select class="form-control" name="payment_terms">
                   <option value="">-- Select --</option>

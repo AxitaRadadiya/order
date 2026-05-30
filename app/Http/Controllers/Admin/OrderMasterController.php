@@ -143,7 +143,7 @@ class OrderMasterController extends Controller
                     </div>';
                 }
                 // Super-admin approval: allow super-admin to finalize orders (set approval_level = 2)
-                if ($au && $au->hasRole(['super-admin','superadmin']) && ($order->approval_level ?? 0) < 2) {
+                if ($au && $au->hasRole(['super-admin','superadmin']) && (($order->approval_level ?? 0) >= 1) && (($order->approval_level ?? 0) < 2)) {
                     $approveSuperUrl = route('orders.approve.superadmin', $order->id);
                     $actions = '<div class="btn-group">
                         <button type="button" class="btn btn-sm" data-toggle="dropdown">
@@ -303,7 +303,18 @@ class OrderMasterController extends Controller
             } elseif ($authUser && $authUser->hasRole('distributor')) {
                 // If a distributor creates an order, mark themselves as the distributor
                 $fields['distributor_id'] = $authUser->id;
-                $fields['approval_level'] = $fields['approval_level'] ?? 0;
+
+                // If distributor is creating the order for a retailer (i.e. user_id is provided
+                // and is different from the distributor), auto-approve distributor approval.
+                $targetUserId = $fields['user_id'] ?? null;
+                if ($targetUserId && $targetUserId != $authUser->id) {
+                    // $fields['distributor_approved'] = true;
+                    // $fields['distributor_approved_at'] = now();
+                    $fields['approval_level'] = 1;
+                    // $fields['visible_to_superadmin'] = true;
+                } else {
+                    $fields['approval_level'] = $fields['approval_level'] ?? 0;
+                }
             }
             $order = OrderMaster::create($fields);
             $subtotal = $this->syncItems($order, $request->input('items', []));
@@ -320,8 +331,7 @@ class OrderMasterController extends Controller
 
             // Retailers are not allowed to set the overall order status.
             $authUser = auth()->user();
-            // Prevent certain roles from setting order/item status: retailer, distributor, super-admin
-            if ($authUser && $authUser->hasRole(['retailer','distributor','super-admin','superadmin'])) {
+            if ($authUser && $authUser->hasRole('retailer')) {
                 $orderStatus = 'pending';
             }
 
@@ -469,10 +479,9 @@ class OrderMasterController extends Controller
                 $orderStatus = $request->input('status', $order->status ?? 'pending');
             }
 
-            // Prevent certain roles from setting overall order status on update.
+            // Retailers are not allowed to set the overall order status.
             $authUser = auth()->user();
-            if ($authUser && $authUser->hasRole(['retailer','distributor','super-admin','superadmin'])) {
-                // keep existing order status or force to pending if none
+            if ($authUser && $authUser->hasRole('retailer')) {
                 $orderStatus = $order->status ?? 'pending';
             }
 
@@ -718,9 +727,9 @@ class OrderMasterController extends Controller
             $total = round(($rate + ($rate * $taxRate / 100)) * $quantity, 2);
             $subtotal += $total;
 
-            // If the current user belongs to any locked role, they are not allowed to set item status.
+            // If the current user is a retailer, they are not allowed to set item status.
             $status = $it['status'] ?? 'pending';
-            if ($authUser && $authUser->hasRole(['retailer','distributor','super-admin','superadmin'])) {
+            if ($authUser && $authUser->hasRole('retailer')) {
                 $status = 'pending';
             }
 

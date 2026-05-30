@@ -701,6 +701,12 @@ body.variant-drawer-open {
     background: #fff;
 }
 
+.dropdown-menu.show {
+  display: block;
+  min-width: 7rem;
+  left: -3px;
+}
+
 .order-table-wrapper::-webkit-scrollbar {
     height: 10px;
 }
