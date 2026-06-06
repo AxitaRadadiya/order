@@ -16,6 +16,7 @@
                         <tr>
                             <th>Sr No.</th>
                             <th>Name</th>
+                            <th>Color Code</th>
                             <th>Actions</th>
                         </tr>
                     </thead>
@@ -46,6 +47,13 @@
                                 <label>Name <span class="text-danger">*</span></label>
                                 <input type="text" class="form-control" name="name" id="color_name" value="" required>
                                 <span class="text-danger error color-name-error"></span>
+                            </div>
+                        </div>
+                        <div class="col-md-12">
+                            <div class="form-group">
+                                <label>Color Code <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" name="color_code" id="color_code" value="" required>
+                                <span class="text-danger error color-code-error"></span>
                             </div>
                         </div>
                     </div>

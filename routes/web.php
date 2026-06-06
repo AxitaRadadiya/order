@@ -18,6 +18,7 @@ use App\Http\Controllers\Admin\GroupController;
 use App\Http\Controllers\Admin\SizeController;
 // use App\Http\Controllers\Admin\SetController;
 use App\Http\Controllers\Admin\ColorController;
+use App\Http\Controllers\Admin\TaxMasterController;
 use App\Http\Controllers\Admin\ItemMasterController;
 use App\Http\Controllers\Admin\ItemController;
 use App\Http\Controllers\Admin\OrderMasterController;
@@ -101,6 +102,7 @@ Route::group(['middleware' => ['auth']], function () {
     Route::post('order-items/{orderItem}/status', [OrderMasterController::class, 'updateItemStatus'])->name('order-items.status.update');
     Route::get('color-list', [ColorController::class,'list'])->name('color.list');
     Route::resource('color', ColorController::class);
+    Route::get('tax-list', [TaxMasterController::class,'list'])->name('tax.list');
     // Cart routes (list + resource-style) placed alongside other admin resources
 
     Route::get('sub-category-list', [SubCategoryController::class,'list'])->name('sub-category.list');
