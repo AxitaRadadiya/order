@@ -22,7 +22,7 @@
     <div class="col-xl-12">
          @php
                     // Allowed tabs — default to 'category'
-                    $allowedTabs = ['category', 'sub-category', 'group', 'sub-group', 'size', 'color'];
+                    $allowedTabs = ['category', 'sub-category', 'group', 'sub-group', 'size', 'color', 'tax'];
                     $activeTab   = in_array(request()->get('tab'), $allowedTabs)
                                     ? request()->get('tab')
                                     : 'category';
@@ -82,6 +82,13 @@
                             <span class="d-none d-lg-block font-weight-bold">Color</span>
                         </a>
                     </li>
+                    <li class="nav-item">
+                        <a href="#tax" data-toggle="tab" aria-expanded="false"
+                            class="nav-link {{ $activeTab === 'tax' ? 'active' : '' }}">
+                             <i class="mdi mdi-currency-inr d-lg-none d-block"></i>
+                             <span class="d-none d-lg-block font-weight-bold">Tax</span>
+                        </a>
+                    </li>
 
                 </ul>
         <div class="card">
@@ -116,6 +123,10 @@
                     </div> -->
                     <div class="tab-pane {{ $activeTab === 'color' ? 'show active' : '' }}" id="color">
                         @include('admin.item-master.color.index')
+                    </div>
+
+                    <div class="tab-pane {{ $activeTab === 'tax' ? 'show active' : '' }}" id="tax">
+                        @include('admin.item-master.tax.index')
                     </div>
 
                 </div>

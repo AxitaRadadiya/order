@@ -273,6 +273,7 @@ $(document).ready(function () {
         load_Size();
         // load_Set();
         load_Color();
+        load_Tax();
         load_SubCategory();
         load_SubGroup();
  
@@ -289,6 +290,7 @@ $(document).ready(function () {
             if(target === '#color')     load_Color();
             if(target === '#sub-category') load_SubCategory();
             if(target === '#sub-group') load_SubGroup();
+            if(target === '#tax') load_Tax();
         });
     }
  
@@ -995,6 +997,7 @@ $(document).ready(function () {
             columns: [
                 { data: 'id',     orderable: true  },
                 { data: 'name',   orderable: true  },
+                { data: 'color_code', orderable: true},
                 { data: 'action', orderable: false }
             ],
            /* language: {
@@ -1014,7 +1017,9 @@ $(document).ready(function () {
         $('#colorForm')[0].reset();
         $('#color_id').val('');
         $('#color_name').val('');
+        $('#color_code').val('');
         $('.color-name-error').text('');
+        $('.color-code-error').text('');
         $('input').removeClass('is-invalid');
  
         // Restore action to store route and remove any leftover _method=PUT
@@ -1027,13 +1032,16 @@ $(document).ready(function () {
     $(document).on('click', '.edit-color-date-modal', function () {
         var colorId   = $(this).data('id');
         var colorName = $(this).data('name');
+        var colorCode = $(this).data('color-code');
  
         // Reset errors
         $('.color-name-error').text('');
+        $('.color-code-error').text('');
         $('input').removeClass('is-invalid');
  
         $('#color_id').val(colorId);
         $('#color_name').val(colorName);
+        $('#color_code').val(colorCode);
  
         var updateUrl = '{{ route("color.update", ":id") }}'.replace(':id', colorId);
         $('#colorForm').attr('action', updateUrl);
@@ -1049,6 +1057,7 @@ $(document).ready(function () {
         e.preventDefault();
  
         var name = $.trim($('#color_name').val());
+        var code = $.trim($('#color_code').val());
  
         // Clear previous errors
         $('.error').text('');
@@ -1060,6 +1069,12 @@ $(document).ready(function () {
             return;
         }
  
+        if (!code) {
+            $('#color_code').addClass('is-invalid');
+            $('.color-code-error').text('Color Code is required.');
+            return;
+        }
+ 
         $('#colorForm').submit();
     });
  
@@ -1067,8 +1082,37 @@ $(document).ready(function () {
         $('#colorForm input[name="_method"]').remove();
         $('#colorForm')[0].reset();
         $('.color-name-error').text('');
+        $('.color-code-error').text('');
         $('input').removeClass('is-invalid');
     });
+
+    function load_Tax() {
+        if ($.fn.dataTable.isDataTable('#TaxMasterTable')) {
+            $('#TaxMasterTable').DataTable().clear().destroy();
+            $('#TaxMasterTable tbody').empty();
+        }
+        $('#TaxMasterTable').DataTable({
+            paging:      true,
+            lengthChange: true,
+            searching:   true,
+            ordering:    true,
+            info:        true,
+            autoWidth:   false,
+            responsive:  true,
+            processing: true,
+            serverSide: true,
+            ajax: {
+                url: "{{ route('tax.list') }}",
+                type: "GET"
+            },
+            columns: [
+                { data: 'id', name: 'id' },
+                { data: 'tax_name', name: 'tax_name' },
+                { data: 'tax_percentage', name: 'tax_percentage' }
+            ],
+            order: [[0, 'asc']]
+        });
+    }
         // CustomerType UI removed — no-op placeholders kept for backwards compatibility.
 
         function load_SubCategory() {
