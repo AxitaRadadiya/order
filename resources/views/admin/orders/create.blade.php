@@ -11,7 +11,7 @@
       <div class="col-sm-6">
         <ol class="breadcrumb float-sm-right">
           <li class="breadcrumb-item"><a href="{{ route('dashboard') }}">Home</a></li>
-          <li class="breadcrumb-item"><a href="{{ route('orders.index') }}">Orders</a></li> 
+          <li class="breadcrumb-item"><a href="{{ route('orders.index') }}">Orders</a></li>
           <li class="breadcrumb-item active">Create</li>
         </ol>
       </div>
@@ -50,7 +50,7 @@
             <div class="col-md-6">
               <div class="form-group">
                 <label>Customer Name <span class="text-danger">*</span></label>
-                <select name="user_id" id="customer_id" class="form-control" required>
+                <select name="user_id" id="customer_id" class="form-control select2" required>
                   <option value="">-- Select Customer --</option>
                   @foreach($customers as $c)
                   <option value="{{ $c->id }}"
@@ -128,15 +128,6 @@
             </div>
           </div>
 
-          {{-- ── Mode Toggle ───────────────────────────────────────────── --}}
-          <!-- <div class="d-flex justify-content-between align-items-center mb-2">
-            <h5 class="m-0">Items</h5>
-            <div class="btn-group btn-group-sm">
-              <button type="button" id="modeNormal" class="btn btn-outline-secondary active">Normal</button>
-              <button type="button" id="modeSizeRange" class="btn btn-outline-secondary">Size Range</button>
-            </div>
-          </div> -->
-
           {{-- ── Normal Items Table ────────────────────────────────────── --}}
           <div id="normalTable">
             <div class="table-responsive" style="overflow-x:auto;">
@@ -144,16 +135,16 @@
               <thead class="thead-light">
                 <tr>
                   <th>Article Number</th>
-                  <th>Item</thh=>
+                  <th>Item</th>
                   <th>Color</th>
                   <th>Size(s)</th>
                   <th>Description</th>
                   <th>Qty</th>
                   <th>MRP</th>
-                  <th>Tax %</thwidth=>
-                  <th>Total</thwidth=>
-                  <th>Status</thdth=>
-                  <th>Action</thwidth=>
+                  <th>Tax %</th>
+                  <th>Total</th>
+                  <th>Status</th>
+                  <th>Action</th>
                 </tr>
               </thead>
               <tbody>
@@ -180,7 +171,6 @@
                     <input type="text" name="items[{{ $i }}][item_name]" class="form-control item-name-input" value="{{ $it['item_name'] ?? '' }}" readonly>
                   </td>
                   <td>
-                    {{-- Color select / readonly for non-super-admin --}}
                     @php
                       $selectedColors = $it['color'] ?? $it['color_id'] ?? [];
                       if (!is_array($selectedColors)) {
@@ -210,7 +200,6 @@
                     @endif
                   </td>
                   <td>
-                    {{-- Size multi-select --}}
                     @php
                       $selectedSizes = [];
                       if (!empty($it['sizes'])) {
@@ -253,7 +242,7 @@
                   <td><button type="button" class="btn btn-sm btn-danger remove-item"><i class="fas fa-trash"></i></button></td>
                 </tr>
                 @endforeach
-                 @else
+                @else
                 {{-- Default empty first row --}}
                 <tr>
                   <td>
@@ -299,8 +288,7 @@
                   <td><input type="number" step="0.01" name="items[0][rate]" class="form-control rate" value="0" readonly></td>
                   <td><input type="number" step="0.01" name="items[0][tax_rate]" class="form-control tax" value="0" readonly></td>
                   <td>
-                      <input type="number" step="0.01" name="items[0][total]" class="form-control total" value="0" readonly>
-                    
+                    <input type="number" step="0.01" name="items[0][total]" class="form-control total" value="0" readonly>
                   </td>
                   <td>
                     @if($lockedStatus)
@@ -428,6 +416,18 @@
                       readonly value="{{ old('subtotal', 0) }}">
                   </div>
                   <div class="d-flex justify-content-between py-1">
+                    <strong>Mark Down (%)</strong>
+                    @if(auth()->user() && auth()->user()->hasRole(['super-admin', 'superadmin']))
+                      <input type="number" step="0.01" name="markdown" id="markdown"
+                        class="form-control form-control-sm w-50 text-right"
+                        value="{{ old('markdown', 0) }}">
+                    @else
+                      <input type="number" step="0.01" name="markdown" id="markdown"
+                        class="form-control form-control-sm w-50 text-right" readonly
+                        value="{{ old('markdown', 0) }}">
+                    @endif
+                  </div>
+                  <div class="d-flex justify-content-between py-1">
                     <strong>Discount</strong>
                     @if(auth()->user() && auth()->user()->hasRole(['super-admin', 'superadmin']))
                       <input type="number" step="0.01" name="discount" id="discount"
@@ -473,7 +473,7 @@
             <label>Notes</label>
             <textarea name="notes" class="form-control" rows="2">{{ old('notes') }}</textarea>
           </div>
-          
+
           <div class="form-group col-md-3">
             <label>Status</label>
             @if($lockedStatus)
@@ -498,8 +498,6 @@
         <a href="{{ route('orders.index') }}" class="btn-cancel mr-2"><i class="fas fa-times mr-1"></i>Cancel</a>
         <button type="submit" class="btn-submit"><i class="fas fa-save mr-1"></i>Save Order</button>
       </div>
-
-
 
     </form>
   </div>
@@ -541,10 +539,10 @@
 <script>
 $(function () {
 
-  var ALL_SIZES  = @json($sizesJson);
-  var ITEMS      = @json($itemsJson);
-  var COLORS     = @json($colors);
-  var IS_RETAILER= @json(optional(auth()->user())->hasRole('retailer') ?? false);
+  var ALL_SIZES      = @json($sizesJson);
+  var ITEMS          = @json($itemsJson);
+  var COLORS         = @json($colors);
+  var IS_RETAILER    = @json(optional(auth()->user())->hasRole('retailer') ?? false);
   var IS_SUPER_ADMIN = @json(optional(auth()->user())->hasRole(['super-admin', 'superadmin']) ?? false);
   var IS_DISTRIBUTOR = @json(optional(auth()->user())->hasRole('distributor') ?? false);
   var IS_LOCKED_STATUS = @json($lockedStatus ?? false);
@@ -567,6 +565,18 @@ $(function () {
     if (!v) return [];
     return Array.isArray(v) ? v.map(String) : String(v).split(',').map(function(x){ return x.trim(); });
   }
+  // Returns the number of colors selected in a row (minimum 1 so qty is never zeroed)
+  function colorCount($row) {
+    var $cs = $row.find('.color-select');
+    if ($cs.length) {
+      var val = $cs.val() || [];
+      return Math.max(1, val.length);
+    }
+    // non-super-admin: count hidden color inputs
+    var hidden = $row.find('input[type=hidden][name$="[color][]"]').length;
+    return Math.max(1, hidden);
+  }
+
   function colorOpts(colors, sel) {
     sel = normalizeArr(sel);
     colors = (colors && colors.length) ? colors : COLORS;
@@ -574,20 +584,25 @@ $(function () {
       return '<option value="'+esc(c.id)+'"'+(sel.indexOf(String(c.id))!==-1?' selected':'')+'>'+esc(c.name)+'</option>';
     }).join('');
   }
+
   function populateColorSelect($row, colors, sel) {
     var $cs = $row.find('.color-select');
     sel = sel || ($cs.length ? $cs.val() : []) || [];
     if ($cs.length) {
+      // Temporarily detach the change listener so rebuilding Select2 does NOT fire recalc
+      $cs.off('change.colorrebuild');
       if ($cs.hasClass('select2-hidden-accessible')) $cs.select2('destroy');
       $cs.html(colorOpts(colors, sel));
       $cs.select2({ placeholder:'Colors…', width:'100%' });
+    
     } else {
-      // no select present (non-super-admin) — show readonly text and hidden inputs
       var selArr = normalizeArr(sel);
-      var names = selArr.map(function(id){ var c = COLORS.find(function(x){ return String(x.id) == String(id); }); return c?c.name : ''; }).filter(Boolean).join(', ');
+      var names = selArr.map(function(id){
+        var c = COLORS.find(function(x){ return String(x.id) == String(id); });
+        return c ? c.name : '';
+      }).filter(Boolean).join(', ');
       var $rd = $row.find('.color-read');
       if ($rd.length) $rd.val(names);
-      // locate color cell (closest td containing color-read or color-select), fallback to index 2
       var $cell = $row.find('td').has('.color-read');
       if (!$cell.length) $cell = $row.find('td').has('.color-select');
       if (!$cell.length) $cell = $row.find('td').eq(2);
@@ -601,96 +616,101 @@ $(function () {
   }
 
   /* ── Recalc totals ────────────────────────────────────────────────────── */
+
   function recalc() {
     var sub = 0;
     $('#itemTable tbody tr').each(function(){
-      var $tr = $(this);
-      var qty  = parseFloat($tr.find('.qty').val()) || 0;
+      var $tr  = $(this);
+      var qty  = parseFloat($tr.find('.qty').val())  || 0;
       var rate = parseFloat($tr.find('.rate').val()) || 0;
-      var tax  = parseFloat($tr.find('.tax').val()) || 0;
+      var tax  = parseFloat($tr.find('.tax').val())  || 0;
+      // qty = sum(size_quantities) × colorCount — already stored in .qty field by updateRowQty
       var tot  = rate * qty * (1 + tax / 100);
       $tr.find('.total').val(tot.toFixed(2));
       sub += tot;
     });
     $('#subtotal').val(sub.toFixed(2));
-    var grand = sub - (parseFloat($('#discount').val())||0) + (parseFloat($('#adjustment').val())||0);
+    var markdownPercent = parseFloat($('#markdown').val()) || 0;
+    var grand = sub
+      - (sub * markdownPercent / 100)
+      - (parseFloat($('#discount').val())   || 0)
+      + (parseFloat($('#adjustment').val()) || 0);
     $('#grand_total').val(grand.toFixed(2));
   }
 
   /* ── Size chip UI ─────────────────────────────────────────────────────── */
   function rebuildSizePanel($row) {
-    var idx = rowIndex($row);
+    var idx     = rowIndex($row);
     var $select = $row.find('.size-select');
     var $panel  = $row.find('.size-qty-wrapper');
-    var selected = $select.val() || [];
+    var selected = ($select.val() || []).map(String);
 
     // Sync chip active states
     $row.find('.size-chip').each(function(){
-      var s = $(this).data('size');
-      $(this).toggleClass('active', selected.indexOf(String(s)) !== -1);
+      var s = String($(this).data('size'));
+      $(this).toggleClass('active', selected.indexOf(s) !== -1);
     });
 
     if (!selected.length) {
       $panel.hide().html('');
-      $row.find('.qty').val(0);
+      $row.find('.qty').val(0);   // no sizes → qty is 0
       recalc();
       return;
     }
 
-    // Preserve existing qty values
+    // Snapshot existing qty values BEFORE we wipe the panel
     var oldQtys = {};
-    $panel.find('.size-qty').each(function(){
-      var sz = $(this).closest('.size-qty-item').data('size');
-      oldQtys[sz] = $(this).val();
+    $panel.find('.size-qty-item').each(function(){
+      var sz = String($(this).data('size'));
+      oldQtys[sz] = $(this).find('.size-qty').val();
     });
 
     var html = selected.map(function(sz){
-      var q = oldQtys[sz] || 0;
+      var q = (oldQtys[sz] !== undefined && oldQtys[sz] !== '') ? oldQtys[sz] : 0;
       return '<div class="size-qty-item" data-size="'+esc(sz)+'">'
         +'<span class="size-qty-label">'+esc(sz)+'</span>'
         +'<div class="size-stepper">'
+        +(IS_SUPER_ADMIN ? '<button type="button" class="stepper-btn minus">−</button>' : '')
         +(IS_SUPER_ADMIN
-                ? '<button type="button" class="stepper-btn minus">−</button>'
-                : '')
-        +(IS_SUPER_ADMIN ?'<input type="text" step="1" min="0" name="items['+idx+'][size_quantities]['+esc(sz)+']" class="size-qty" value="'+esc(q)+'" readonly>': '')
-        +(IS_SUPER_ADMIN
-                ? '<button type="button" class="stepper-btn plus">+</button>'
-                : '')
-        +'</input>'
+          ? '<input type="text" step="1" min="0" name="items['+idx+'][size_quantities]['+esc(sz)+']" class="size-qty" value="'+esc(q)+'">'
+          : '')
+        +(IS_SUPER_ADMIN ? '<button type="button" class="stepper-btn plus">+</button>' : '')
+        +'</div>'
         +'</div>';
     }).join('');
+
     if (IS_SUPER_ADMIN) {
-    html += '<div class="size-qty-total"><small>Total</small><span class="total-qty-badge">0</span></div>';
+      html += '<div class="size-qty-total"><small>Total</small><span class="total-qty-badge">0</span></div>';
     }
+
     $panel.html(html).show();
     updateTotalQtyBadge($row);
-    updateRowQty($row);
+    updateRowQty($row);   // qty = sum(size qtys) × colorCount
     recalc();
   }
 
+  // Badge shows the raw size-qty sum (per-color piece count) for clarity
   function updateTotalQtyBadge($row) {
     var tot = 0;
-    $row.find('.size-qty').each(function(){ tot += parseFloat($(this).val())||0; });
-    $row.find('.total-qty-badge').text(tot);
+    $row.find('.size-qty').each(function(){ tot += parseFloat($(this).val()) || 0; });
+    $row.find('.total-qty-badge').text(tot + ' × ' + colorCount($row) + ' colors = ' + (tot * colorCount($row)));
   }
 
   function updateRowQty($row) {
-    var q = 0;
-    $row.find('.size-qty').each(function(){ q += parseFloat($(this).val())||0; });
-    $row.find('.qty').val(q);
+    var sizeSum = 0;
+    $row.find('.size-qty').each(function(){ sizeSum += parseFloat($(this).val()) || 0; });
+    var colors = colorCount($row);
+    $row.find('.qty').val(sizeSum * colors);
   }
 
   /* ── Size chip click ──────────────────────────────────────────────────── */
   $(document).on('click', '.size-chip', function(){
+    if (!IS_SUPER_ADMIN) return;
     var $chip = $(this);
     var $row  = $chip.closest('tr');
     var $sel  = $row.find('.size-select');
     var size  = String($chip.data('size'));
-    var cur   = $sel.val() || [];
-
-    if (!IS_SUPER_ADMIN) {
-      return;
-    }
+    var cur   = ($sel.val() || []).map(String);
 
     if ($chip.hasClass('active')) {
       cur = cur.filter(function(s){ return s !== size; });
@@ -706,12 +726,13 @@ $(function () {
     var $btn   = $(this);
     var $input = $btn.siblings('input.size-qty');
     var val    = parseFloat($input.val()) || 0;
-    $input.val($btn.hasClass('plus') ? val+1 : Math.max(0, val-1));
+    $input.val($btn.hasClass('plus') ? val + 1 : Math.max(0, val - 1));
     var $row = $btn.closest('tr');
     updateTotalQtyBadge($row);
     updateRowQty($row);
     recalc();
   });
+
   $(document).on('input', '.size-qty', function(){
     var $row = $(this).closest('tr');
     updateTotalQtyBadge($row);
@@ -719,8 +740,17 @@ $(function () {
     recalc();
   });
 
+  // Rate / tax changes recalculate totals; color changes do NOT
   $(document).on('input', '.rate,.tax', recalc);
-  $('#discount,#adjustment').on('input', recalc);
+  $('#markdown,#discount,#adjustment').on('input', recalc);
+
+  // Color change → re-run qty × color multiplication and update totals
+  $(document).on('change', '.color-select', function(){
+    var $row = $(this).closest('tr');
+    updateTotalQtyBadge($row);
+    updateRowQty($row);
+    recalc();
+  });
 
   /* ── Article select → auto-fill row ──────────────────────────────────── */
   $(document).on('change', '.article-select', function(){
@@ -731,30 +761,46 @@ $(function () {
     var found = itemByArticle(val);
     if (!found) {
       var $opt = $(this).find('option:selected');
-      found = { id:$opt.data('id')||null, name:$opt.data('name')||'', rate:parseFloat($opt.data('rate'))||0, tax:parseFloat($opt.data('tax'))||0, desc:$opt.data('desc')||'' };
+      found = {
+        id: $opt.data('id') || null,
+        name: $opt.data('name') || '',
+        rate: parseFloat($opt.data('rate')) || 0,
+        tax: parseFloat($opt.data('tax')) || 0,
+        desc: $opt.data('desc') || ''
+      };
     }
-    $row.find('.item-id-hidden').val(found.id||'');
-    $row.find('.item-name-input').val(found.name||found.article_number||'');
-    $row.find('.rate').val(found.rate||0);
-    $row.find('.tax').val(found.tax||0);
-    if (!$row.find('.desc').val()) $row.find('.desc').val(found.desc||'');
 
-    populateColorSelect($row, found.colors||[]);
+    $row.find('.item-id-hidden').val(found.id || '');
+    $row.find('.item-name-input').val(found.name || found.article_number || '');
+    $row.find('.rate').val(found.rate || 0);
+    $row.find('.tax').val(found.tax || 0);
+    if (!$row.find('.desc').val()) $row.find('.desc').val(found.desc || '');
+
+    // Populate colors — this does NOT affect qty
+    populateColorSelect($row, found.colors || []);
 
     var sizeChoices = (found.sizes && found.sizes.length) ? found.sizes : ALL_SIZES;
     var $sz = $row.find('.size-select');
     if ($sz.hasClass('select2-hidden-accessible')) $sz.select2('destroy');
-    $sz.html(sizeChoices.map(function(s){ return '<option value="'+s+'">'+s+'</option>'; }).join(''));
+    $sz.html(sizeChoices.map(function(s){
+      return '<option value="'+s+'">'+s+'</option>';
+    }).join(''));
 
-    // rebuild chips
+    // Rebuild chips
     var $chips = $row.find('.size-chips-wrap');
     if (IS_SUPER_ADMIN) {
-    $chips.html(sizeChoices.map(function(s){
-      return '<button type="button" class="size-chip" data-size="'+esc(s)+'">'+esc(s)+'</button>';
-    }).join(''));
+      $chips.html(sizeChoices.map(function(s){
+        return '<button type="button" class="size-chip" data-size="'+esc(s)+'">'+esc(s)+'</button>';
+      }).join(''));
     } else {
       $chips.empty();
     }
+
+    // BUG FIX #6: When article changes, clear size panel and reset qty to 0
+    // so stale qty from a previous item doesn't carry over.
+    $row.find('.size-select').val([]);
+    $row.find('.size-qty-wrapper').hide().html('');
+    $row.find('.qty').val(0);
 
     rebuildSizePanel($row);
     recalc();
@@ -769,77 +815,70 @@ $(function () {
         +' data-rate="'+(m.rate||0)+'"'
         +' data-tax="'+(m.tax||0)+'"'
         +' data-desc="'+(String(m.desc||'').replace(/"/g,'&quot;'))+'"'
-        +(it.item_id==m.id?' selected':'')+'>'+esc(m.article_number||'')+'</option>';
+        +(it.item_id == m.id ? ' selected' : '')
+        +'>'+esc(m.article_number||'')+'</option>';
     }).join('');
 
-    var colOpts = colorOpts(it.colors||COLORS, it.color||it.color_id||[]);
+    var colOpts = colorOpts(it.colors || COLORS, it.color || it.color_id || []);
 
-    var sizeChips = '';
+    var sizeChips = IS_SUPER_ADMIN
+      ? ALL_SIZES.map(function(s){
+          return '<button type="button" class="size-chip" data-size="'+esc(s)+'">'+esc(s)+'</button>';
+        }).join('')
+      : '';
 
-    if (IS_SUPER_ADMIN) {
-      sizeChips = ALL_SIZES.map(function(s){
-        return '<button type="button" class="size-chip" data-size="'+esc(s)+'">'+esc(s)+'</button>';
-      }).join('');
-    }
-    var sizeOpts = ALL_SIZES.map(function(s){ return '<option value="'+s+'">'+s+'</option>'; }).join('');
+    var sizeOpts = ALL_SIZES.map(function(s){
+      return '<option value="'+s+'">'+s+'</option>';
+    }).join('');
 
     var statusSel = IS_LOCKED_STATUS
       ? '<input type="hidden" name="items['+idx+'][status]" value="pending"><span class="badge badge-secondary">Pending</span>'
       : '<select name="items['+idx+'][status]" class="form-control status-select" style="font-size:12px!important;">'
-        +['pending','draft','confirmed','shipped','delivered'].map(function(s){
-          return '<option value="'+s+'"'+(it.status&&it.status==s?' selected':'')+'>'+s.charAt(0).toUpperCase()+s.slice(1)+'</option>';
-        }).join('')+'</select>';
+        + ['pending','draft','confirmed','shipped','delivered'].map(function(s){
+            return '<option value="'+s+'"'+(it.status && it.status == s ? ' selected' : '')+'>'+s.charAt(0).toUpperCase()+s.slice(1)+'</option>';
+          }).join('')
+        + '</select>';
 
     return '<tr>'
       +'<td>'
-        +(
-            IS_SUPER_ADMIN
-            ? '<select name="items['+idx+'][article_number]" class="form-control article-select">'
-                + artOpts +
-              '</select>'
-            : '<input type="text" class="form-control" value="'+esc(
-              (function () {
-                  var found = ITEMS.find(function(i){
-                      return i.id == it.item_id;
-                  });
-                  return found ? found.article_number : '';
-              })()
-          )+'" readonly>'
-          + '<input type="hidden" name="items['+idx+'][article_number]" value="'+esc(
-              (function () {
-                  var found = ITEMS.find(function(i){
-                      return i.id == it.item_id;
-                  });
-                  return found ? found.article_number : '';
-              })()
-          )+'">'
+        +(IS_SUPER_ADMIN
+          ? '<select name="items['+idx+'][article_number]" class="form-control article-select">'+artOpts+'</select>'
+          : (function(){
+              var found = ITEMS.find(function(i){ return i.id == it.item_id; });
+              var artNum = found ? found.article_number : '';
+              return '<input type="text" class="form-control" value="'+esc(artNum)+'" readonly>'
+                   + '<input type="hidden" name="items['+idx+'][article_number]" value="'+esc(artNum)+'">';
+            })()
         )
         +'<input type="hidden" name="items['+idx+'][item_id]" class="item-id-hidden" value="'+(it.item_id||'')+'">'
       +'</td>'
       +'<td><input type="text" name="items['+idx+'][item_name]" class="form-control item-name-input" value="'+(it.item_name||'')+'" readonly></td>'
-      +(
-        IS_SUPER_ADMIN
+      +(IS_SUPER_ADMIN
         ? '<td class="color-cell"><select name="items['+idx+'][color][]" class="form-control color-select" multiple>'+colOpts+'</select></td>'
         : (function(){
-            var sel = normalizeArr(it.color||it.color_id||[]);
-            var names = sel.map(function(id){ var c = COLORS.find(function(x){ return String(x.id)==String(id); }); return c?c.name:''; }).filter(Boolean).join(', ');
-            var hidden = sel.map(function(id){ return '<input type="hidden" name="items['+idx+'][color][]" value="'+esc(id)+'">'; }).join('');
+            var sel   = normalizeArr(it.color || it.color_id || []);
+            var names = sel.map(function(id){
+              var c = COLORS.find(function(x){ return String(x.id) == String(id); });
+              return c ? c.name : '';
+            }).filter(Boolean).join(', ');
+            var hidden = sel.map(function(id){
+              return '<input type="hidden" name="items['+idx+'][color][]" value="'+esc(id)+'">';
+            }).join('');
             return '<td class="color-cell"><input type="text" class="form-control color-read" readonly value="'+esc(names)+'">'+hidden+'</td>';
           })()
       )
       +'<td>'
         +'<select name="items['+idx+'][sizes][]" class="size-select d-none" multiple>'+sizeOpts+'</select>'
         +'<div class="size-chips-wrap">'+sizeChips+'</div>'
-        +(
-            IS_SUPER_ADMIN
-            ? '<div class="size-qty-wrapper size-qty-panel" style="display:none;"></div>'
-            : '<div class="form-control size-readonly-box" readonly>'
-                + (it.sizes ? normalizeArr(it.sizes).join(', ') : '')
-              + '</div>'
-          )
+        +(IS_SUPER_ADMIN
+          ? '<div class="size-qty-wrapper size-qty-panel" style="display:none;"></div>'
+          : '<div class="form-control size-readonly-box" readonly>'
+              + (it.sizes ? normalizeArr(it.sizes).join(', ') : '')
+            + '</div>'
+        )
       +'</td>'
       +'<td><input type="text" name="items['+idx+'][description]" class="form-control desc" value="'+(it.description||'')+'" readonly></td>'
-      +'<td><input type="number" step="0.01" name="items['+idx+'][quantity]" class="form-control qty" value="'+(it.quantity||0)+'" readonly color:var(--brand)!important;"></td>'
+      +'<td><input type="number" step="0.01" name="items['+idx+'][quantity]" class="form-control qty" value="'+(it.quantity||0)+'" readonly></td>'
       +'<td><input type="number" step="0.01" name="items['+idx+'][rate]" class="form-control rate" value="'+(it.rate||0)+'" readonly></td>'
       +'<td><input type="number" step="0.01" name="items['+idx+'][tax_rate]" class="form-control tax" value="'+(it.tax_rate||0)+'" readonly></td>'
       +'<td><input type="number" step="0.01" name="items['+idx+'][total]" class="form-control total" value="'+(it.total||0)+'" readonly></td>'
@@ -852,16 +891,13 @@ $(function () {
 
   /* ── Add Row ─────────────────────────────────────────────────────────── */
   $('#addItem').on('click', function(){
-    if (!IS_SUPER_ADMIN) {
-      alert('Not allowed');
-      return;
-    }
+    if (!IS_SUPER_ADMIN) { alert('Not allowed'); return; }
     $('#itemTable tbody').append(buildRow(rowCounter));
     var $new = $('#itemTable tbody tr:last');
     $new.find('.color-select').select2({ placeholder:'Colors…', width:'100%' });
+    $new.find('.article-select').select2({ placeholder:'Article', width:'100%' });
     rowCounter++;
     recalc();
-    // Update all row numbers
     updateRowNumbers();
   });
 
@@ -879,36 +915,43 @@ $(function () {
     });
   }
 
-  /* ── Customer → addresses*/
+  /* ── Customer → addresses ────────────────────────────────────────────── */
   $('#customer_id').on('change', function(){
     var id = $(this).val();
     if (!id) { $('#billing_address,#shipping_address').val(''); return; }
     fetch("{{ url('customer') }}/" + id)
       .then(function(r){ return r.ok ? r.json() : Promise.reject(r.status); })
       .then(function(d){
-        $('#billing_address').val(d.billing_address||'');
-        $('#shipping_address').val(d.shipping_address||'');
+        $('#billing_address').val(d.billing_address || '');
+        $('#shipping_address').val(d.shipping_address || '');
       })
       .catch(function(){ $('#billing_address,#shipping_address').val(''); });
   });
 
   /* ── Init Select2 on existing rows ──────────────────────────────────── */
   if ($.fn.select2) {
-    $('.color-select').select2({ placeholder:'Colors…', width:'100%' });
+    // We explicitly do NOT call .trigger('change') here to avoid spurious qty updates.
+    $('.color-select').each(function(){
+      $(this).select2({ placeholder:'Colors…', width:'100%' });
+    });
+    $('.article-select').each(function(){
+      $(this).select2({ placeholder:'Article', width:'100%' });
+    });
   }
 
   // Init size chip states for old() data rows
   $('#itemTable tbody tr').each(function(){
-    var $row = $(this);
-    var selected = $row.find('.size-select').val() || [];
+    var $row     = $(this);
+    var selected = ($row.find('.size-select').val() || []).map(String);
     if (selected.length) {
       $row.find('.size-chip').each(function(){
         $(this).toggleClass('active', selected.indexOf(String($(this).data('size'))) !== -1);
       });
-      // Ensure panel is visible (it was rendered server-side)
       if ($row.find('.size-qty-wrapper .size-qty-item').length) {
         $row.find('.size-qty-wrapper').show();
         updateTotalQtyBadge($row);
+        // Ensure qty field reflects actual size-qty sum (not doubled by colors)
+        updateRowQty($row);
       }
     }
   });
@@ -936,82 +979,106 @@ $(function () {
   if (Array.isArray(PRE_ITEMS) && PRE_ITEMS.length) {
     $('#itemTable tbody tr').each(function(){
       var $r = $(this);
-      if (!$r.find('.article-select').val() && !$r.find('.item-id-hidden').val() && !$r.find('.item-name-input').val()) $r.remove();
+      if (!$r.find('.article-select').val() && !$r.find('.item-id-hidden').val() && !$r.find('.item-name-input').val()) {
+        $r.remove();
+      }
     });
     rowCounter = $('#itemTable tbody tr').length;
 
     PRE_ITEMS.forEach(function(it){
       var idx = rowCounter++;
       var rd = {
-        item_id: it.item_id||it.id||null, item_name: it.item_name||it.name||'',
-        rate: it.rate||0, tax_rate: it.tax_rate||0,
-        quantity: it.quantity||it.qty||0, description: it.description||'',
-        color: it.color||it.color_id||null,
-        sizes: it.sizes||it.size||null, size_quantities: it.size_quantities||null
+        item_id: it.item_id || it.id || null,
+        item_name: it.item_name || it.name || '',
+        rate: it.rate || 0,
+        tax_rate: it.tax_rate || 0,
+        quantity: it.quantity || it.qty || 0,
+        description: it.description || '',
+        color: it.color || it.color_id || null,
+        sizes: it.sizes || it.size || null,
+        size_quantities: it.size_quantities || null
       };
       $('#itemTable tbody').append(buildRow(idx, rd));
       var $tr = $('#itemTable tbody tr:last');
 
-      if ($.fn.select2) $tr.find('.color-select').select2({ placeholder:'Colors…', width:'100%' });
+      if ($.fn.select2) {
+        $tr.find('.color-select').select2({ placeholder:'Colors…', width:'100%' });
+        $tr.find('.article-select').select2({ placeholder:'Article', width:'100%' });
+      }
 
       if (rd.item_id) {
-        var fa = (function(){ var f=ITEMS.find(function(x){ return x.id==rd.item_id; }); return f?f.article_number:''; })();
+        var fa = (ITEMS.find(function(x){ return x.id == rd.item_id; }) || {}).article_number || '';
         if (fa) $tr.find('.article-select').val(fa).trigger('change');
       }
+
+      // Set colors without triggering any qty recalc
       if (rd.color) {
-        try { $tr.find('.color-select').val(normalizeArr(rd.color)).trigger('change.select2'); } catch(e){}
+        try {
+          $tr.find('.color-select').val(normalizeArr(rd.color));
+          if ($tr.find('.color-select').hasClass('select2-hidden-accessible')) {
+            $tr.find('.color-select').trigger('change.select2');
+          }
+        } catch(e){}
       }
+
       if (rd.sizes) {
-        var sv = Array.isArray(rd.sizes) ? rd.sizes : String(rd.sizes).split(',').map(function(s){ return s.trim(); });
+        var sv = Array.isArray(rd.sizes)
+          ? rd.sizes
+          : String(rd.sizes).split(',').map(function(s){ return s.trim(); });
         $tr.find('.size-select').val(sv);
         rebuildSizePanel($tr);
-        if (rd.size_quantities && typeof rd.size_quantities==='object') {
+
+        // Apply saved size_quantities after panel is built
+        if (rd.size_quantities && typeof rd.size_quantities === 'object') {
           Object.keys(rd.size_quantities).forEach(function(sz){
             $tr.find('.size-qty-item[data-size="'+sz+'"] .size-qty').val(rd.size_quantities[sz]);
           });
           updateTotalQtyBadge($tr);
-          updateRowQty($tr);
+          updateRowQty($tr);   // qty = sum of sizes only
         }
       }
 
-      try {
+      // BUG FIX #8: Final qty sync — always derive from size_quantities sum.
+      // Never multiply by color count.
+      (function(){
         var finalQty = 0;
         if (rd.size_quantities && typeof rd.size_quantities === 'object') {
-          Object.keys(rd.size_quantities).forEach(function(sz){ finalQty += parseFloat(rd.size_quantities[sz])||0; });
+          Object.keys(rd.size_quantities).forEach(function(sz){
+            finalQty += parseFloat(rd.size_quantities[sz]) || 0;
+          });
         }
         if (!finalQty) {
-          finalQty = parseFloat(rd.quantity)||parseFloat(rd.qty)||0;
+          // Fallback to the stored quantity field if no size breakdown available
+          finalQty = parseFloat(rd.quantity) || parseFloat(rd.qty) || 0;
         }
         $tr.find('.qty').val(finalQty);
-      } catch(e) {
-        // ignore
-      }
+      })();
     });
+
     updateRowNumbers();
     recalc();
   }
 
+  /* ── Variant Drawer ──────────────────────────────────────────────────── */
   var activeVariantRow = null;
   var drawerSizes = [];
-  var drawerQtys = {};
+  var drawerQtys  = {};
 
   function variantEscape(value) {
-    return String(value).replace(/[&<>"']/g, function(ch) {
-      return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' })[ch];
+    return String(value).replace(/[&<>"']/g, function(ch){
+      return({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'})[ch];
     });
   }
 
   function variantRowLabel($row) {
     var article = $row.find('.article-select').val() || $row.find('input[name$="[article_number]"]').val() || '';
-    var item = $row.find('.item-name-input').val() || 'Selected item';
+    var item    = $row.find('.item-name-input').val() || 'Selected item';
     return article ? item + ' (' + article + ')' : item;
   }
 
   function variantSizeOptions($row) {
     var opts = [];
-    $row.find('.size-select option').each(function() {
-      opts.push(String($(this).val()));
-    });
+    $row.find('.size-select option').each(function(){ opts.push(String($(this).val())); });
     return opts.length ? opts : ALL_SIZES.map(String);
   }
 
@@ -1021,32 +1088,33 @@ $(function () {
 
   function variantQtyMap($row) {
     var qtys = {};
-    $row.find('.size-qty').each(function() {
+    $row.find('.size-qty').each(function(){
       var size = $(this).closest('[data-size]').data('size');
-      if (size !== undefined) {
-        qtys[String(size)] = parseFloat($(this).val()) || 0;
-      }
+      if (size !== undefined) qtys[String(size)] = parseFloat($(this).val()) || 0;
     });
     return qtys;
   }
 
   function refreshVariantCell($row) {
     if (!IS_SUPER_ADMIN) return;
-
     var $cell = $row.find('td').has('.size-select').first();
     if (!$cell.length) return;
 
-    var sizes = variantSelectedSizes($row);
-    var qtys = variantQtyMap($row);
-    var totalQty = sizes.reduce(function(sum, size) {
+    var sizes    = variantSelectedSizes($row);
+    var qtys     = variantQtyMap($row);
+    var colors   = colorCount($row);
+    // totalQty = sum of size quantities × number of colors
+    var totalQty = sizes.reduce(function(sum, size){
       return sum + (parseFloat(qtys[size]) || 0);
-    }, 0);
-    var chips = sizes.map(function(size) {
+    }, 0) * colors;
+
+    var chips = sizes.map(function(size){
       var qty = qtys[size] || 0;
-      return '<span class="variant-mini-chip">' + variantEscape(size) + ' x ' + variantEscape(qty) + '</span>';
+      return '<span class="variant-mini-chip">'+variantEscape(size)+' x '+variantEscape(qty)+'</span>';
     }).join('');
+
     var summary = sizes.length
-      ? '<span class="variant-count-pill">' + sizes.length + ' Variants Added</span><div class="variant-chip-list">' + chips + '</div>'
+      ? '<span class="variant-count-pill">'+sizes.length+' Variants Added</span><div class="variant-chip-list">'+chips+'</div>'
       : '<span class="variant-empty-text">No Variants Added</span>';
     var buttonText = sizes.length ? 'Edit Variants' : 'Add Variants';
 
@@ -1057,47 +1125,51 @@ $(function () {
     $row.find('.size-chips-wrap,.size-qty-wrapper').hide();
     $cell.find('.variant-table-summary').remove();
     $cell.prepend(
-      '<div class="variant-table-summary">' + summary +
-      '<button type="button" class="variant-edit-btn"><i class="fas fa-pencil-alt mr-1"></i>' + buttonText + '</button></div>'
+      '<div class="variant-table-summary">'+summary
+      +'<button type="button" class="variant-edit-btn"><i class="fas fa-pencil-alt mr-1"></i>'+buttonText+'</button></div>'
     );
   }
 
   function refreshAllVariantCells() {
-    $('#itemTable tbody tr').each(function() {
-      refreshVariantCell($(this));
-    });
+    $('#itemTable tbody tr').each(function(){ refreshVariantCell($(this)); });
   }
 
   function renderVariantDrawer() {
-    $('#variantDrawerSizes').html(variantSizeOptions(activeVariantRow).map(function(size) {
-      var active = drawerSizes.indexOf(String(size)) !== -1 ? ' active' : '';
-      return '<button type="button" class="variant-drawer-size' + active + '" data-size="' + variantEscape(size) + '">' + variantEscape(size) + '</button>';
-    }).join(''));
+    $('#variantDrawerSizes').html(
+      variantSizeOptions(activeVariantRow).map(function(size){
+        var active = drawerSizes.indexOf(String(size)) !== -1 ? ' active' : '';
+        return '<button type="button" class="variant-drawer-size'+active+'" data-size="'+variantEscape(size)+'">'+variantEscape(size)+'</button>';
+      }).join('')
+    );
 
-    $('#variantSelectedList').html(drawerSizes.map(function(size) {
-      var qty = drawerQtys[size] || 1;
-      return '<div class="variant-selected-row" data-size="' + variantEscape(size) + '">' +
-        '<span class="variant-selected-name">' + variantEscape(size) + '</span>' +
-        '<div class="size-stepper">' +
-          '<button type="button" class="stepper-btn variant-drawer-minus">-</button>' +
-          '<input type="text" class="size-qty variant-drawer-qty" value="' + variantEscape(qty) + '" readonly>' +
-          '<button type="button" class="stepper-btn variant-drawer-plus">+</button>' +
-        '</div>' +
-      '</div>';
-    }).join('') || '<div class="variant-selected-empty">Select sizes from above</div>');
+    $('#variantSelectedList').html(
+      drawerSizes.map(function(size){
+        var qty = drawerQtys[size] || 1;
+        return '<div class="variant-selected-row" data-size="'+variantEscape(size)+'">'
+          +'<span class="variant-selected-name">'+variantEscape(size)+'</span>'
+          +'<div class="size-stepper">'
+            +'<button type="button" class="stepper-btn variant-drawer-minus">-</button>'
+            +'<input type="text" class="size-qty variant-drawer-qty" value="'+variantEscape(qty)+'" readonly>'
+            +'<button type="button" class="stepper-btn variant-drawer-plus">+</button>'
+          +'</div>'
+          +'</div>';
+      }).join('') || '<div class="variant-selected-empty">Select sizes from above</div>'
+    );
 
-    var total = drawerSizes.reduce(function(sum, size) {
+    // Total = sum of size qtys × colors selected on that row
+    var colorMult = activeVariantRow ? colorCount(activeVariantRow) : 1;
+    var total = drawerSizes.reduce(function(sum, size){
       return sum + (parseFloat(drawerQtys[size]) || 0);
-    }, 0);
-    $('#variantDrawerTotal').text(total);
+    }, 0) * colorMult;
+    $('#variantDrawerTotal').text(total + (colorMult > 1 ? ' ('+( total/colorMult )+' × '+colorMult+' colors)' : ''));
   }
 
   function openVariantDrawer($row) {
     if (!IS_SUPER_ADMIN) return;
     activeVariantRow = $row;
     drawerSizes = variantSelectedSizes($row);
-    drawerQtys = variantQtyMap($row);
-    drawerSizes.forEach(function(size) {
+    drawerQtys  = variantQtyMap($row);
+    drawerSizes.forEach(function(size){
       if (!drawerQtys[size]) drawerQtys[size] = 1;
     });
     $('#variantDrawerItem').text(variantRowLabel($row));
@@ -1111,18 +1183,29 @@ $(function () {
     $('body').removeClass('variant-drawer-open');
     activeVariantRow = null;
     drawerSizes = [];
-    drawerQtys = {};
+    drawerQtys  = {};
   }
 
   function applyVariantDrawer() {
     if (!activeVariantRow) return;
+
+    // 1. Commit selected sizes to the hidden select
     activeVariantRow.find('.size-select').val(drawerSizes);
+
+    // 2. Wipe panel so rebuildSizePanel starts with clean oldQtys = {}
+    activeVariantRow.find('.size-qty-wrapper').html('');
+
+    // 3. Rebuild panel (will find no oldQtys → sets all to 0)
     rebuildSizePanel(activeVariantRow);
-    drawerSizes.forEach(function(size) {
-      activeVariantRow.find('[data-size]').filter(function() {
-        return String($(this).data('size')) === String(size);
-      }).find('.size-qty').val(drawerQtys[size] || 1);
+
+    // 4. Apply drawer quantities — these are the authoritative values
+    drawerSizes.forEach(function(size){
+      activeVariantRow
+        .find('.size-qty-item[data-size="'+size+'"] .size-qty')
+        .val(drawerQtys[size] || 1);
     });
+
+    // 5. Recompute totals from the freshly written qty inputs
     updateTotalQtyBadge(activeVariantRow);
     updateRowQty(activeVariantRow);
     recalc();
@@ -1130,41 +1213,42 @@ $(function () {
     closeVariantDrawer();
   }
 
-  $(document).on('click', '.variant-edit-btn', function() {
+  $(document).on('click', '.variant-edit-btn', function(){
     openVariantDrawer($(this).closest('tr'));
   });
   $(document).on('click', '[data-variant-close]', closeVariantDrawer);
-  $('#variantDrawerBackdrop').on('click', function(event) {
-    if (event.target === this) closeVariantDrawer();
+  $('#variantDrawerBackdrop').on('click', function(e){
+    if (e.target === this) closeVariantDrawer();
   });
-  $(document).on('click', '.variant-drawer-size', function() {
+  $(document).on('click', '.variant-drawer-size', function(){
     var size = String($(this).data('size'));
     if (drawerSizes.indexOf(size) === -1) {
       drawerSizes.push(size);
       drawerQtys[size] = drawerQtys[size] || 1;
     } else {
-      drawerSizes = drawerSizes.filter(function(item) { return item !== size; });
+      drawerSizes = drawerSizes.filter(function(item){ return item !== size; });
       delete drawerQtys[size];
     }
     renderVariantDrawer();
   });
-  $(document).on('click', '.variant-drawer-plus,.variant-drawer-minus', function() {
+  $(document).on('click', '.variant-drawer-plus,.variant-drawer-minus', function(){
     var size = String($(this).closest('.variant-selected-row').data('size'));
-    var qty = parseFloat(drawerQtys[size]) || 0;
+    var qty  = parseFloat(drawerQtys[size]) || 0;
     drawerQtys[size] = $(this).hasClass('variant-drawer-plus') ? qty + 1 : Math.max(1, qty - 1);
     renderVariantDrawer();
   });
-  $('#variantClearAll').on('click', function() {
+  $('#variantClearAll').on('click', function(){
     drawerSizes = [];
-    drawerQtys = {};
+    drawerQtys  = {};
     renderVariantDrawer();
   });
   $('#variantSaveBtn').on('click', applyVariantDrawer);
-  $(document).on('change', '.article-select', function() {
+
+  $(document).on('change', '.article-select', function(){
     var $row = $(this).closest('tr');
-    setTimeout(function() { refreshVariantCell($row); }, 0);
+    setTimeout(function(){ refreshVariantCell($row); }, 0);
   });
-  $('#addItem').on('click', function() {
+  $('#addItem').on('click', function(){
     setTimeout(refreshAllVariantCells, 0);
   });
 

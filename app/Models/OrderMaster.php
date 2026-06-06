@@ -11,7 +11,7 @@ class OrderMaster extends Model
 
     protected $fillable = [
         'user_id','date','eway_bill_number','transport_number','lr_number',
-        'billing_address','shipping_address','subtotal','discount','adjustment','grand_total',
+        'billing_address','shipping_address','subtotal','discount','markdown','adjustment','grand_total',
         'terms','notes','status','expected_date',
         'distributor_id','distributor_approved','distributor_approved_at','visible_to_superadmin','approval_level'
     ];

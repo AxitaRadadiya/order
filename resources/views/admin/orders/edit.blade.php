@@ -43,7 +43,7 @@
             <div class="col-md-6">
               <div class="form-group">
                 <label>Customer Name <span class="text-danger">*</span></label>
-                <select name="user_id" id="customer_id" class="form-control">
+                <select name="user_id" id="customer_id" class="form-control select2">
                   <option value="">-- Select Customer --</option>
                   @foreach($customers as $c)
                     <option value="{{ $c->id }}"
@@ -485,6 +485,18 @@
                            readonly value="{{ old('subtotal', $order->subtotal ?? 0) }}">
                   </div>
                   <div class="d-flex justify-content-between py-1">
+                    <strong>Mark Down (%)</strong>
+                    @if(auth()->user() && auth()->user()->hasRole(['super-admin', 'superadmin']))
+                      <input type="number" step="0.01" name="markdown" id="markdown"
+                             class="form-control form-control-sm w-50 text-right"
+                             value="{{ old('markdown', $order->markdown ?? 0) }}">
+                    @else
+                      <input type="number" step="0.01" name="markdown" id="markdown"
+                             class="form-control form-control-sm w-50 text-right" readonly
+                             value="{{ old('markdown', $order->markdown ?? 0) }}">
+                    @endif
+                  </div>
+                  <div class="d-flex justify-content-between py-1">
                     <strong>Discount</strong>
                     @if(auth()->user() && auth()->user()->hasRole(['super-admin', 'superadmin']))
                       <input type="number" step="0.01" name="discount" id="discount"
@@ -661,6 +673,18 @@ $(function () {
     }
   }
 
+  // Returns the number of colors selected in a row (minimum 1 so qty is never zeroed)
+  function colorCount($row) {
+    var $cs = $row.find('.color-select');
+    if ($cs.length) {
+      var val = $cs.val() || [];
+      return Math.max(1, val.length);
+    }
+    // non-super-admin: count hidden color inputs
+    var hidden = $row.find('input[type=hidden][name$="[color][]"]').length;
+    return Math.max(1, hidden);
+  }
+
   function rebuildSizePanel($row) {
     var idx = rowIndex($row);
     var $select = $row.find('.size-select');
@@ -712,7 +736,8 @@ $(function () {
   function updateTotalQtyBadge($row) {
     var tot = 0;
     $row.find('.size-qty').each(function(){ tot += parseFloat($(this).val())||0; });
-    $row.find('.total-qty-badge').text(tot);
+    var colors = colorCount($row);
+    $row.find('.total-qty-badge').text(tot + ' × ' + colors + ' colors = ' + (tot * colors));
   }
 
   // size-chip click
@@ -775,15 +800,11 @@ $(function () {
   }
 
   function updateRowQty($row) {
-    if (!$row.find('.size-qty').length) {
-      return;
-    }
-
-    var qty = 0;
-    $row.find('.size-qty').each(function() {
-      qty += parseFloat($(this).val()) || 0;
-    });
-    $row.find('.qty').val(qty);
+    if (!$row.find('.size-qty').length) return;
+    var sizeSum = 0;
+    $row.find('.size-qty').each(function(){ sizeSum += parseFloat($(this).val()) || 0; });
+    var colors = colorCount($row);
+    $row.find('.qty').val(sizeSum * colors);
   }
 
   // ── Recalculate totals ───────────────────────────────────────────────────
@@ -800,13 +821,22 @@ $(function () {
       subtotal += tot;
     });
     $('#subtotal').val(subtotal.toFixed(2));
+    var markdownPercent = parseFloat($('#markdown').val()) || 0;
     var grand = subtotal
+              - (subtotal * markdownPercent / 100)
               - (parseFloat($('#discount').val())   || 0)
               + (parseFloat($('#adjustment').val()) || 0);
     $('#grand_total').val(grand.toFixed(2));
   }
 
   $(document).on('input', '.size-qty,.rate,.tax', recalc);
+  // Color change → re-run qty × color multiplication and update totals
+  $(document).on('change', '.color-select', function(){
+    var $row = $(this).closest('tr');
+    updateTotalQtyBadge($row);
+    updateRowQty($row);
+    recalc();
+  });
   $(document).on('change', '.size-select', function() {
     var $row = $(this).closest('tr');
     if (IS_SUPER_ADMIN) {
@@ -816,7 +846,7 @@ $(function () {
     }
     recalc();
   });
-  $('#discount,#adjustment').on('input', recalc);
+  $('#markdown,#discount,#adjustment').on('input', recalc);
 
   // ── Auto-fill row when item selected ─────────────────────────────────────
   $(document).on('change', '.article-select', function () {
@@ -953,6 +983,7 @@ $(function () {
     // initialize Select2 on newly appended row
     var $new = $('#itemsTable tbody tr:last');
     $new.find('.color-select').select2({ placeholder: 'Colors', width: '100%' });
+    $new.find('.article-select').select2({ placeholder: 'Article', width: '100%' });
     // initialize size chips / panel
     if (IS_SUPER_ADMIN) {
       $new.find('.size-chips-wrap').html(ALL_SIZES.map(function(s){ return '<button type="button" class="size-chip" data-size="'+escapeHtml(s)+'">'+escapeHtml(s)+'</button>'; }).join(''));
@@ -1105,6 +1136,7 @@ $(function () {
     }));
 
     var $tr = $('#itemsTable tbody tr:last');
+    if ($.fn.select2) { $tr.find('.article-select').select2({ placeholder: 'Article', width: '100%' }); }
     $tr.find('.item-name-hidden').val(itemName);
     $tr.find('.item-select').val(itemId);
     // set article-select value (find article_number from ITEMS by id)
@@ -1166,9 +1198,10 @@ $(function () {
 
     var sizes = variantSelectedSizes($row);
     var qtys = variantQtyMap($row);
+    var colors = colorCount($row);
     var totalQty = sizes.reduce(function(sum, size) {
       return sum + (parseFloat(qtys[size]) || 0);
-    }, 0);
+    }, 0) * colors;
     var chips = sizes.map(function(size) {
       var qty = qtys[size] || 0;
       return '<span class="variant-mini-chip">' + variantEscape(size) + ' x ' + variantEscape(qty) + '</span>';
@@ -1214,10 +1247,12 @@ $(function () {
       '</div>';
     }).join('') || '<div class="variant-selected-empty">Select sizes from above</div>');
 
+    // Total = sum of size qtys × colors selected on that row
+    var colorMult = activeVariantRow ? colorCount(activeVariantRow) : 1;
     var total = drawerSizes.reduce(function(sum, size) {
       return sum + (parseFloat(drawerQtys[size]) || 0);
-    }, 0);
-    $('#variantDrawerTotal').text(total);
+    }, 0) * colorMult;
+    $('#variantDrawerTotal').text(total + (colorMult > 1 ? ' ('+( total/colorMult )+' × '+colorMult+' colors)' : ''));
   }
 
   function openVariantDrawer($row) {
@@ -1302,6 +1337,7 @@ $(function () {
 
   if ($.fn.select2) {
     $('.color-select').select2({ placeholder: 'Colors', width: '100%' });
+    $('.article-select').select2({ placeholder: 'Article', width: '100%' });
   }
 
   // Init size chip states for existing rows
