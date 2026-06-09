@@ -10,6 +10,7 @@ use App\Models\Size;
 use App\Models\SubCategory;
 use App\Models\SubGroup;
 use App\Models\Color;
+use App\Models\TaxMaster; 
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -37,8 +38,9 @@ class ItemController extends Controller
             'sub_categories' => SubCategory::orderBy('name')->get(),
             'sub_groups'     => SubGroup::orderBy('name')->get(),
             'colors'         => Color::orderBy('name')->get(),
-            'sizes'          => Size::orderBy('name')->pluck('name')->toArray(),
+            'sizes'          => Size::orderBy('name')->get(),
             'generatedItemCode' => Item::generateSequentialCode(),
+            'taxes'          => TaxMaster::orderBy('tax_percentage')->get(),
         ]);
     }
 
@@ -50,15 +52,20 @@ class ItemController extends Controller
             'item_code'        => 'nullable|string|max:100|unique:items,item_code',
             'sub_category'     => 'nullable|exists:sub_categories,id',
             'sub_group'        => 'nullable|exists:sub_groups,id',
-            'colors'           => 'nullable|array',
-            'colors.*'         => 'nullable|exists:colors,id',
-            'sizes'            => 'nullable|array',
+            // 'colors'           => 'nullable|array',
+            // 'colors.*'         => 'nullable|exists:colors,id',
+            // 'sizes'            => 'nullable|array',
+            'variants' => 'required|array|min:1',
+            'variants.*.color_id' => 'required|exists:colors,id',
+            'variants.*.size_id' => 'required|exists:sizes,id',
+            'variants.*.quantity' => 'required|integer|min:0',
             'description'      => 'nullable|string',
             'category_id'      => 'nullable|exists:categories,id',
             'group_id'         => 'nullable|exists:groups,id',
             'unit'             => 'nullable|string|max:50',
             'price'            => 'required|numeric|min:0',
-            'tax_percent'      => 'nullable|numeric|min:0',
+            'tax_id'           => 'nullable|exists:tax_masters,id',
+            'video_link'       => 'nullable|url',
             // images[] — up to 5 files, jpg/png only, max 2 MB each
             'images'           => 'nullable|array|max:5',
             'images.*'         => 'image|mimes:jpg,jpeg,png|max:2048',
@@ -105,26 +112,58 @@ class ItemController extends Controller
         $validated['show_item_on_web'] = (int) ($validated['show_item_on_web'] ?? 1);
 
         // Extract colors (pivot) before creating — no `colors` column on items table
-        $colors = $validated['colors'] ?? null;
-        unset($validated['colors']);
+        // $colors = $validated['colors'] ?? null;
+        // unset($validated['colors']);
+
+        $variants = $validated['variants'] ?? [];
+
+        $combinations = [];
+
+        foreach ($variants as $variant) {
+
+            $key = $variant['color_id'] . '_' . $variant['size_id'];
+
+            if (in_array($key, $combinations)) {
+
+                return back()
+                    ->withInput()
+                    ->withErrors([
+                        'variants' => 'Duplicate Color + Size combination is not allowed.'
+                    ]);
+            }
+
+            $combinations[] = $key;
+        }
+
+        $variants = $validated['variants'] ?? [];
+        unset($validated['variants']);
 
         $item = Item::create($validated);
 
-        if (!empty($colors)) {
-            $item->colors()->sync($colors);
+        foreach ($variants as $variant) {
+            $item->variants()->create([
+                'color_id' => $variant['color_id'],
+                'size_id' => $variant['size_id'],
+                'quantity' => $variant['quantity'],
+            ]);
         }
+        // if (!empty($colors)) {
+        //     $item->colors()->sync($colors);
+        // }
 
         return redirect()->route('items.index')->withSuccess('Item created successfully.');
     }
 
     public function show(Item $item): View
     {
-        $item->load(['category', 'group']);
+        $item->load(['category', 'group', 'variants.color', 'variants.size']);
         return view('admin.items.show', compact('item'));
     }
 
     public function edit(Item $item): View
     {
+        $item->load('variants');
+
         return view('admin.items.edit', [
             'item'           => $item,
             'categories'     => Category::orderBy('name')->get(),
@@ -132,7 +171,8 @@ class ItemController extends Controller
             'sub_categories' => SubCategory::orderBy('name')->get(),
             'sub_groups'     => SubGroup::orderBy('name')->get(),
             'colors'         => Color::orderBy('name')->get(),
-            'sizes'          => Size::orderBy('name')->pluck('name')->toArray(),
+            'sizes'          => Size::orderBy('name')->get(),
+            'taxes'          => TaxMaster::orderBy('tax_percentage')->get(),
         ]);
     }
 
@@ -144,15 +184,20 @@ class ItemController extends Controller
             'item_code'        => 'nullable|string|max:100|unique:items,item_code,' . $item->id,
             'sub_category'     => 'nullable|exists:sub_categories,id',
             'sub_group'        => 'nullable|exists:sub_groups,id',
-            'colors'           => 'nullable|array',
-            'colors.*'         => 'nullable|exists:colors,id',
-            'sizes'            => 'nullable|array',
+            // 'colors'           => 'nullable|array',
+            // 'colors.*'         => 'nullable|exists:colors,id',
+            // 'sizes'            => 'nullable|array',
+            'variants' => 'required|array|min:1',
+            'variants.*.color_id' => 'required|exists:colors,id',
+            'variants.*.size_id' => 'required|exists:sizes,id',
+            'variants.*.quantity' => 'required|integer|min:0',
             'description'      => 'nullable|string',
             'category_id'      => 'nullable|exists:categories,id',
             'group_id'         => 'nullable|exists:groups,id',
             'unit'             => 'nullable|string|max:50',
             'price'            => 'required|numeric|min:0',
-            'tax_percent'      => 'nullable|numeric|min:0',
+            'tax_id'           => 'nullable|exists:tax_masters,id',
+            'video_link'       => 'nullable|url',
             // images[] — up to 5 files, jpg/png only, max 2 MB each
             'images'           => 'nullable|array|max:5',
             'images.*'         => 'image|mimes:jpg,jpeg,png|max:2048',
@@ -222,17 +267,50 @@ class ItemController extends Controller
         }
 
         // Extract colors (pivot) before updating — no `colors` column on items table
-        $colors = $validated['colors'] ?? null;
-        unset($validated['colors']);
+        // $colors = $validated['colors'] ?? null;
+        // unset($validated['colors']);
 
         $validated['status']           = (int) ($validated['status'] ?? 1);
         $validated['show_item_on_web'] = (int) ($validated['show_item_on_web'] ?? 1);
 
+        $variants = $validated['variants'] ?? [];
+
+        $combinations = [];
+
+        foreach ($variants as $variant) {
+
+            $key = $variant['color_id'] . '_' . $variant['size_id'];
+
+            if (in_array($key, $combinations)) {
+
+                return back()
+                    ->withInput()
+                    ->withErrors([
+                        'variants' => 'Duplicate Color + Size combination is not allowed.'
+                    ]);
+            }
+
+            $combinations[] = $key;
+        }
+
+        $variants = $validated['variants'] ?? [];
+        unset($validated['variants']);
+
         $item->update($validated);
 
-        if (is_array($colors)) {
-            $item->colors()->sync($colors);
+        $item->variants()->delete();
+
+        foreach ($variants as $variant) {
+            $item->variants()->create([
+                'color_id' => $variant['color_id'],
+                'size_id' => $variant['size_id'],
+                'quantity' => $variant['quantity'],
+            ]);
         }
+
+        // if (is_array($colors)) {
+        //     $item->colors()->sync($colors);
+        // }
 
         return redirect()->route('items.index')->withSuccess('Item updated successfully.');
     }
@@ -369,7 +447,7 @@ class ItemController extends Controller
                 'colors'         => $item->colors->pluck('name')->toArray(),
                 'sizes'          => $sizes,
                 'price'          => (float) $item->price,
-                'tax_percent'    => (float) $item->tax_percent,
+                'tax_percent'    => (float) $item->tax->tax_percentage,
                 'image_url'      => $item->image_url,
                 'description'    => $item->description,
             ];

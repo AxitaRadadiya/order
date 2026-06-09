@@ -27,6 +27,8 @@ class Item extends Model
         'unit',
         'price',
         'tax_percent',
+        'tax_id',
+        'video_link',
         'status',
         'show_item_on_web',
     ];
@@ -58,6 +60,16 @@ class Item extends Model
     public function subGroup()
     {
         return $this->belongsTo(SubGroup::class, 'sub_group');
+    }
+
+    public function tax()
+    {
+        return $this->belongsTo(TaxMaster::class, 'tax_id');
+    }
+
+    public function variants()
+    {
+        return $this->hasMany(ItemVariant::class);
     }
 
     public function colors()
