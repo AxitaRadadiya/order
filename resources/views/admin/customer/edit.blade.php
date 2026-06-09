@@ -37,7 +37,7 @@
 
     @php $addr = $customer->address; $bank = $customer->bankDetail; @endphp
 
-    <form id="customerForm" action="{{ route('customers.update', $customer) }}" method="POST">
+    <form id="customerForm" action="{{ route('customers.update', $customer) }}" method="POST" enctype="multipart/form-data">
       @csrf @method('PUT')
 
       @if(!empty($isDistributorPanel) && $isDistributorPanel)
@@ -58,11 +58,20 @@
           <div class="row">
             <div class="col-md-3">
               <div class="form-group">
-                <label>Name <span class="text-danger">*</span></label>
-                <input type="text" class="form-control @error('name') is-invalid @enderror"
-                       name="name" value="{{ old('name', $customer->name) }}"
-                       placeholder="Full name" required>
-                @error('name')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                <label>First Name <span class="text-danger">*</span></label>
+                <input type="text" class="form-control @error('first_name') is-invalid @enderror"
+                       name="first_name" value="{{ old('first_name', $customer->first_name) }}"
+                       placeholder="First name" required>
+                @error('first_name')<div class="invalid-feedback">{{ $message }}</div>@enderror
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="form-group">
+                <label>Last Name <span class="text-danger">*</span></label>
+                <input type="text" class="form-control @error('last_name') is-invalid @enderror"
+                       name="last_name" value="{{ old('last_name', $customer->last_name) }}"
+                       placeholder="Last name" required>
+                @error('last_name')<div class="invalid-feedback">{{ $message }}</div>@enderror
               </div>
             </div>
             <div class="col-md-3">
@@ -131,6 +140,69 @@
 
             <div class="col-md-3">
               <div class="form-group">
+                <label>GST Number</label>
+                <input type="text" class="form-control" name="gst_number" value="{{ old('gst_number', $customer->gst_number) }}" placeholder="GST Number">
+              </div>
+            </div>
+
+            <div class="col-md-3">
+              <div class="form-group">
+                <label>PAN Number</label>
+                <input type="text" class="form-control" name="pan_number" value="{{ old('pan_number', $customer->pan_number) }}" placeholder="PAN Number">
+              </div>
+            </div>
+
+            <div class="col-md-3">
+              <div class="form-group">
+                <label>Profile Image</label>
+                <input type="file" name="profile_image" class="form-control">
+                @if(isset($customer) && $customer->profile_image)
+                    <img src="{{ asset('storage/' . $customer->profile_image) }}" width="80" class="mt-2 rounded">
+                @endif
+              </div>
+            </div>
+
+            <div class="col-md-3">
+              <div class="form-group">
+                <label>Shop Image</label>
+                <input type="file" name="shop_image" class="form-control">
+                @if(isset($customer) && $customer->shop_image)
+                    <img src="{{ asset('storage/' . $customer->shop_image) }}" width="80" class="mt-2 rounded">
+                @endif
+              </div>
+            </div>            
+
+            <div class="col-md-3">
+              <div class="form-group">
+                <label>PAN Card Image</label>
+                <input type="file" name="pan_card_image" class="form-control">
+                @if(isset($customer) && $customer->pan_card_image)
+                    <img src="{{ asset('storage/' . $customer->pan_card_image) }}" width="80" class="mt-2 rounded">
+                @endif
+              </div>
+            </div>
+
+            <div class="col-md-3">
+              <div class="form-group">
+                <label>GST Certificate Image</label>
+                <input type="file" name="gst_certificate_image" class="form-control">
+                @if(isset($customer) && $customer->gst_certificate_image)
+                    <img src="{{ asset('storage/' . $customer->gst_certificate_image) }}" width="80" class="mt-2 rounded">
+                @endif
+              </div>
+            </div>
+
+            <div class="col-md-3">
+              <div class="form-group">
+                <label>Google Location Link</label>
+                <input type="url" class="form-control @error('google_location_link') is-invalid @enderror"
+                       name="google_location_link" value="{{ old('google_location_link', $customer->google_location_link) }}">
+                @error('google_location_link')<div class="invalid-feedback">{{ $message }}</div>@enderror
+              </div>
+            </div>
+
+            <!-- <div class="col-md-3">
+              <div class="form-group">
                 <label>Password <small class="text-muted">(blank = keep current)</small></label>
                 <div class="input-group">
                   <input type="password" class="form-control @error('password') is-invalid @enderror"
@@ -149,7 +221,7 @@
                   @error('password_confirmation')<div class="invalid-feedback">{{ $message }}</div>@enderror
                 </div>
               </div>
-            </div>
+            </div> -->
             <div class="col-md-3">
               <div class="form-group">
                 <label>Status <span class="text-danger">*</span></label>
@@ -240,7 +312,7 @@
 
                 <div class="col-md-6">
                   <div class="form-group"><label>State</label>
-                    <select class="form-control bf" id="b_st" name="billing_state">
+                    <select class="form-control bf" id="b_st" name="billing_state" data-selected="{{ old('billing_state', $addr->billing_state ?? '') }}">
                       <option value="">-- Select State --</option>
                       @foreach($states as $state)
                         <option value="{{ $state->name }}"
@@ -255,7 +327,7 @@
 
                 <div class="col-md-6">
                   <div class="form-group"><label>City</label>
-                    <select class="form-control bf" id="b_cty" name="billing_city">
+                    <select class="form-control bf" id="b_cty" name="billing_city" data-selected="{{ old('billing_city', $addr->billing_city ?? '') }}">
                       <option value="">-- Select City --</option>
                       @foreach($cities as $city)
                         <option value="{{ $city->name }}"
@@ -278,14 +350,14 @@
                   </div>
                 </div>
 
-                <div class="col-md-12">
+                <!-- <div class="col-md-12">
                   <div class="form-group"><label>GST Number</label>
                     <input type="text" class="form-control bf upper" id="b_gst"
                            name="billing_gst_number"
                            value="{{ old('billing_gst_number', $addr->billing_gst_number ?? '') }}"
                            placeholder="GST Number">
                   </div>
-                </div>
+                </div> -->
               </div>
             </div>
           </div>
@@ -343,7 +415,7 @@
 
                <div class="col-md-6">
                   <div class="form-group"><label>State</label>
-                    <select class="form-control" id="s_st" name="shipping_state">
+                    <select class="form-control" id="s_st" name="shipping_state" data-selected="{{ old('shipping_state', $addr->shipping_state ?? '') }}">
                       <option value="">-- Select State --</option>
                       @foreach($states as $state)
                         <option value="{{ $state->name }}"
@@ -358,7 +430,7 @@
 
                 <div class="col-md-6">
                   <div class="form-group"><label>City</label>
-                    <select class="form-control" id="s_cty" name="shipping_city">
+                    <select class="form-control" id="s_cty" name="shipping_city" data-selected="{{ old('shipping_city', $addr->shipping_city ?? '') }}">
                       <option value="">-- Select City --</option>
                       @foreach($cities as $city)
                         <option value="{{ $city->name }}"
@@ -379,14 +451,14 @@
                   </div>
                 </div>
 
-                <div class="col-md-12">
+                <!-- <div class="col-md-12">
                   <div class="form-group"><label>GST Number</label>
                     <input type="text" class="form-control upper" id="s_gst"
                            name="shipping_gst_number"
                            value="{{ old('shipping_gst_number', $addr->shipping_gst_number ?? '') }}"
                            placeholder="GST Number">
                   </div>
-                </div>
+                </div> -->
               </div>
             </div>
           </div>

@@ -76,6 +76,7 @@ class User extends Authenticatable
 
     protected $fillable = [
         'name',
+        'first_name', 'last_name',
         'email',
         'password',
         'profile_image',
@@ -97,6 +98,13 @@ class User extends Authenticatable
         'credit_limit',
         'distributor_verified',
         'distributor_verified_at',
+        'shop_name',
+        'state_id',
+        'city_id',
+        'shop_image',
+        'pan_card_image',
+        'gst_certificate_image',
+        'google_location_link',
     ];
 
     protected $hidden = ['password', 'remember_token'];
@@ -129,7 +137,15 @@ class User extends Authenticatable
         return $this->hasMany(self::class, 'distributor_id');
     }
 
-    
+    public function state()
+    {
+        return $this->belongsTo(State::class);
+    }
+
+    public function city()
+    {
+        return $this->belongsTo(City::class);
+    }
 
     public function addresses()
     {
@@ -164,5 +180,74 @@ class User extends Authenticatable
         }
 
         return asset($path);
+    }
+
+    public function getShopImageUrlAttribute(): string
+    {
+        if (!$this->shop_image) {
+            return '';
+        }
+
+        if (Storage::disk('public')->exists($this->shop_image)) {
+            return Storage::url($this->shop_image);
+        }
+
+        return asset($this->shop_image);
+    }
+
+    public function getPanCardImageUrlAttribute(): string
+    {
+        if (!$this->pan_card_image) {
+            return '';
+        }
+
+        if (Storage::disk('public')->exists($this->pan_card_image)) {
+            return Storage::url($this->pan_card_image);
+        }
+
+        return asset($this->pan_card_image);
+    }
+
+    public function getGstCertificateImageUrlAttribute(): string
+    {
+        if (!$this->gst_certificate_image) {
+            return '';
+        }
+
+        if (Storage::disk('public')->exists($this->gst_certificate_image)) {
+            return Storage::url($this->gst_certificate_image);
+        }
+
+        return asset($this->gst_certificate_image);
+    }
+
+    protected static function booted()
+    {
+        static::saving(function ($user) {
+            $user->name = trim(
+                ($user->first_name ?? '') . ' ' .
+                ($user->last_name ?? '')
+            );
+        });
+    }
+
+    public function getNameAttribute($value): string
+    {
+        $first = $this->attributes['first_name'] ?? null;
+        $last = $this->attributes['last_name'] ?? null;
+
+        $full = trim((string) ($first ? $first : '') . ' ' . ($last ? $last : ''));
+
+        return $full !== '' ? $full : ($value ?? '');
+    }
+
+    public function setNameAttribute($value): void
+    {
+        $name = trim((string) $value);
+        $parts = preg_split('/\s+/', $name);
+
+        $this->attributes['first_name'] = $parts[0] ?? null;
+        $this->attributes['last_name'] = count($parts) > 1 ? implode(' ', array_slice($parts, 1)) : null;
+        $this->attributes['name'] = $name;
     }
 }

@@ -35,7 +35,7 @@
       </div>
     @endif
 
-    <form id="customerForm" action="{{ route('customers.store') }}" method="POST">
+    <form id="customerForm" action="{{ route('customers.store') }}" method="POST" enctype="multipart/form-data">
       @csrf
 
       @if(!empty($isDistributorPanel) && $isDistributorPanel)
@@ -56,10 +56,18 @@
           <div class="row">
             <div class="col-md-3">
               <div class="form-group">
-                <label>Name <span class="text-danger">*</span></label>
-                <input type="text" class="form-control @error('name') is-invalid @enderror"
-                       name="name" value="{{ old('name') }}" placeholder="Full name" required>
-                @error('name')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                <label>First Name <span class="text-danger">*</span></label>
+                <input type="text" class="form-control @error('first_name') is-invalid @enderror"
+                       name="first_name" value="{{ old('first_name') }}" placeholder="First name" required>
+                @error('first_name')<div class="invalid-feedback">{{ $message }}</div>@enderror
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="form-group">
+                <label>Last Name <span class="text-danger">*</span></label>
+                <input type="text" class="form-control @error('last_name') is-invalid @enderror"
+                       name="last_name" value="{{ old('last_name') }}" placeholder="Last name" required>
+                @error('last_name')<div class="invalid-feedback">{{ $message }}</div>@enderror
               </div>
             </div>
             <div class="col-md-3">
@@ -123,6 +131,56 @@
 
             <div class="col-md-3">
               <div class="form-group">
+                <label>GST Number</label>
+                <input type="text" class="form-control" name="gst_number" value="{{ old('gst_number') }}" placeholder="GST Number">
+              </div>
+            </div>
+
+            <div class="col-md-3">
+              <div class="form-group">
+                <label>PAN Number</label>
+                <input type="text" class="form-control" name="pan_number" value="{{ old('pan_number') }}" placeholder="PAN Number">
+              </div>
+            </div>
+
+            <div class="form-group col-md-3">
+              <label>Profile Image</label>
+              <input type="file" name="profile_image" class="form-control">
+              @if(isset($customer) && $customer->profile_image)
+                  <img src="{{ $customer->profile_image_url }}" width="80" class="mt-2 rounded">
+              @endif
+            </div>
+
+            <div class="form-group col-md-3">
+              <label>Shop Image</label>
+              <input type="file" name="shop_image" class="form-control">
+              @if(isset($customer) && $customer->shop_image)
+                  <img src="{{ asset('storage/' . $customer->shop_image) }}" width="80" class="mt-2 rounded">
+              @endif
+            </div>
+
+            <div class="form-group col-md-3">
+              <label>PAN Card Image</label>
+              <input type="file" name="pan_card_image" class="form-control">
+              @if(isset($customer) && $customer->pan_card_image)
+                  <img src="{{ asset('storage/' . $customer->pan_card_image) }}" width="80" class="mt-2 rounded">
+              @endif
+            </div>
+
+            <div class="form-group col-md-3">
+              <label>GST Certificate Image</label>
+              <input type="file" name="gst_certificate_image" class="form-control">
+              @if(isset($customer) && $customer->gst_certificate_image)
+                  <img src="{{ asset('storage/' . $customer->gst_certificate_image) }}" width="80" class="mt-2 rounded">
+              @endif
+            </div>
+
+            <div class="form-group col-md-3">
+              <label>Google Location Link</label>
+              <input type="text" class="form-control" name="google_location_link" value="{{ old('google_location_link') }}">
+            </div>
+            <!-- <div class="col-md-3">
+              <div class="form-group">
                 <label>Password <span class="text-danger">*</span></label>
                   <div class="input-group">
                     <input type="password" class="form-control @error('password') is-invalid @enderror"
@@ -141,7 +199,7 @@
                   @error('password_confirmation')<div class="invalid-feedback">{{ $message }}</div>@enderror
                 </div>
               </div>
-            </div>
+            </div> -->
             <div class="col-md-3">
               <div class="form-group">
                 <label>Payment Terms</label>
@@ -252,13 +310,13 @@
                   </div>
                 </div>
 
-                <div class="col-md-12">
+                <!-- <div class="col-md-12">
                   <div class="form-group"><label>GST Number</label>
                     <input type="text" class="form-control bf upper" id="b_gst"
                            name="billing_gst_number" value="{{ old('billing_gst_number') }}"
                            placeholder="GST Number">
                   </div>
-                </div>
+                </div> -->
               </div>
             </div>
           </div>
@@ -349,13 +407,13 @@
                   </div>
                 </div>
 
-                <div class="col-md-12">
+                <!-- <div class="col-md-12">
                   <div class="form-group"><label>GST Number</label>
                     <input type="text" class="form-control upper" id="s_gst"
                            name="shipping_gst_number" value="{{ old('shipping_gst_number') }}"
                            placeholder="GST Number">
                   </div>
-                </div>
+                </div> -->
               </div>
             </div>
           </div>

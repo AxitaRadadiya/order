@@ -7,6 +7,7 @@
     <title>{{ config('app.name', 'LeadFlow') }} — Register</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <style>
     :root{
@@ -128,16 +129,27 @@
 
         <form method="POST" action="{{ route('register') }}">
             @csrf
-
-            <div class="field">
-                <label for="name">Full name</label>
+            <div class="row">
+            <div class="field col-md-6">
+                <label for="first_name">First name</label>
                 <div class="input-wrap">
                     <span class="input-icon">
                         <svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-3.33 0-10 1.67-10 5v3h20v-3c0-3.33-6.67-5-10-5z"/></svg>
                     </span>
-                    <input id="name" type="text" name="name" value="{{ old('name') }}" placeholder="Your full name" required autofocus autocomplete="name">
+                    <input id="first_name" type="text" name="first_name" value="{{ old('first_name') }}" placeholder="Your first name" required autofocus autocomplete="given-name">
                 </div>
-                @error('name')<p class="err">{{ $message }}</p>@enderror
+                @error('first_name')<p class="err">{{ $message }}</p>@enderror
+            </div>
+            <div class="field col-md-6">
+                <label for="last_name">Last name</label>
+                <div class="input-wrap">
+                    <span class="input-icon">
+                        <svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-3.33 0-10 1.67-10 5v3h20v-3c0-3.33-6.67-5-10-5z"/></svg>
+                    </span>
+                    <input id="last_name" type="text" name="last_name" value="{{ old('last_name') }}" placeholder="Your last name" required autocomplete="family-name">
+                </div>
+                @error('last_name')<p class="err">{{ $message }}</p>@enderror
+            </div>
             </div>
 
             <div class="field">
@@ -163,6 +175,50 @@
             </div>
 
             <div class="field">
+                <label for="shop_name">Shop name</label>
+                <div class="input-wrap">
+                    <span class="input-icon">
+                        <svg viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                    </span>
+                    <input id="shop_name" type="text" name="shop_name" value="{{ old('shop_name') }}" placeholder="Shop name" required autocomplete="organization">
+                </div>
+                @error('shop_name')<p class="err">{{ $message }}</p>@enderror
+            </div>
+
+            <div class="row">
+                <div class="field col-md-6">
+                    <label for="state_id">State</label>
+                    <select name="state_id" id="state_id" class="form-control" required>
+                        <option value="">Select State</option>
+                        @foreach($states as $state)
+                            <option value="{{ $state->id }}"
+                                {{ old('state_id') == $state->id ? 'selected' : '' }}>
+                                {{ $state->name }}
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+
+                <div class="field col-md-6">
+                    <label for="city_id">City</label>
+                    <select name="city_id" id="city_id" class="form-control" required>
+                        <option value="">Select City</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="field">
+                <label for="gst_number">GST number (optional)</label>
+                <div class="input-wrap">
+                    <span class="input-icon">
+                        <svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-3.33 0-10 1.67-10 5v3h20v-3c0-3.33-6.67-5-10-5z"/></svg>
+                    </span>
+                    <input id="gst_number" type="text" name="gst_number" value="{{ old('gst_number') }}" placeholder="GST number (optional)" autocomplete="organization">
+                </div>
+                @error('gst_number')<p class="err">{{ $message }}</p>@enderror
+            </div>
+
+            <!-- <div class="field">
                 <label for="distributor_id">Distributor (optional)</label>
                 <div class="input-wrap">
                     <span class="input-icon">
@@ -206,7 +262,7 @@
                     </button>
                 </div>
                 @error('password_confirmation')<p class="err">{{ $message }}</p>@enderror
-            </div>
+            </div> -->
 
             <div class="meta-row">
                 <div></div>
@@ -224,5 +280,68 @@
        
     </div>
 </div>
+<script>
+    var STATES = @json($states);
+    var CITIES = @json($cities);
+    function populateStates($sel, countryId, selectedId) {
+    $sel.empty().append('<option value="">-- Select State --</option>');
+
+    STATES.forEach(function (s) {
+        if (String(s.country_id) === String(countryId)) {
+        $sel.append(
+            $('<option>', {
+            value: s.id,
+            text: s.name
+            }).prop('selected', String(s.id) === String(selectedId))
+        );
+        }
+    });
+    }
+
+    function populateCities($sel, stateId, selectedId) {
+    $sel.empty().append('<option value="">-- Select City --</option>');
+
+    CITIES.forEach(function (c) {
+        if (String(c.state_id) === String(stateId)) {
+        $sel.append(
+            $('<option>', {
+            value: c.id,
+            text: c.name
+            }).prop('selected', String(c.id) === String(selectedId))
+        );
+        }
+    });
+    }
+
+    function getStateId($stateSelect) {
+    return $stateSelect.val();
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+
+        const stateSelect = document.getElementById('state_id');
+        const citySelect  = document.getElementById('city_id');
+
+        function populateCities(stateId) {
+            citySelect.innerHTML = '<option value="">Select City</option>';
+            CITIES.forEach(function (c) {
+                if (String(c.state_id) === String(stateId)) {
+
+                    const option = document.createElement('option');
+                    option.value = c.id;
+                    option.text  = c.name;
+
+                    citySelect.appendChild(option);
+                }
+            });
+        }
+        stateSelect.addEventListener('change', function () {
+            populateCities(this.value);
+        });
+        if (stateSelect.value) {
+            populateCities(stateSelect.value);
+        }
+    });
+</script>
 </body>
 </html>
