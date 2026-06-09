@@ -25,7 +25,15 @@ class User extends Authenticatable
                 $user->created_by = auth()->id();
             }
         });
+
+        static::saving(function ($user) {
+            $user->name = trim(
+                ($user->first_name ?? '') . ' ' .
+                ($user->last_name ?? '')
+            );
+        });
     }
+
 
     public function hasRole(string|array $roles): bool
     {
@@ -149,7 +157,6 @@ class User extends Authenticatable
         return $this->hasMany(self::class, 'distributor_id');
     }
 
-<<<<<<< HEAD
     public function state()
     {
         return $this->belongsTo(State::class);
@@ -159,14 +166,12 @@ class User extends Authenticatable
     {
         return $this->belongsTo(City::class);
     }
-=======
     public function creator()
     {
         return $this->belongsTo(self::class, 'created_by');
     }
 
     
->>>>>>> distributorchange
 
     public function addresses()
     {
@@ -242,15 +247,7 @@ class User extends Authenticatable
         return asset($this->gst_certificate_image);
     }
 
-    protected static function booted()
-    {
-        static::saving(function ($user) {
-            $user->name = trim(
-                ($user->first_name ?? '') . ' ' .
-                ($user->last_name ?? '')
-            );
-        });
-    }
+
 
     public function getNameAttribute($value): string
     {

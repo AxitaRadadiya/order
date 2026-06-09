@@ -52,7 +52,6 @@ class CustomerController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-<<<<<<< HEAD
             'first_name' => 'required|string|max:255',
             'last_name'  => 'required|string|max:255',
             'email'        => 'required|email|unique:users,email',
@@ -71,20 +70,6 @@ class CustomerController extends Controller
             'pan_card_image' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
             'gst_certificate_image' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
             'google_location_link' => 'nullable|url|max:255',
-=======
-            'name'           => 'required|string|max:255',
-            'email'          => 'required|email|unique:users,email',
-            'mobile'         => 'nullable|digits:10',
-            'company_name'   => 'nullable|string|max:255',
-            'website'        => 'nullable|url|max:255',
-            'password'       => 'required|min:6',
-            'distributor_id' => 'nullable|exists:users,id',
-            'role_id'        => 'nullable|exists:roles,id',
-            'gst_number'     => 'nullable|string|max:20',
-            'pan_number'     => 'nullable|string|max:15',
-            'credit_limit'   => 'nullable|numeric|min:0',
-            'discount'       => 'nullable|numeric|min:0|max:100',
->>>>>>> distributorchange
         ]);
 
         $role = null;
@@ -142,7 +127,6 @@ class CustomerController extends Controller
             }
 
             $customer = Customer::create([
-<<<<<<< HEAD
                 'first_name'      => $request->first_name,
                 'last_name'       => $request->last_name,
                 'name'            => trim($request->first_name . ' ' . $request->last_name),
@@ -161,24 +145,6 @@ class CustomerController extends Controller
                 'discount'        => $request->discount ?? 0,
                 'credit_limit'    => $request->credit_limit ?? 0,
                 'distributor_verified' => $autoVerified,
-=======
-                'name'                    => $request->name,
-                'company_name'            => $request->company_name,
-                'email'                   => $request->email,
-                'mobile'                  => $request->mobile,
-                'website'                 => $request->website,
-                'distributor_id'          => $request->input('distributor_id'),
-                'password'                => Hash::make($request->password),
-                'role_id'                 => $request->input('role_id') ?? null,
-                'payment_terms'           => $request->payment_terms,
-                'gst_treatment'           => $request->gst_treatment,
-                'gst_number'              => $request->gst_number,
-                'pan_number'              => $request->pan_number,
-                'place_of_supply'         => $request->place_of_supply,
-                'discount'                => $request->discount ?? 0,
-                'credit_limit'            => $request->credit_limit ?? 0,
-                'distributor_verified'    => $autoVerified,
->>>>>>> distributorchange
                 'distributor_verified_at' => $autoVerified ? now() : null,
                 'google_location_link' => $request->google_location_link,
                 'profile_image' => $profileImage,
@@ -315,7 +281,6 @@ class CustomerController extends Controller
         }
 
         $request->validate([
-<<<<<<< HEAD
             'first_name'    => 'required|string|max:255',
             'last_name'     => 'required|string|max:255',
             'email'        => 'required|email|unique:users,email,' . $customer->id,
@@ -335,21 +300,6 @@ class CustomerController extends Controller
             'pan_card_image' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
             'gst_certificate_image' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
             'google_location_link' => 'nullable|url|max:255',
-=======
-            'name'           => 'required|string|max:255',
-            'email'          => 'required|email|unique:users,email,' . $customer->id,
-            'mobile'         => 'nullable|digits:10',
-            'company_name'   => 'nullable|string|max:255',
-            'website'        => 'nullable|url|max:255',
-            'password'       => 'nullable|min:6',
-            'distributor_id' => 'nullable|exists:users,id',
-            'role_id'        => 'nullable|exists:roles,id',
-            'status'         => 'required|in:0,1',
-            'gst_number'     => 'nullable|string|max:20',
-            'pan_number'     => 'nullable|string|max:15',
-            'credit_limit'   => 'nullable|numeric|min:0',
-            'discount'       => 'nullable|numeric|min:0|max:100',
->>>>>>> distributorchange
         ]);
 
         DB::beginTransaction();
@@ -360,7 +310,6 @@ class CustomerController extends Controller
                 $request->validate(['distributor_id' => 'required|exists:users,id']);
             }
 
-<<<<<<< HEAD
             $profileImage = $customer->profile_image;
             $shopImage = $customer->shop_image;
             $panImage = $customer->pan_card_image;
@@ -387,8 +336,6 @@ class CustomerController extends Controller
             }
 
             // 1. Update Customer
-=======
->>>>>>> distributorchange
             $customerData = [
                 'first_name'      => $request->first_name,
                 'last_name'       => $request->last_name,
