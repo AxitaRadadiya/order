@@ -91,17 +91,17 @@
               <!-- <dt class="col-sm-4">Unit</dt>
               <dd class="col-sm-8">{{ $item->unit ?? '-' }}</dd> -->
 
-              <dt class="col-sm-4">Sizes</dt>
+              <!-- <dt class="col-sm-4">Sizes</dt>
               <dd class="col-sm-8">{{ is_array($item->sizes) && count($item->sizes) ? implode(', ', $item->sizes) : '-' }}</dd>
 
               <dt class="col-sm-4">Colors</dt>
-              <dd class="col-sm-8">{{ ($item->colors && $item->colors->count()) ? $item->colors->pluck('name')->join(', ') : '-' }}</dd>
+              <dd class="col-sm-8">{{ ($item->colors && $item->colors->count()) ? $item->colors->pluck('name')->join(', ') : '-' }}</dd> -->
 
               <dt class="col-sm-4">Price</dt>
               <dd class="col-sm-8">{{ number_format($item->price,2) }}</dd>
 
               <dt class="col-sm-4">Tax</dt>
-              <dd class="col-sm-8">{{ $item->tax_percent }}%</dd>
+              <dd class="col-sm-8">{{ optional($item->tax)->tax_percentage }}%</dd>
 
               <dt class="col-sm-4">Status</dt>
               <dd class="col-sm-8">{{ $item->status ? 'Active' : 'Inactive' }}</dd>
@@ -109,6 +109,32 @@
               <dt class="col-sm-4">Show On Web</dt>
               <dd class="col-sm-8">{{ $item->show_item_on_web ? 'Yes' : 'No' }}</dd>
             </dl>
+
+            @if($item->variants->count())
+                <hr>
+
+                <h5 class="mt-3">Item Variants</h5>
+
+                <table class="table table-bordered mt-2">
+                    <thead>
+                        <tr>
+                            <th>Color</th>
+                            <th>Size</th>
+                            <th>Quantity</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        @foreach($item->variants as $variant)
+                            <tr>
+                                <td>{{ optional($variant->color)->name }}</td>
+                                <td>{{ optional($variant->size)->name }}</td>
+                                <td>{{ $variant->quantity }}</td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            @endif
           </div>
         </div>
       </div>

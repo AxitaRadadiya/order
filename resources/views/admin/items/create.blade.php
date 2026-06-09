@@ -58,7 +58,7 @@
 							</div>
 						</div>
 
-						<div class="col-md-4">
+						<div class="col-md-3">
 							<div class="form-group">
 								<label>Group</label>
 								<select name="group_id" class="form-control select2 @error('group_id') is-invalid @enderror">
@@ -70,7 +70,7 @@
 								@error('group_id')<div class="invalid-feedback">{{ $message }}</div>@enderror
 							</div>
 						</div>
-						<div class="col-md-4">
+						<div class="col-md-3">
 							<div class="form-group">
 								<label>Sub-Group</label>
 								<select name="sub_group" class="form-control select2 @error('sub_group') is-invalid @enderror">
@@ -82,7 +82,7 @@
 								@error('sub_group')<div class="invalid-feedback">{{ $message }}</div>@enderror
 							</div>
 						</div>
-						<div class="col-md-4">
+						<div class="col-md-3">
 							<div class="form-group">
 								<label>Category</label>
 								<select name="category_id" class="form-control select2 @error('category_id') is-invalid @enderror">
@@ -94,7 +94,7 @@
 								@error('category_id')<div class="invalid-feedback">{{ $message }}</div>@enderror
 							</div>
 						</div>
-						<div class="col-md-4">
+						<div class="col-md-3">
 							<div class="form-group">
 								<label>Sub-Category</label>
 								<select name="sub_category" class="form-control select2 @error('sub_category') is-invalid @enderror">
@@ -106,20 +106,20 @@
 								@error('sub_category')<div class="invalid-feedback">{{ $message }}</div>@enderror
 							</div>
 						</div>
-						<div class="col-md-4">
+						<!-- <div class="col-md-4">
 							<div class="form-group">
 								<label>Colors</label>
 								<select name="colors[]" class="form-control select2 @error('colors') is-invalid @enderror" multiple>
 									@foreach($colors as $color)
-									<option value="{{ $color->id }}" {{ in_array($color->id, (array) old('colors', [])) ? 'selected' : '' }}>{{ $color->name }}</option>
+									<option value="{{ $color->id }}" {{ in_array($color->id, (array) old('colors', [])) ? 'selected' : '' }}>{{ $color->color_code }}</option>
 									@endforeach
 								</select>
 								@error('colors')<div class="invalid-feedback">{{ $message }}</div>@enderror
 							</div>
-						</div>
+						</div> -->
 
 						{{-- Sizes --}}
-						<div class="col-md-12">
+						<!-- <div class="col-md-12">
 							<div class="form-group">
 								<label>Sizes</label>
 								@php
@@ -136,7 +136,7 @@
 									@endforeach
 								</div>
 							</div>
-						</div>
+						</div> -->
 
 						<div class="col-md-3">
 							<div class="form-group">
@@ -148,7 +148,22 @@
 						<div class="col-md-3">
 							<div class="form-group">
 								<label>Tax %</label>
-								<input type="number" step="0.01" name="tax_percent" value="{{ old('tax_percent', 0) }}" class="form-control">
+								<select name="tax_id" class="form-control">
+									<option value="">-- Select Tax --</option>
+									@foreach($taxes as $tax)
+										<option value="{{ $tax->id }}"
+											@selected(old('tax_id', $item->tax_id ?? '') == $tax->id)>
+											{{ $tax->tax_name }}
+										</option>
+									@endforeach
+								</select>
+							</div>
+						</div>
+
+						<div class="col-md-3">
+							<div class="form-group">
+								<label>Video Link</label>
+								<input type="url" name="video_link" value="{{ old('video_link') }}" class="form-control">
 							</div>
 						</div>
 
@@ -201,6 +216,81 @@
 										   name="show_item_on_web" value="1"
 										   {{ old('show_item_on_web', 1) ? 'checked' : '' }}>
 									<label class="custom-control-label" for="show_item_on_web">Show Item on Web</label>
+								</div>
+							</div>
+						</div>
+
+						<div class="col-md-12">
+							<div class="card mt-3">
+								<div class="card-header pl-0">
+									<h5 class="mb-0">Item Variants</h5>
+									<!-- <button type="button" class="btn btn-sm btn-create" id="addVariantRow">
+										<i class="fas fa-plus"></i> Add Variant
+									</button> -->
+								</div>
+
+								<div class="card-body p-0">
+									@error('variants')
+										<div class="alert alert-danger mt-2">
+											{{ $message }}
+										</div>
+									@enderror
+									<table class="table table-bordered mb-0" id="variantTable">
+										<thead>
+											<tr>
+												<th width="35%">Color</th>
+												<th width="35%">Size</th>
+												<th width="20%">Quantity</th>
+												<th width="10%">Action</th>
+											</tr>
+										</thead>
+
+										<tbody>
+											<tr>
+												<td>
+													<select name="variants[0][color_id]" class="form-control select2">
+														<option value="">Select Color</option>
+														@foreach($colors as $color)
+															<option value="{{ $color->id }}">
+																{{ $color->color_code }}
+															</option>
+														@endforeach
+													</select>
+												</td>
+
+												<td>
+													<select name="variants[0][size_id]" class="form-control select2">
+														<option value="">Select Size</option>
+														@foreach($sizes as $size)
+															<option value="{{ $size->id }}">
+																{{ $size->name }}
+															</option>
+														@endforeach
+													</select>
+												</td>
+
+												<td>
+													<input type="number"
+														name="variants[0][quantity]"
+														class="form-control"
+														min="0"
+														value="0">
+												</td>
+
+												<td class="text-center">
+													<button type="button"
+															class="btn btn-danger btn-sm removeRow">
+														<i class="fas fa-trash"></i>
+													</button>
+												</td>
+											</tr>
+										</tbody>
+									</table>
+									<div class="p-3 text-right">
+										<button type="button" class="btn btn-sm btn-create" id="addVariantRow">
+											<i class="fas fa-plus"></i> Add Variant
+										</button>
+									</div>
 								</div>
 							</div>
 						</div>
@@ -362,5 +452,99 @@
 		updateUploadVisibility();
 	}
 })();
+
+let variantIndex = 1;
+
+function initSelect2(context = document) {
+    $(context).find('.select2').each(function () {
+
+        // prevent re-initialization issues
+        if ($(this).hasClass("select2-hidden-accessible")) {
+            $(this).select2('destroy');
+        }
+
+        $(this).select2({
+            width: '100%'
+        });
+    });
+}
+
+$(document).ready(function () {
+    initSelect2();
+});
+
+document.getElementById('addVariantRow').addEventListener('click', function () {
+
+    let row = `
+        <tr>
+            <td>
+                <select name="variants[${variantIndex}][color_id]"
+                        class="form-control select2">
+                    <option value="">Select Color</option>
+
+                    @foreach($colors as $color)
+                        <option value="{{ $color->id }}">
+                            {{ $color->color_code }}
+                        </option>
+                    @endforeach
+                </select>
+            </td>
+
+            <td>
+                <select name="variants[${variantIndex}][size_id]"
+                        class="form-control select2">
+                    <option value="">Select Size</option>
+
+                    @foreach($sizes as $size)
+                        <option value="{{ $size->id }}">
+                            {{ $size->name }}
+                        </option>
+                    @endforeach
+                </select>
+            </td>
+
+            <td>
+                <input type="number"
+                       name="variants[${variantIndex}][quantity]"
+                       class="form-control"
+                       min="0"
+                       value="0">
+            </td>
+
+            <td class="text-center">
+                <button type="button"
+                        class="btn btn-danger btn-sm removeRow">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </td>
+        </tr>
+    `;
+
+    document.querySelector('#variantTable tbody')
+            .insertAdjacentHTML('beforeend', row);
+
+	initSelect2(document.querySelector('#variantTable tbody'));
+    variantIndex++;
+});
+
+document.addEventListener('click', function (e) {
+
+    if (e.target.closest('.removeRow')) {
+
+        let rows = document.querySelectorAll('#variantTable tbody tr');
+
+        if (rows.length > 1) {
+            e.target.closest('tr').remove();
+			// destroy select2 before removing (clean memory)
+            $(row).find('.select2').each(function () {
+                if ($(this).hasClass("select2-hidden-accessible")) {
+                    $(this).select2('destroy');
+                }
+            });
+
+            row.remove();
+        }
+    }
+});
 </script>
 @endsection

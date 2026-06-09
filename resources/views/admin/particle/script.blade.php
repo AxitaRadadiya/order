@@ -996,8 +996,8 @@ $(document).ready(function () {
             },
             columns: [
                 { data: 'id',     orderable: true  },
-                { data: 'name',   orderable: true  },
                 { data: 'color_code', orderable: true},
+                { data: 'name',   orderable: true  },
                 { data: 'action', orderable: false }
             ],
            /* language: {
