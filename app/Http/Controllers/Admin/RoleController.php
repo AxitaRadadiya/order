@@ -10,9 +10,42 @@ use Illuminate\Http\Request;
 class RoleController extends Controller
 {
    
+    public function __construct()
+    {
+        $this->middleware('auth');
+        $this->middleware(function ($request, $next) {
+            $user = auth()->user();
+            if ($user && $user->hasRole(['super-admin', 'admin', 'distributor'])) {
+                return $next($request);
+            }
+            abort(403, 'Unauthorized action.');
+        });
+    }
+
     public function index()
     {
-        $roles = Role::select('id')->get();
+        $user = auth()->user();
+
+        // super-admin/admin sees:
+        //  1) default roles
+        //  2) ALSO roles created by super-admin themselves
+        $isDefaultViewer = $user && $user->hasRole(['super-admin', 'admin']);
+
+        $roles = Role::query()
+            ->when($isDefaultViewer, function ($q) use ($user) {
+                $defaultRoleNames = ['accounts', 'production', 'sales executive', 'sales manager', 'distributor', 'retailer', 'admin', 'super-admin'];
+
+                $q->where(function ($qq) use ($defaultRoleNames, $user) {
+                    $qq->whereIn('name', $defaultRoleNames)
+                       ->orWhere('created_by', $user->id);
+                });
+            })
+            ->when(!$isDefaultViewer && $user && $user->hasRole('distributor'), function ($q) use ($user) {
+                $q->where('created_by', $user->id);
+            })
+            ->select('id')
+            ->get();
+
 
         return view('admin.roles.index', compact('roles'));
     }
@@ -22,7 +55,6 @@ class RoleController extends Controller
     {
         $columns = [0 => 'id', 1 => 'name'];
 
-        $totalData = Role::count();
         $limit     = (int) $request->input('length', 10);
         $start     = (int) $request->input('start',  0);
         $order     = $columns[$request->input('order.0.column')] ?? 'id';
@@ -31,6 +63,36 @@ class RoleController extends Controller
         $search    = trim((string) $request->input('search.value', ''));
 
         $query = Role::with('permissions');
+
+        $user = auth()->user();
+        $isSuperAdminPanel = $user && $user->hasRole(['super-admin', 'admin']);
+
+        if ($isSuperAdminPanel) {
+            // super-admin/admin can see:
+            $defaultRoleNames = ['accounts', 'production', 'sales executive', 'sales manager', 'distributor', 'retailer', 'admin', 'super-admin'];
+
+            $query->where(function ($qq) use ($defaultRoleNames, $user) {
+                $qq->whereIn('name', $defaultRoleNames)
+                   ->orWhere('created_by', $user->id);
+            });
+
+            $totalData = Role::where(function ($qq) use ($defaultRoleNames, $user) {
+                $qq->whereIn('name', $defaultRoleNames)
+                   ->orWhere('created_by', $user->id);
+            })->count();
+        } elseif ($user && $user->hasRole('distributor')) {
+
+            // distributor can only see roles created by them
+            $query->where('created_by', $user->id);
+            $totalData = Role::where('created_by', $user->id)->count();
+        } 
+        // else {
+        //     // other non-superadmin users: only show roles created by them
+        //     $query->where('created_by', $user->id);
+        //     $totalData = Role::where('created_by', $user->id)->count();
+        // }
+
+
 
         if ($search !== '') {
             $query->where('name', 'like', "%{$search}%");
@@ -81,16 +143,20 @@ class RoleController extends Controller
      ───────────────────────────────────────── */
     public function create()
     {
-        // Anyone authenticated can access role creation (removed super-admin restriction)
-        // Group permissions by prefix (e.g. "user-list" → group "User")
-        $permissions = Permission::orderBy('name')->get()
-            // exclude the catch-all 'all-modules' permission from UI groups
-            ->reject(function($p) { return strtolower($p->name) === 'all-modules'; })
-            ->groupBy(function ($p) {
-                // Take first segment before "-" as the group label
-                $parts = explode('-', $p->name);
-                return ucfirst($parts[0]);
+        $permsQuery = Permission::orderBy('name')->get()
+            ->reject(function($p) { return strtolower($p->name) === 'all-modules'; });
+
+        if (auth()->user()->hasRole('distributor')) {
+            $permsQuery = $permsQuery->filter(function($p) {
+                $name = strtolower($p->name);
+                return str_starts_with($name, 'customer-') || str_starts_with($name, 'order-') || str_starts_with($name, 'catalog-') || $name === 'catalog';
             });
+        }
+
+        $permissions = $permsQuery->groupBy(function ($p) {
+            $parts = explode('-', $p->name);
+            return ucfirst($parts[0]);
+        });
 
         return view('admin.roles.create', compact('permissions'));
     }
@@ -100,12 +166,25 @@ class RoleController extends Controller
      ───────────────────────────────────────── */
     public function store(Request $request)
     {
-        // removed super-admin only restriction for storing roles
         $request->validate([
             'name'          => ['required', 'string', 'max:100', 'unique:roles,name'],
             'permissions'   => ['nullable', 'array'],
             'permissions.*' => ['integer', 'exists:permissions,id'],
         ]);
+
+        if (auth()->user()->hasRole('distributor')) {
+            $allowedPermIds = Permission::where(function($q) {
+                $q->where('name', 'like', 'customer-%')
+                  ->orWhere('name', 'like', 'order-%')
+                  ->orWhere('name', 'like', 'catalog-%')
+                  ->orWhere('name', 'catalog');
+            })->pluck('id')->toArray();
+
+            $requestedPerms = $request->input('permissions', []);
+            if (array_diff($requestedPerms, $allowedPermIds)) {
+                return redirect()->back()->withErrors(['permissions' => 'Unauthorized permissions selected.'])->withInput();
+            }
+        }
 
         $role = Role::create(['name' => $request->name]);
 
@@ -130,14 +209,25 @@ class RoleController extends Controller
      ───────────────────────────────────────── */
     public function edit(Role $role)
     {
-        // removed super-admin only restriction for editing roles
-        $permissions = Permission::orderBy('name')
+        if (auth()->user()->hasRole('distributor') && $role->created_by !== auth()->id()) {
+            abort(403, 'Unauthorized action.');
+        }
+
+        $permsQuery = Permission::orderBy('name')
             ->get()
-            ->reject(function($p) { return strtolower($p->name) === 'all-modules'; })
-            ->groupBy(function ($p) {
-                $parts = explode('-', $p->name);
-                return ucfirst($parts[0]);
+            ->reject(function($p) { return strtolower($p->name) === 'all-modules'; });
+
+        if (auth()->user()->hasRole('distributor')) {
+            $permsQuery = $permsQuery->filter(function($p) {
+                $name = strtolower($p->name);
+                return str_starts_with($name, 'customer-') || str_starts_with($name, 'order-') || str_starts_with($name, 'catalog-') || $name === 'catalog';
             });
+        }
+
+        $permissions = $permsQuery->groupBy(function ($p) {
+            $parts = explode('-', $p->name);
+            return ucfirst($parts[0]);
+        });
 
         $assignedIds = $role->permissions->pluck('id')->toArray();
 
@@ -149,12 +239,29 @@ class RoleController extends Controller
      ───────────────────────────────────────── */
     public function update(Request $request, Role $role)
     {
-        // removed super-admin only restriction for updating roles
+        if (auth()->user()->hasRole('distributor') && $role->created_by !== auth()->id()) {
+            abort(403, 'Unauthorized action.');
+        }
+
         $request->validate([
             'name'          => ['required', 'string', 'max:100', 'unique:roles,name,' . $role->id],
             'permissions'   => ['nullable', 'array'],
             'permissions.*' => ['integer', 'exists:permissions,id'],
         ]);
+
+        if (auth()->user()->hasRole('distributor')) {
+            $allowedPermIds = Permission::where(function($q) {
+                $q->where('name', 'like', 'customer-%')
+                  ->orWhere('name', 'like', 'order-%')
+                  ->orWhere('name', 'like', 'catalog-%')
+                  ->orWhere('name', 'catalog');
+            })->pluck('id')->toArray();
+
+            $requestedPerms = $request->input('permissions', []);
+            if (array_diff($requestedPerms, $allowedPermIds)) {
+                return redirect()->back()->withErrors(['permissions' => 'Unauthorized permissions selected.'])->withInput();
+            }
+        }
 
         $role->update(['name' => $request->name]);
         $role->permissions()->sync($request->input('permissions', []));
@@ -168,7 +275,10 @@ class RoleController extends Controller
      ───────────────────────────────────────── */
     public function destroy(Role $role)
     {
-        // removed super-admin only restriction for deleting roles
+        if (auth()->user()->hasRole('distributor') && $role->created_by !== auth()->id()) {
+            abort(403, 'Unauthorized action.');
+        }
+
         $role->permissions()->detach();
         $role->delete();
 

@@ -106,6 +106,7 @@
             @php
               $fixedCatalogRoles = ['retailer', 'distributor'];
               $isFixedCatalogRole = in_array(strtolower($role->name), $fixedCatalogRoles, true);
+              $isDistributorRole = strtolower($role->name) === 'distributor';
             @endphp
 
             <div class="table-responsive">
@@ -141,8 +142,18 @@
                             @endphp
 
                             @if($perm)
-                              @php $checked = in_array($perm->id, old('permissions', $assignedIds)); @endphp
-                              @if($group === 'Catalog' && $isFixedCatalogRole)
+                              @php
+                                $checked = in_array($perm->id, old('permissions', $assignedIds));
+                                $isDistributorSetting = $isDistributorRole && strtolower($group) === 'setting';
+                              @endphp
+
+                              @if($isDistributorSetting && in_array($action, ['view','create','edit','delete']))
+                                <input type="checkbox" class="perm-chk" name="permissions[]" value="{{ $perm->id }}" id="perm_{{ $perm->id }}" checked>
+                              @if(!in_array($perm->id, old('permissions', $assignedIds)))
+                                <input type="hidden" name="permissions[]" value="{{ $perm->id }}">
+                              @endif
+
+                              @elseif($group === 'Catalog' && $isFixedCatalogRole)
                                 <input type="checkbox" class="perm-chk" name="permissions[]" value="{{ $perm->id }}" id="perm_{{ $perm->id }}" checked disabled>
                                 <input type="hidden" name="permissions[]" value="{{ $perm->id }}">
                               @else

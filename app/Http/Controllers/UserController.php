@@ -17,26 +17,42 @@ class UserController extends Controller
     public function __construct()
     {
         $this->middleware('auth');
+        $this->middleware(function ($request, $next) {
+            $user = auth()->user();
+            if ($user && $user->hasRole(['super-admin', 'admin', 'distributor'])) {
+                return $next($request);
+            }
+            abort(403, 'Unauthorized action.');
+        });
     }
 
     public function index(): View
     {
-        // Exclude customers (retailer/distributor) from the users index
-        $excludeRoleIds = Role::whereIn('name', ['retailer', 'distributor'])->pluck('id')->toArray();
+        $query = User::with(['role']);
+
+        if (auth()->user()->hasRole('super-admin')) {
+            $query->where(function ($q) {
+                $q->where('created_by', auth()->id())
+                  ->orWhereNull('created_by');
+            });
+            $excludeRoleIds = Role::whereIn('name', ['retailer', 'distributor'])->pluck('id')->toArray();
+            $query->when(!empty($excludeRoleIds), fn($q) => $q->whereNotIn('role_id', $excludeRoleIds));
+        } elseif (auth()->user()->hasRole('distributor')) {
+            $query->where('created_by', auth()->id());
+        } else {
+            $query->where('created_by', auth()->id());
+            $excludeRoleIds = Role::whereIn('name', ['retailer', 'distributor'])->pluck('id')->toArray();
+            $query->when(!empty($excludeRoleIds), fn($q) => $q->whereNotIn('role_id', $excludeRoleIds));
+        }
 
         return view('admin.users.index', [
-            'users' => User::with(['role'])
-                ->when(!empty($excludeRoleIds), fn($q) => $q->whereNotIn('role_id', $excludeRoleIds))
-                ->orderBy('id')
-                ->paginate(15),
+            'users' => $query->orderBy('id')->paginate(15),
         ]);
     }
 
     public function create(): View
     {
-        return view('admin.users.create', [
-            'roles' => Role::whereNotIn('name', ['retailer', 'distributor'])->orderBy('name')->get(),
-        ]);
+        return view('admin.users.create', $this->formData());
     }
 
     public function store(Request $request): RedirectResponse
@@ -51,10 +67,10 @@ class UserController extends Controller
 
         $loginUser = Auth::user();
         Log::info('user.created', [
-            'actor_id' => $loginUser->id,
+            'actor_id'   => $loginUser->id,
             'actor_name' => $loginUser->name,
-            'user_id' => $user->id,
-            'user_name' => $user->name,
+            'user_id'    => $user->id,
+            'user_name'  => $user->name,
             'properties' => $request->except(['_token', 'password', 'password_confirmation']),
         ]);
 
@@ -64,20 +80,31 @@ class UserController extends Controller
 
     public function show(User $user): View
     {
-        $user->load([
-            'role',
-        ]);
+        if ($user->created_by !== auth()->id()) {
+            abort(403, 'Unauthorized action.');
+        }
+
+        $user->load(['role']);
+
+        // Fetch all users created by this profile user
+        $createdUsers = User::with('role')
+            ->where('created_by', $user->id)
+            ->orderBy('id', 'desc')
+            ->get();
 
         return view('admin.users.show', [
-            'user' => $user,
+            'user'         => $user,
+            'createdUsers' => $createdUsers,
         ]);
     }
 
     public function edit($id): View
     {
-        $user = User::with([
-            'role',
-        ])->findOrFail($id);
+        $user = User::with(['role'])->findOrFail($id);
+
+        if ($user->created_by !== auth()->id()) {
+            abort(403, 'Unauthorized action.');
+        }
 
         return view('admin.users.edit', array_merge(
             ['user' => $user],
@@ -88,6 +115,10 @@ class UserController extends Controller
     public function update(Request $request, $id): RedirectResponse
     {
         $user = User::findOrFail($id);
+
+        if ($user->created_by !== auth()->id()) {
+            abort(403, 'Unauthorized action.');
+        }
 
         $validated = $request->validate($this->rules($user));
 
@@ -112,11 +143,11 @@ class UserController extends Controller
         $loginUser = Auth::user();
         if (! empty($changes)) {
             Log::info('user.updated', [
-                'actor_id' => $loginUser->id,
+                'actor_id'   => $loginUser->id,
                 'actor_name' => $loginUser->name,
-                'user_id' => $user->id,
-                'user_name' => $user->name,
-                'changes' => $changes,
+                'user_id'    => $user->id,
+                'user_name'  => $user->name,
+                'changes'    => $changes,
             ]);
         }
 
@@ -126,13 +157,17 @@ class UserController extends Controller
 
     public function destroy(User $user): RedirectResponse
     {
+        if ($user->created_by !== auth()->id()) {
+            abort(403, 'Unauthorized action.');
+        }
+
         $loginUser = Auth::user();
 
         Log::info('user.deleted', [
-            'actor_id' => $loginUser->id,
+            'actor_id'   => $loginUser->id,
             'actor_name' => $loginUser->name,
-            'user_id' => $user->id,
-            'user_name' => $user->name,
+            'user_id'    => $user->id,
+            'user_name'  => $user->name,
         ]);
 
         $user->syncRoles([]);
@@ -144,14 +179,28 @@ class UserController extends Controller
 
     public function userList(Request $request)
     {
-        $excludeRoleIds = Role::whereIn('name', ['retailer', 'distributor'])->pluck('id')->toArray();
-        $query = User::with(['role'])->when(!empty($excludeRoleIds), fn($q) => $q->whereNotIn('role_id', $excludeRoleIds));
+        $query = User::with(['role']);
+
+        if (auth()->user()->hasRole('super-admin')) {
+            $query->where(function ($q) {
+                $q->where('created_by', auth()->id())
+                  ->orWhereNull('created_by');
+            });
+            $excludeRoleIds = Role::whereIn('name', ['retailer', 'distributor'])->pluck('id')->toArray();
+            $query->when(!empty($excludeRoleIds), fn($q) => $q->whereNotIn('role_id', $excludeRoleIds));
+        } elseif (auth()->user()->hasRole('distributor')) {
+            $query->where('created_by', auth()->id());
+        } else {
+            $query->where('created_by', auth()->id());
+            $excludeRoleIds = Role::whereIn('name', ['retailer', 'distributor'])->pluck('id')->toArray();
+            $query->when(!empty($excludeRoleIds), fn($q) => $q->whereNotIn('role_id', $excludeRoleIds));
+        }
 
         $totalData = $query->count();
         $totalFiltered = $totalData;
 
-        $limit = $request->input('length');
-        $start = $request->input('start');
+        $limit  = $request->input('length');
+        $start  = $request->input('start');
         $search = $request->input('search.value');
 
         if (! empty($search)) {
@@ -173,83 +222,91 @@ class UserController extends Controller
         $data = [];
 
         foreach ($users as $i => $u) {
-            $viewUrl = route('users.show', $u->id);
-            $editUrl = route('users.edit', $u->id);
-            $deleteUrl = route('users.destroy', $u->id);
-
-                $actions = '<div class="btn-group" style="position: relative; left: 10px;">
-                    <button type="button" class="btn btn-sm btn-info " data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" title="Actions">
+            $actions = '<div class="btn-group" style="position: relative; left: 10px;">
+                    <button type="button" class="btn btn-sm btn-info" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" title="Actions">
                         <i class="fas fa-ellipsis-v"></i>
                     </button>
                     <div class="dropdown-menu action-dropdown" role="menu">';
 
-
-                $actions .= '<a class="dropdown-item" href="'.route('users.show',$u->id).'" id="userInfo" data-userid="'.$u->id.'">View</a>';
-
-                $actions .= '<a class="dropdown-item" href="'.route('users.edit', $u->id).'">Edit</a>';
-
-                $actions .= '
-                    <form action="'.route('users.destroy', $u->id).'" method="POST" class="deleteForm" style="display:inline;">
-                        '.csrf_field().'
+            $actions .= '<a class="dropdown-item" href="' . route('users.show', $u->id) . '" id="userInfo" data-userid="' . $u->id . '">View</a>';
+            $actions .= '<a class="dropdown-item" href="' . route('users.edit', $u->id) . '">Edit</a>';
+            $actions .= '
+                    <form action="' . route('users.destroy', $u->id) . '" method="POST" class="deleteForm" style="display:inline;">
+                        ' . csrf_field() . '
                         <input type="hidden" name="_method" value="DELETE">
                         <button type="submit" class="dropdown-item deleteButton">Delete</button>
                     </form>
                 ';
-
-                $actions .= '</div></div>';
-                $actionHtml = $actions;
+            $actions .= '</div></div>';
 
             $avatarHtml = '<div class="user-name-cell">'
                 . '<span>' . e($u->name) . '</span>'
                 . '</div>';
 
             $data[] = [
-                'id' => $start + $i + 1,
-                'name' => $avatarHtml,
-                'email' => $u->email,
+                'id'     => $start + $i + 1,
+                'name'   => $avatarHtml,
+                'email'  => $u->email,
                 'mobile' => $u->mobile,
-                'role' => optional($u->role)->name,
+                'role'   => optional($u->role)->name,
                 'status' => $u->status ? 'Active' : 'Inactive',
-                'action' => $actionHtml,
+                'action' => $actions,
             ];
         }
 
         return response()->json([
-            'draw' => intval($request->input('draw')),
-            'recordsTotal' => $totalData,
+            'draw'            => intval($request->input('draw')),
+            'recordsTotal'    => $totalData,
             'recordsFiltered' => $totalFiltered,
-            'data' => $data,
+            'data'            => $data,
         ]);
     }
 
     protected function formData(?User $user = null): array
     {
+        $rolesQuery = Role::orderBy('name');
+        if (auth()->user()->hasRole('distributor')) {
+            $rolesQuery->where('created_by', auth()->id());
+        } else {
+            $rolesQuery->whereNotIn('name', ['retailer', 'distributor']);
+        }
+
         return [
-            'roles' => Role::whereNotIn('name', ['retailer', 'distributor'])->orderBy('name')->get(),
+            'roles' => $rolesQuery->get(),
         ];
     }
 
     protected function rules(?User $user = null): array
     {
+        $roleRule = 'exists:roles,id';
+        if (auth()->user()->hasRole('distributor')) {
+            $roleRule = 'exists:roles,id,created_by,' . auth()->id();
+        }
+
         return [
-            'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'email', 'unique:users,email' . ($user ? ',' . $user->id : '')],
-            'mobile' => ['nullable', 'string', 'max:15'],
-            'role_id' => ['required', 'exists:roles,id'],
-            'status' => ['required', 'in:0,1'],
-            'note' => ['nullable', 'string', 'max:1000'],
-            'password' => [$user ? 'nullable' : 'required', 'string', 'min:8', 'confirmed'],
+            'name'      => ['required', 'string', 'max:255'],
+            'email'     => ['required', 'email', 'unique:users,email' . ($user ? ',' . $user->id : '')],
+            'mobile'    => ['nullable', 'string', 'max:15'],
+            'role_id'   => ['required', $roleRule],
+            'status'    => ['required', 'in:0,1'],
+            'note'      => ['nullable', 'string', 'max:1000'],
+            'password'  => [$user ? 'nullable' : 'required', 'string', 'min:8', 'confirmed'],
             'is_active' => ['nullable', 'boolean'],
         ];
     }
 
     protected function storeRules(): array
     {
+        $roleRule = 'exists:roles,id';
+        if (auth()->user()->hasRole('distributor')) {
+            $roleRule = 'exists:roles,id,created_by,' . auth()->id();
+        }
+
         return [
-            'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'email', 'unique:users,email'],
-            'role_id' => ['required', 'exists:roles,id'],
-            'status' => ['required', 'in:0,1'],
+            'name'     => ['required', 'string', 'max:255'],
+            'email'    => ['required', 'email', 'unique:users,email'],
+            'role_id'  => ['required', $roleRule],
+            'status'   => ['required', 'in:0,1'],
             'password' => ['required', 'string', 'min:8', 'confirmed'],
         ];
     }
@@ -257,14 +314,14 @@ class UserController extends Controller
     protected function userPayload(Request $request, array $validated, ?User $user = null): array
     {
         $data = [
-            'name' => $validated['name'],
-            'email' => $validated['email'],
-            'mobile' => $validated['mobile'] ?? null,
-            'role_id' => (int) $validated['role_id'],
-            'status' => (int) ($validated['status'] ?? 1),
-            'note' => $validated['note'] ?? null,
-            'is_active' => $request->boolean('is_active', (int) ($validated['status'] ?? 1) === 1),
-            // legacy customer_type removed; keep database role_id
+            'name'       => $validated['name'],
+            'email'      => $validated['email'],
+            'mobile'     => $validated['mobile'] ?? null,
+            'role_id'    => (int) $validated['role_id'],
+            'status'     => (int) ($validated['status'] ?? 1),
+            'note'       => $validated['note'] ?? null,
+            'is_active'  => $request->boolean('is_active', (int) ($validated['status'] ?? 1) === 1),
+            'created_by' => $user ? $user->created_by : auth()->id(),
         ];
 
         if (! $user || $request->filled('password')) {

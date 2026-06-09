@@ -16,6 +16,17 @@ class User extends Authenticatable
     /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable, LogsActivity, SoftDeletes;
 
+    protected static function booted(): void
+    {
+        parent::booted();
+
+        static::creating(function ($user) {
+            if (empty($user->created_by) && auth()->check()) {
+                $user->created_by = auth()->id();
+            }
+        });
+    }
+
     public function hasRole(string|array $roles): bool
     {
         $role = $this->role;
@@ -82,6 +93,7 @@ class User extends Authenticatable
         'profile_image',
         'role_id',
         'distributor_id',
+        'created_by',
         'status',
         'mobile',
         'note',
@@ -137,6 +149,7 @@ class User extends Authenticatable
         return $this->hasMany(self::class, 'distributor_id');
     }
 
+<<<<<<< HEAD
     public function state()
     {
         return $this->belongsTo(State::class);
@@ -146,6 +159,14 @@ class User extends Authenticatable
     {
         return $this->belongsTo(City::class);
     }
+=======
+    public function creator()
+    {
+        return $this->belongsTo(self::class, 'created_by');
+    }
+
+    
+>>>>>>> distributorchange
 
     public function addresses()
     {
