@@ -129,7 +129,7 @@ class Item extends Model
 
     public static function generateSequentialCode(int $digits = 4): string
     {
-        $maxId = (int) self::max('id');
+        $maxId = (int) self::withTrashed()->max('id');
         $next  = $maxId + 1;
         return str_pad((string) $next, $digits, '0', STR_PAD_LEFT);
     }

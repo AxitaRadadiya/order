@@ -6,12 +6,29 @@
 @endsection
 @section('content')
 
+<div class="content-header">
+  <div class="container-fluid">
+    <div class="row mb-2">
+      <div class="col-sm-6">
+        <h1 class="m-0">Create User</h1>
+      </div>
+      <div class="col-sm-6">
+        <ol class="breadcrumb float-sm-right">
+          <li class="breadcrumb-item"><a href="{{ route('dashboard') }}">Home</a></li>
+          <li class="breadcrumb-item"><a href="{{ route('users.index') }}">Users</a></li>
+          <li class="breadcrumb-item active">Create</li>
+        </ol>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div class="pull-card">
   <div class="container-fluid" style="padding:0;">
 
     <div class="main-card">
-      <div class="main-card-head" style="justify-content: space-between;">
-        <div class="main-card-title"><i class="fas fa-user-edit"></i> User Details</div>
+      <!-- <div class="main-card-head" style="justify-content: space-between;">
+        <div class="main-card-title">Create User</div>
         <div class="col-sm-6">
           <ol class="breadcrumb float-sm-right">
             <li class="breadcrumb-item"><a href="{{ route('dashboard') }}">Home</a></li>
@@ -19,7 +36,7 @@
             <li class="breadcrumb-item active">Create</li>
           </ol>
         </div>
-      </div>
+      </div> -->
       <div class="main-card-body">
 
         @if($errors->any())
@@ -35,18 +52,27 @@
         <form action="{{ route('users.store') }}" method="POST" autocomplete="off">
           @csrf
 
-          <div class="form-label-title">
+          <!-- <div class="form-label-title">
             <i class="fas fa-id-card mr-1"></i> Basic Information
-          </div>
+          </div> -->
 
           <div class="row">
             <div class="col-md-6">
               <div class="form-group">
-                <label class="font-weight-bold">Name <span class="text-danger">*</span></label>
-                <input id="name" name="name" type="text"
-                       class="form-control @error('name') is-invalid @enderror"
-                       value="{{ old('name') }}" placeholder="e.g. John Doe" required>
-                @error('name')<span class="invalid-feedback">{{ $message }}</span>@enderror
+                <label class="font-weight-bold">First Name <span class="text-danger">*</span></label>
+                <input id="first_name" name="first_name" type="text"
+                       class="form-control @error('first_name') is-invalid @enderror"
+                       value="{{ old('first_name') }}" placeholder="e.g. John" required>
+                @error('first_name')<span class="invalid-feedback">{{ $message }}</span>@enderror
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="form-group">
+                <label class="font-weight-bold">Last Name <span class="text-danger">*</span></label>
+                <input id="last_name" name="last_name" type="text"
+                       class="form-control @error('last_name') is-invalid @enderror"
+                       value="{{ old('last_name') }}" placeholder="e.g. Doe" required>
+                @error('last_name')<span class="invalid-feedback">{{ $message }}</span>@enderror
               </div>
             </div>
             <div class="col-md-6">
@@ -84,7 +110,7 @@
                 @error('status')<span class="invalid-feedback">{{ $message }}</span>@enderror
               </div>
             </div>
-            <div class="col-md-6">
+            <!-- <div class="col-md-6">
               <div class="form-group">
                 <label class="font-weight-bold">Password <span class="text-danger">*</span></label>
                 <div class="input-group">
@@ -118,7 +144,7 @@
                   @error('password_confirmation')<span class="invalid-feedback">{{ $message }}</span>@enderror
                 </div>
               </div>
-            </div>
+            </div> -->
           </div>
 
       </div>

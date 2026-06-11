@@ -409,7 +409,7 @@ class ItemController extends Controller
                 'article_number' => $item->article_number ?? '-',
                 'category'       => optional($item->category)->name ?? '-',
                 'group'          => optional($item->group)->name   ?? '-',
-                'sizes'          => $sizesDisplay ?: '-',
+                // 'sizes'          => $sizesDisplay ?: '-',
                 'price'          => number_format((float) $item->price, 2),
                 'status'         => $statusBadge,
                 'action'         => $actions,

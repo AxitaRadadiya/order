@@ -284,13 +284,14 @@ class UserController extends Controller
         }
 
         return [
-            'name'      => ['required', 'string', 'max:255'],
+            'first_name'  => ['required', 'string', 'max:255'],
+            'last_name'   => ['required', 'string', 'max:255'],
             'email'     => ['required', 'email', 'unique:users,email' . ($user ? ',' . $user->id : '')],
             'mobile'    => ['nullable', 'string', 'max:15'],
             'role_id'   => ['required', $roleRule],
             'status'    => ['required', 'in:0,1'],
             'note'      => ['nullable', 'string', 'max:1000'],
-            'password'  => [$user ? 'nullable' : 'required', 'string', 'min:8', 'confirmed'],
+            // 'password'  => [$user ? 'nullable' : 'required', 'string', 'min:8', 'confirmed'],
             'is_active' => ['nullable', 'boolean'],
         ];
     }
@@ -303,18 +304,21 @@ class UserController extends Controller
         }
 
         return [
-            'name'     => ['required', 'string', 'max:255'],
+            'first_name'  => ['required', 'string', 'max:255'],
+            'last_name'   => ['required', 'string', 'max:255'],
             'email'    => ['required', 'email', 'unique:users,email'],
             'role_id'  => ['required', $roleRule],
             'status'   => ['required', 'in:0,1'],
-            'password' => ['required', 'string', 'min:8', 'confirmed'],
+            // 'password' => ['required', 'string', 'min:8', 'confirmed'],
         ];
     }
 
     protected function userPayload(Request $request, array $validated, ?User $user = null): array
     {
         $data = [
-            'name'       => $validated['name'],
+            'first_name' => $validated['first_name'],
+            'last_name'  => $validated['last_name'],
+            'name'       => trim($validated['first_name'] . ' ' . $validated['last_name']),
             'email'      => $validated['email'],
             'mobile'     => $validated['mobile'] ?? null,
             'role_id'    => (int) $validated['role_id'],
@@ -324,8 +328,8 @@ class UserController extends Controller
             'created_by' => $user ? $user->created_by : auth()->id(),
         ];
 
-        if (! $user || $request->filled('password')) {
-            $data['password'] = Hash::make($validated['password']);
+        if (! $user) {
+            $data['password'] = Hash::make('12345678');
         }
 
         return $data;

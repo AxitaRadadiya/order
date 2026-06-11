@@ -124,7 +124,7 @@
                   <input id="mobile" type="tel" inputmode="numeric" pattern="[0-9]{10}"
                     class="form-control phone-only @error('mobile') is-invalid @enderror"
                     name="mobile" value="{{ old('mobile') }}"
-                    placeholder="10-digit mobile number" maxlength="10">
+                    placeholder="10-digit mobile number" maxlength="10" required>
                 @error('mobile')<div class="invalid-feedback">{{ $message }}</div>@enderror
               </div>
             </div>
@@ -144,8 +144,8 @@
             </div>
 
             <div class="form-group col-md-3">
-              <label>Profile Image</label>
-              <input type="file" name="profile_image" class="form-control">
+              <label>Profile Image <span class="text-danger">*</span></label>
+              <input type="file" name="profile_image" class="form-control" required>
               @if(isset($customer) && $customer->profile_image)
                   <img src="{{ $customer->profile_image_url }}" width="80" class="mt-2 rounded">
               @endif
@@ -203,7 +203,7 @@
             <div class="col-md-3">
               <div class="form-group">
                 <label>Payment Terms</label>
-                <select class="form-control" name="payment_terms">
+                <select class="form-control select2" name="payment_terms">
                   <option value="">-- Select --</option>
                   @foreach(['due_on_receipt'=>'Due on Receipt','net_15'=>'Net 15','net_30'=>'Net 30','net_45'=>'Net 45','net_60'=>'Net 60'] as $val=>$lbl)
                     <option value="{{ $val }}" @selected(old('payment_terms') == $val)>{{ $lbl }}</option>
@@ -216,7 +216,7 @@
             <div class="col-md-3">
               <div class="form-group">
                 <label>Place of Supply</label>
-                <select class="form-control" name="place_of_supply">
+                <select class="form-control select2" name="place_of_supply">
                   <option value="">-- Select State --</option>
                   @foreach($states->pluck('name')->unique()->sort()->values() as $stateName)
                     <option value="{{ $stateName }}" @selected(old('place_of_supply') == $stateName)>

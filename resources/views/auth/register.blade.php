@@ -8,6 +8,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <style>
     :root{
@@ -100,6 +101,11 @@
 
     .card-foot{text-align:center;margin-top:22px;font-family:var(--mono);font-size:.7rem;color:var(--text3)}
     .card-foot span{color:var(--accent2)}
+
+    /* Dropdown options */
+    .select2-container--default .select2-results__option { color: #000 !important;}
+    /* Search input */
+    .select2-search__field { color: #000 !important;}
     </style>
 </head>
 <body>
@@ -169,7 +175,7 @@
                     <span class="input-icon">
                         <svg viewBox="0 0 24 24"><path d="M17 4h-10c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h10c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zM12 19c-1.66 0-3-1.34-3-3h6c0 1.66-1.34 3-3 3z"/></svg>
                     </span>
-                    <input id="mobile" type="text" name="mobile" value="{{ old('mobile') }}" placeholder="Mobile number" required autocomplete="mobile">
+                    <input id="mobile" type="text" name="mobile" value="{{ old('mobile') }}" placeholder="Mobile number" maxlength="10" oninput="this.value = this.value.replace(/[^0-9]/g, '')" inputmode="numeric" required autocomplete="mobile">
                 </div>
                 @error('mobile')<p class="err">{{ $message }}</p>@enderror
             </div>
@@ -188,7 +194,7 @@
             <div class="row">
                 <div class="field col-md-6">
                     <label for="state_id">State</label>
-                    <select name="state_id" id="state_id" class="form-control" required>
+                    <select name="state_id" id="state_id" class="form-control select2" required>
                         <option value="">Select State</option>
                         @foreach($states as $state)
                             <option value="{{ $state->id }}"
@@ -201,7 +207,7 @@
 
                 <div class="field col-md-6">
                     <label for="city_id">City</label>
-                    <select name="city_id" id="city_id" class="form-control" required>
+                    <select name="city_id" id="city_id" class="form-control select2" required>
                         <option value="">Select City</option>
                     </select>
                 </div>
@@ -280,6 +286,8 @@
        
     </div>
 </div>
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <script>
     var STATES = @json($states);
     var CITIES = @json($cities);
@@ -298,48 +306,97 @@
     });
     }
 
-    function populateCities($sel, stateId, selectedId) {
-    $sel.empty().append('<option value="">-- Select City --</option>');
+    // function populateCities($sel, stateId, selectedId) {
+    // $sel.empty().append('<option value="">-- Select City --</option>');
 
-    CITIES.forEach(function (c) {
-        if (String(c.state_id) === String(stateId)) {
-        $sel.append(
-            $('<option>', {
-            value: c.id,
-            text: c.name
-            }).prop('selected', String(c.id) === String(selectedId))
-        );
-        }
-    });
-    }
+    // CITIES.forEach(function (c) {
+    //     if (String(c.state_id) === String(stateId)) {
+    //     $sel.append(
+    //         $('<option>', {
+    //         value: c.id,
+    //         text: c.name
+    //         }).prop('selected', String(c.id) === String(selectedId))
+    //     );
+    //     }
+    // });
+    // }
 
     function getStateId($stateSelect) {
     return $stateSelect.val();
     }
 
-    document.addEventListener('DOMContentLoaded', function () {
+    // document.addEventListener('DOMContentLoaded', function () {
 
-        const stateSelect = document.getElementById('state_id');
-        const citySelect  = document.getElementById('city_id');
+    //     const stateSelect = document.getElementById('state_id');
+    //     const citySelect  = document.getElementById('city_id');
 
-        function populateCities(stateId) {
-            citySelect.innerHTML = '<option value="">Select City</option>';
-            CITIES.forEach(function (c) {
-                if (String(c.state_id) === String(stateId)) {
+    //     function populateCities(stateId) {
+    //         citySelect.innerHTML = '<option value="">Select City</option>';
+    //         CITIES.forEach(function (c) {
+    //             if (String(c.state_id) === String(stateId)) {
 
-                    const option = document.createElement('option');
-                    option.value = c.id;
-                    option.text  = c.name;
+    //                 const option = document.createElement('option');
+    //                 option.value = c.id;
+    //                 option.text  = c.name;
 
-                    citySelect.appendChild(option);
+    //                 citySelect.appendChild(option);
+    //             }
+    //         });
+    //         $('#city_id').trigger('change.select2');
+    //     }
+    //     stateSelect.addEventListener('change', function () {
+    //         populateCities(this.value);
+    //     });
+    //     if (stateSelect.value) {
+    //         populateCities(stateSelect.value);
+    //     }
+    // });
+    $(document).ready(function () {
+
+        $('#state_id').select2({
+            placeholder: 'Select State',
+            width: '100%'
+        });
+
+        $('#city_id').select2({
+            placeholder: 'Select City',
+            width: '100%'
+        });
+
+        function loadCities(stateId) {
+
+            $('#city_id').empty();
+            $('#city_id').append(
+                '<option value="">Select City</option>'
+            );
+
+            CITIES.forEach(function (city) {
+                if (String(city.state_id) === String(stateId)) {
+                    $('#city_id').append(
+                        new Option(city.name, city.id)
+                    );
                 }
             });
+
+            // Refresh Select2
+            $('#city_id').trigger('change');
         }
-        stateSelect.addEventListener('change', function () {
-            populateCities(this.value);
+
+        $('#state_id').on('change', function () {
+            loadCities($(this).val());
         });
-        if (stateSelect.value) {
-            populateCities(stateSelect.value);
+
+        // For old selected state after validation error
+        let oldState = $('#state_id').val();
+
+        if (oldState) {
+            loadCities(oldState);
+
+            let oldCity = "{{ old('city_id') }}";
+
+            if (oldCity) {
+                $('#city_id').val(oldCity).trigger('change');
+            }
         }
     });
 </script>

@@ -247,7 +247,7 @@ $(document).ready(function () {
             { data: 'article_number' },
             { data: 'category' },    
             { data: 'group' },       
-            { data: 'sizes' },      
+            // { data: 'sizes' },      
             { data: 'price' },
             { data: 'status' },
             { data: 'action', orderable: false, searchable: false }
