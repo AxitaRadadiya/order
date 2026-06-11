@@ -39,4 +39,10 @@ class OrderMaster extends Model
     {
         return $this->belongsTo(User::class, 'distributor_id');
     }
+
+    public function inventoryLogs()
+    {
+        return $this->hasMany(InventoryLog::class, 'order_master_id');
+    }
 }
+

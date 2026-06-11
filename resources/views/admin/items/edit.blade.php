@@ -20,9 +20,11 @@
 <div class="pull-card">
 	<div class="container-fluid">
 		<div class="main-card mt-4">
-			<div class="main-card-head">
-				<div class="main-card-title"></div>
-			</div>
+      <div class="main-card-head d-flex justify-content-end align-items-center mb-2">
+        <a href="{{ route('items.index') }}" class="btn-cancel mr-1"><i class="fas fa-arrow-left"></i> Back</a>
+        <a href="{{ route('items.show', $item->id) }}" class="btn btn-info btn-sm mr-1"><i class="fas fa-eye"></i> View Stock</a>
+        <button type="submit" class="btn-submit"><i class="fas fa-save mr-1"></i>Update Item</button>
+      </div>
 			<div class="main-card-body">
 				<form action="{{ route('items.update', $item->id) }}" method="POST" enctype="multipart/form-data">
 					@csrf
@@ -301,11 +303,20 @@
 															min="0">
 													</td>
 
-													<td class="text-center">
-														<button type="button" class="btn btn-danger btn-sm removeRow">
-															<i class="fas fa-trash"></i>
-														</button>
-													</td>
+<td class="text-center">
+<button type="button"
+													class="btn btn-create btn-sm restockBtn"
+													data-variant-id="{{ $variant->id }}"
+													data-color-code="{{ optional($variant->color)->color_code }}"
+													data-size-name="{{ optional($variant->size)->name }}"
+													data-current-qty="{{ $variant->quantity }}"
+													>
+													<i class="fas fa-plus"></i> Restock
+												</button>
+													<button type="button" class="btn btn-danger btn-sm removeRow">
+														<i class="fas fa-trash"></i>
+													</button>
+												</td>
 												</tr>
 
 												@php $index++; @endphp
@@ -333,11 +344,18 @@
 														<input type="number" name="variants[0][quantity]" class="form-control" value="0" min="0">
 													</td>
 
-													<td class="text-center">
-														<button type="button" class="btn btn-danger btn-sm removeRow">
-															<i class="fas fa-trash"></i>
-														</button>
-													</td>
+<td class="text-center">
+<button type="button"
+													class="btn btn-create btn-sm restockBtn"
+													disabled
+													title="Select color/size first"
+												>
+													<i class="fas fa-plus"></i> Restock
+													</button>
+													<button type="button" class="btn btn-danger btn-sm removeRow">
+														<i class="fas fa-trash"></i>
+													</button>
+												</td>
 												</tr>
 											@endforelse
 										</tbody>
@@ -357,6 +375,47 @@
 						<button type="submit" class="btn btn-create"><i class="fas fa-save mr-1"></i>Update Item</button>
 					</div>
 				</form>
+			</div>
+		</div>
+	</div>
+</div>
+
+<!-- Restock Modal -->
+<div class="modal fade" id="restockModal" tabindex="-1" role="dialog" aria-labelledby="restockModalLabel" aria-hidden="true">
+	<div class="modal-dialog modal-dialog-centered" role="document">
+		<div class="modal-content">
+			<div class="modal-header">
+				<h5 class="modal-title" id="restockModalLabel">Restock Variant</h5>
+				<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+					<span aria-hidden="true">&times;</span>
+				</button>
+			</div>
+			<div class="modal-body">
+				<div id="restockErrorBox" class="alert alert-danger" style="display:none;"></div>
+				<div class="form-group">
+					<label>Color Code</label>
+					<input type="text" id="restockColorCode" class="form-control" readonly>
+				</div>
+				<div class="form-group">
+					<label>Size</label>
+					<input type="text" id="restockSizeDisplay" class="form-control" readonly>
+				</div>
+				<div class="form-group">
+					<label>Current Stock</label>
+					<input type="text" id="currentStockDisplay" class="form-control" readonly>
+				</div>
+				<div class="form-group">
+					<label>Add Qty <span class="text-danger">*</span></label>
+					<input type="number" id="restockQty" class="form-control" min="1" value="1">
+				</div>
+				<div class="form-group">
+					<label>Note <span class="text-muted">(optional)</span></label>
+					<input type="text" id="restockNote" class="form-control">
+				</div>
+			</div>
+			<div class="modal-footer">
+				<button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+				<button type="button" class="btn btn-primary" id="restockSubmit">Submit</button>
 			</div>
 		</div>
 	</div>
@@ -652,6 +711,82 @@ document.addEventListener('click', function (e) {
             row.remove();
         }
     }
+});
+
+// Restock modal behavior
+$(document).on('click', '.restockBtn', function () {
+    const btn = $(this);
+
+    $('#restockModal').attr('data-variant-id', btn.data('variant-id'));
+    $('#restockColorCode').val(btn.data('color-code') ?? '');
+    $('#restockSizeDisplay').val(btn.data('size-name') ?? '');
+    $('#currentStockDisplay').val(btn.data('current-qty') ?? '');
+
+    $('#restockQty').val(1);
+    $('#restockNote').val('');
+
+    $('#restockErrorBox').hide().text('');
+    $('#restockModal').modal('show');
+});
+
+$(document).on('click', '#restockSubmit', function (e) {
+    e.preventDefault();
+
+    const modal = $('#restockModal');
+    const item_variant_id = modal.attr('data-variant-id');
+    const qty = parseInt($('#restockQty').val(), 10);
+    const note = $('#restockNote').val();
+
+    $('#restockErrorBox').hide().text('');
+
+    if (!item_variant_id) {
+        $('#restockErrorBox').text('Invalid variant.').show();
+        return;
+    }
+
+    if (!qty || qty < 1) {
+        $('#restockErrorBox').text('Qty must be at least 1.').show();
+        return;
+    }
+
+    fetch('{{ url('/item-variant/restock') }}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+        },
+        body: JSON.stringify({
+            item_variant_id: item_variant_id,
+            qty: qty,
+            note: note
+        })
+    })
+    .then(async (res) => {
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok || !data.success) {
+            throw new Error(data.message || data.error || 'Something went wrong.');
+        }
+        return data;
+    })
+    .then((data) => {
+        const variantId = item_variant_id;
+        const restockBtn = $(".restockBtn[data-variant-id='" + variantId + "']");
+        const row = restockBtn.closest('tr');
+
+        row.find("input[type='number'][name*='[quantity]']").first().val(data.new_qty);
+        $('#currentStockDisplay').val(data.new_qty);
+
+        if (window.Swal) {
+            const Toast = Swal.mixin({ toast: true, position: 'top-end', showConfirmButton: false, timer: 3000 });
+            Toast.fire({ icon: 'success', title: 'Stock updated successfully' });
+        }
+
+        modal.modal('hide');
+    })
+    .catch((err) => {
+        $('#restockErrorBox').text(err.message || 'Failed to update stock.').show();
+    });
 });
 </script>
 @endsection

@@ -15,7 +15,8 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Schema;
-use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Str;
+use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 
 class ItemController extends Controller
@@ -108,6 +109,11 @@ class ItemController extends Controller
             $validated['item_code'] = Item::generateSequentialCode();
         }
 
+        // Keep tax_id and tax_percent synchronized based on selected tax
+        $tax = !empty($validated['tax_id']) ? TaxMaster::find($validated['tax_id']) : null;
+        $validated['tax_id'] = $validated['tax_id'] ?? null;
+        $validated['tax_percent'] = $tax ? $tax->tax_percentage : 0;
+
         $validated['status']           = (int) ($validated['status'] ?? 1);
         $validated['show_item_on_web'] = (int) ($validated['show_item_on_web'] ?? 1);
 
@@ -138,25 +144,37 @@ class ItemController extends Controller
         $variants = $validated['variants'] ?? [];
         unset($validated['variants']);
 
-        $item = Item::create($validated);
+        $userId = auth()->id();
 
-        foreach ($variants as $variant) {
-            $item->variants()->create([
-                'color_id' => $variant['color_id'],
-                'size_id' => $variant['size_id'],
-                'quantity' => $variant['quantity'],
-            ]);
-        }
-        // if (!empty($colors)) {
-        //     $item->colors()->sync($colors);
-        // }
+        // Create item + variants + inventory logs atomically
+        DB::transaction(function () use ($validated, $variants, $userId, &$item) {
+            $item = Item::create($validated);
+
+            foreach ($variants as $variant) {
+                $createdVariant = $item->variants()->create([
+                    'color_id' => $variant['color_id'],
+                    'size_id' => $variant['size_id'],
+                    'quantity' => $variant['quantity'],
+                ]);
+
+                $createdVariant->inventoryLogs()->create([
+                    'item_variant_id' => $createdVariant->id,
+                    'order_master_id' => null,
+                    'type' => 'restock',
+                    'qty' => $variant['quantity'],
+                    'note' => 'Initial stock',
+                    'created_by' => $userId,
+                ]);
+            }
+        });
 
         return redirect()->route('items.index')->withSuccess('Item created successfully.');
     }
 
     public function show(Item $item): View
     {
-        $item->load(['category', 'group', 'variants.color', 'variants.size']);
+        $item->load(['variants.color', 'variants.size', 'variants.inventoryLogs']);
+
         return view('admin.items.show', compact('item'));
     }
 
@@ -178,141 +196,165 @@ class ItemController extends Controller
 
     public function update(Request $request, Item $item): RedirectResponse
     {
-        $validated = $request->validate([
-            'name'             => 'required|string|max:255',
-            'article_number'   => 'nullable|string|max:100|unique:items,article_number,' . $item->id,
-            'item_code'        => 'nullable|string|max:100|unique:items,item_code,' . $item->id,
-            'sub_category'     => 'nullable|exists:sub_categories,id',
-            'sub_group'        => 'nullable|exists:sub_groups,id',
-            // 'colors'           => 'nullable|array',
-            // 'colors.*'         => 'nullable|exists:colors,id',
-            // 'sizes'            => 'nullable|array',
-            'variants' => 'required|array|min:1',
-            'variants.*.color_id' => 'required|exists:colors,id',
-            'variants.*.size_id' => 'required|exists:sizes,id',
-            'variants.*.quantity' => 'required|integer|min:0',
-            'description'      => 'nullable|string',
-            'category_id'      => 'nullable|exists:categories,id',
-            'group_id'         => 'nullable|exists:groups,id',
-            'unit'             => 'nullable|string|max:50',
-            'price'            => 'required|numeric|min:0',
-            'tax_id'           => 'nullable|exists:tax_masters,id',
-            'video_link'       => 'nullable|url',
-            // images[] — up to 5 files, jpg/png only, max 2 MB each
-            'images'           => 'nullable|array|max:5',
-            'images.*'         => 'image|mimes:jpg,jpeg,png|max:2048',
-            'status'           => 'nullable|in:0,1',
-            'show_item_on_web' => 'nullable|in:0,1',
-        ]);
+    $validated = $request->validate([
+        'name'             => 'required|string|max:255',
+        'article_number'   => 'nullable|string|max:100|unique:items,article_number,' . $item->id,
+        'item_code'        => 'nullable|string|max:100|unique:items,item_code,' . $item->id,
+        'sub_category'     => 'nullable|exists:sub_categories,id',
+        'sub_group'        => 'nullable|exists:sub_groups,id',
+        'variants'         => 'required|array|min:1',
+        'variants.*.color_id'  => 'required|exists:colors,id',
+        'variants.*.size_id'   => 'required|exists:sizes,id',
+        'variants.*.quantity'  => 'required|integer|min:0',
+        'description'      => 'nullable|string',
+        'category_id'      => 'nullable|exists:categories,id',
+        'group_id'         => 'nullable|exists:groups,id',
+        'unit'             => 'nullable|string|max:50',
+        'price'            => 'required|numeric|min:0',
+        'tax_id'           => 'nullable|exists:tax_masters,id',
+        'video_link'       => 'nullable|url',
+        'images'           => 'nullable|array|max:5',
+        'images.*'         => 'image|mimes:jpg,jpeg,png|max:2048',
+        'status'           => 'nullable|in:0,1',
+        'show_item_on_web' => 'nullable|in:0,1',
+    ]);
 
-        // Handle images: keep existing unless removed, append newly uploaded images
-        $MAX_FILES = 5;
-        $prevImages = is_array($item->images) ? $item->images : ($item->image ? [$item->image] : []);
+    // ── Image handling (keep your existing image logic) ──────────────
+    $MAX_FILES    = 5;
+    $prevImages   = is_array($item->images) ? $item->images : ($item->image ? [$item->image] : []);
+    $keptExisting = $request->input('existing_images', $prevImages);
+    if (!is_array($keptExisting)) { $keptExisting = [$keptExisting]; }
 
-        // Which existing images the client wants to keep (hidden inputs 'existing_images[]')
-        $keptExisting = $request->input('existing_images', $prevImages);
-        if (!is_array($keptExisting)) {
-            $keptExisting = [$keptExisting];
+    $toDelete = array_diff($prevImages, $keptExisting);
+    foreach ($toDelete as $d) { Storage::disk('public')->delete($d); }
+
+    $finalImages   = array_values($keptExisting);
+    $uploadedPaths = [];
+    if ($request->hasFile('images')) {
+        foreach ($request->file('images') as $file) {
+            if (count($finalImages) >= $MAX_FILES) continue;
+            $path            = $file->store('items', 'public');
+            $uploadedPaths[] = $path;
+            $finalImages[]   = $path;
         }
+    }
 
-        // Delete any previously stored images that the user removed
-        $toDelete = array_diff($prevImages, $keptExisting);
-        foreach ($toDelete as $d) {
-            Storage::disk('public')->delete($d);
+    $primary     = $request->input('primary_image');
+    $primaryPath = null;
+    if ($primary) {
+        if (str_starts_with($primary, 'new-')) {
+            $idx = (int) Str::after($primary, 'new-');
+            if (isset($uploadedPaths[$idx])) { $primaryPath = $uploadedPaths[$idx]; }
+        } else {
+            if (in_array($primary, $finalImages)) { $primaryPath = $primary; }
         }
+    }
+    $primaryPath = $primaryPath ?? ($finalImages[0] ?? null);
+    if ($primaryPath) { $validated['image'] = $primaryPath; }
+    if (Schema::hasColumn('items', 'images')) { $validated['images'] = $finalImages; }
+    // ── End image handling ───────────────────────────────────────────
 
-        // Start final images list with kept existing
-        $finalImages = array_values($keptExisting);
+    $tax = !empty($validated['tax_id']) ? TaxMaster::find($validated['tax_id']) : null;
+    $validated['tax_id']      = $validated['tax_id'] ?? null;
+    $validated['tax_percent'] = $tax ? $tax->tax_percentage : 0;
+    $validated['status']           = (int) ($validated['status'] ?? 1);
+    $validated['show_item_on_web'] = (int) ($validated['show_item_on_web'] ?? 1);
 
-        // Handle new uploads and append (respect MAX_FILES)
-        $uploadedPaths = [];
-        if ($request->hasFile('images')) {
-            foreach ($request->file('images') as $file) {
-                if (count($finalImages) >= $MAX_FILES) {
-                    // skip extra uploads beyond limit
-                    continue;
-                }
-                $path = $file->store('items', 'public');
-                $uploadedPaths[] = $path;
-                $finalImages[] = $path;
-            }
+    $variants = $validated['variants'] ?? [];
+    unset($validated['variants']);
+
+    // Duplicate combination check
+    $combinations = [];
+    foreach ($variants as $variant) {
+        $key = $variant['color_id'] . '_' . $variant['size_id'];
+        if (in_array($key, $combinations)) {
+            return back()->withInput()->withErrors([
+                'variants' => 'Duplicate Color + Size combination is not allowed.'
+            ]);
         }
+        $combinations[] = $key;
+    }
 
-        // determine primary image
-        $primary = $request->input('primary_image');
-        $primaryPath = null;
-        if ($primary) {
-            if (str_starts_with($primary, 'new-')) {
-                $idx = (int) Str::after($primary, 'new-');
-                if (isset($uploadedPaths[$idx])) {
-                    $primaryPath = $uploadedPaths[$idx];
-                }
-            } else {
-                // existing image path selected
-                if (in_array($primary, $finalImages)) {
-                    $primaryPath = $primary;
-                }
-            }
-        }
+    $userId = auth()->id();
 
-        // fallback to first image if none explicitly selected
-        $primaryPath = $primaryPath ?? ($finalImages[0] ?? null);
-
-        if ($primaryPath) {
-            $validated['image'] = $primaryPath;
-        }
-
-        if (Schema::hasColumn('items', 'images')) {
-            $validated['images'] = $finalImages;
-        }
-
-        // Extract colors (pivot) before updating — no `colors` column on items table
-        // $colors = $validated['colors'] ?? null;
-        // unset($validated['colors']);
-
-        $validated['status']           = (int) ($validated['status'] ?? 1);
-        $validated['show_item_on_web'] = (int) ($validated['show_item_on_web'] ?? 1);
-
-        $variants = $validated['variants'] ?? [];
-
-        $combinations = [];
-
-        foreach ($variants as $variant) {
-
-            $key = $variant['color_id'] . '_' . $variant['size_id'];
-
-            if (in_array($key, $combinations)) {
-
-                return back()
-                    ->withInput()
-                    ->withErrors([
-                        'variants' => 'Duplicate Color + Size combination is not allowed.'
-                    ]);
-            }
-
-            $combinations[] = $key;
-        }
-
-        $variants = $validated['variants'] ?? [];
-        unset($validated['variants']);
+    DB::transaction(function () use ($item, $validated, $variants, $userId) {
 
         $item->update($validated);
 
-        $item->variants()->delete();
+        // Build map of EXISTING variants keyed by color_id_size_id
+        // KEY FIX: do NOT delete variants — update them in place to preserve
+        // inventory_logs foreign keys
+        $existingVariants = $item->variants()->get()->keyBy(function ($v) {
+            return $v->color_id . '_' . $v->size_id;
+        });
+
+        // Track which variant keys are in the new submission
+        $submittedKeys = [];
 
         foreach ($variants as $variant) {
-            $item->variants()->create([
-                'color_id' => $variant['color_id'],
-                'size_id' => $variant['size_id'],
-                'quantity' => $variant['quantity'],
-            ]);
+            $key    = $variant['color_id'] . '_' . $variant['size_id'];
+            $newQty = (int) $variant['quantity'];
+            $submittedKeys[] = $key;
+
+            if ($existingVariants->has($key)) {
+                // --- EXISTING VARIANT: update qty, log only the difference ---
+                $existingVariant = $existingVariants->get($key);
+                $oldQty          = (int) $existingVariant->quantity;
+
+                // Update qty on the existing record (preserves the ID and all logs)
+                $existingVariant->update(['quantity' => $newQty]);
+
+                if ($newQty === $oldQty) {
+                    // No change — no log needed
+                    continue;
+                }
+
+                $diff = abs($newQty - $oldQty);
+                $type = $newQty > $oldQty ? 'restock' : 'deduct';
+                $note = $newQty > $oldQty ? 'Stock updated' : 'Stock adjusted';
+
+                $existingVariant->inventoryLogs()->create([
+                    'item_variant_id' => $existingVariant->id,
+                    'order_master_id' => null,
+                    'type'            => $type,
+                    'qty'             => $diff,
+                    'note'            => $note,
+                    'created_by'      => $userId,
+                ]);
+
+            } else {
+                // --- BRAND NEW VARIANT: create it and log initial stock ---
+                $newVariant = $item->variants()->create([
+                    'color_id' => $variant['color_id'],
+                    'size_id'  => $variant['size_id'],
+                    'quantity' => $newQty,
+                ]);
+
+                // Log full qty as initial stock — same as store()
+                if ($newQty > 0) {
+                    $newVariant->inventoryLogs()->create([
+                        'item_variant_id' => $newVariant->id,
+                        'order_master_id' => null,
+                        'type'            => 'restock',
+                        'qty'             => $newQty,
+                        'note'            => 'Initial stock',
+                        'created_by'      => $userId,
+                    ]);
+                }
+            }
         }
 
-        // if (is_array($colors)) {
-        //     $item->colors()->sync($colors);
-        // }
+        // --- REMOVED VARIANTS: delete only variants not in submission ---
+        // Their logs are also deleted via cascade (set up in migration)
+        $keysToDelete = $existingVariants->keys()->diff($submittedKeys);
+        if ($keysToDelete->isNotEmpty()) {
+            $item->variants()
+                ->whereIn('id', $existingVariants->only($keysToDelete)->pluck('id'))
+                ->delete();
+        }
+    });
 
-        return redirect()->route('items.index')->withSuccess('Item updated successfully.');
+    return redirect()->route('items.index')->withSuccess('Item updated successfully.');
     }
 
     public function destroy(Item $item): RedirectResponse

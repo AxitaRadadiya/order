@@ -4,18 +4,18 @@
 @section('content')
 <div class="content-header">
   <div class="container-fluid">
-	<div class="row mb-2">
-	  <div class="col-sm-6">
-		<h1 class="m-0">Item Details</h1>
-	  </div>
-	  <div class="col-sm-6">
-		<ol class="breadcrumb float-sm-right">
-		  <li class="breadcrumb-item"><a href="{{ route('dashboard') }}">Home</a></li>
-		  <li class="breadcrumb-item"><a href="{{ route('items.index') }}">Items</a></li>
-		  <li class="breadcrumb-item active">show</li>
-		</ol>
-	  </div>
-	</div>
+    <div class="row mb-2">
+      <div class="col-sm-6">
+        <h1 class="m-0">Item Details</h1>
+      </div>
+      <div class="col-sm-6">
+        <ol class="breadcrumb float-sm-right">
+          <li class="breadcrumb-item"><a href="{{ route('dashboard') }}">Home</a></li>
+          <li class="breadcrumb-item"><a href="{{ route('items.index') }}">Items</a></li>
+          <li class="breadcrumb-item active">Show</li>
+        </ol>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -23,7 +23,6 @@
   <div class="container-fluid">
     <div class="main-card mt-4">
       <div class="main-card-head d-flex justify-content-end align-items-center mb-2">
-     <!--   <div class="main-card-title"><i class="fas fa-eye"></i> {{ $item->name }}</div>-->
         <a href="{{ route('items.index') }}" class="btn-cancel mr-1"><i class="fas fa-arrow-left"></i> Back</a>
         <a href="{{ route('items.edit', $item->id) }}" class="btn-submit"><i class="fas fa-edit"></i> Edit</a>
       </div>
@@ -31,7 +30,6 @@
         <div class="row">
           <div class="col-md-4">
             @php
-              // Support both single and multiple images (array or JSON column)
               $images = [];
               if (!empty($item->images) && is_array($item->images)) {
                 $images = $item->images;
@@ -41,7 +39,6 @@
               } elseif (!empty($item->image)) {
                 $images = [$item->image];
               }
-              // Filter out non-existing images
               $images = array_values(array_filter($images, function($img) {
                 return $img && file_exists(public_path('storage/' . $img));
               }));
@@ -58,7 +55,6 @@
               <script>
                 function setMainImage(src, thumb) {
                   document.getElementById('mainProductImage').src = src;
-                  // Optional: highlight selected thumbnail
                   document.querySelectorAll('.product-thumb').forEach(function(img) {
                     img.style.border = '2px solid #eee';
                   });
@@ -72,68 +68,65 @@
           <div class="col-md-8">
             <h4>{{ $item->name }}</h4>
             <p class="text-muted">Article Number: {{ $item->article_number ?? '-' }}</p>
-            <p class="text-muted">Item Code: {{ $item->item_code ?? '-' }}</p>
-            <p>{{ $item->description }}</p>
-
-            <dl class="row">
-              <dt class="col-sm-4">Category</dt>
-              <dd class="col-sm-8">{{ optional($item->category)->name ?? '-' }}</dd>
-
-              <dt class="col-sm-4">Sub Category</dt>
-              <dd class="col-sm-8">{{ optional($item->subCategory)->name ?? '-' }}</dd>
-
-              <dt class="col-sm-4">Group</dt>
-              <dd class="col-sm-8">{{ optional($item->group)->name ?? '-' }}</dd>
-
-              <dt class="col-sm-4">Sub Group</dt>
-              <dd class="col-sm-8">{{ optional($item->subGroup)->name ?? '-' }}</dd>
-
-              <!-- <dt class="col-sm-4">Unit</dt>
-              <dd class="col-sm-8">{{ $item->unit ?? '-' }}</dd> -->
-
-              <!-- <dt class="col-sm-4">Sizes</dt>
-              <dd class="col-sm-8">{{ is_array($item->sizes) && count($item->sizes) ? implode(', ', $item->sizes) : '-' }}</dd>
-
-              <dt class="col-sm-4">Colors</dt>
-              <dd class="col-sm-8">{{ ($item->colors && $item->colors->count()) ? $item->colors->pluck('name')->join(', ') : '-' }}</dd> -->
-
-              <dt class="col-sm-4">Price</dt>
-              <dd class="col-sm-8">{{ number_format($item->price,2) }}</dd>
-
-              <dt class="col-sm-4">Tax</dt>
-              <dd class="col-sm-8">{{ optional($item->tax)->tax_percentage }}%</dd>
-
-              <dt class="col-sm-4">Status</dt>
-              <dd class="col-sm-8">{{ $item->status ? 'Active' : 'Inactive' }}</dd>
-
-              <dt class="col-sm-4">Show On Web</dt>
-              <dd class="col-sm-8">{{ $item->show_item_on_web ? 'Yes' : 'No' }}</dd>
-            </dl>
+            <p class="text-muted">MRP: {{ number_format($item->price, 2) }}</p>
 
             @if($item->variants->count())
                 <hr>
-
                 <h5 class="mt-3">Item Variants</h5>
-
+                <div class="table-responsive">
                 <table class="table table-bordered mt-2">
                     <thead>
                         <tr>
-                            <th>Color</th>
+                            <th>Color Code</th>
                             <th>Size</th>
-                            <th>Quantity</th>
+                            <th>Total Production</th>
+                            <th>Total Sold</th>
+                            <th>Current Stock</th>
                         </tr>
                     </thead>
-
                     <tbody>
+                        @php
+                            $totalProduction = 0;
+                            $totalSold = 0;
+                            $totalStock = 0;
+                        @endphp
                         @foreach($item->variants as $variant)
-                            <tr>
-                                <td>{{ optional($variant->color)->name }}</td>
-                                <td>{{ optional($variant->size)->name }}</td>
-                                <td>{{ $variant->quantity }}</td>
+                            @php
+                                $totalProduction += $variant->total_production;
+                                $totalSold += $variant->total_sold;
+                                $totalStock += $variant->current_stock;
+
+                                if ($variant->current_stock == 0) {
+                                    $rowStyle = 'background-color: #ffe6e6;';
+                                    $stockOutput = '<span class="badge badge-danger">Out of Stock</span>';
+                                } elseif ($variant->current_stock <= 10) {
+                                    $rowStyle = 'background-color: #fff3cd;';
+                                    $stockOutput = '<span class="badge badge-warning">Low Stock</span>';
+                                } else {
+                                    $rowStyle = '';
+                                    $stockOutput = '<span style="color: green;">' . $variant->current_stock . '</span>';
+                                }
+                            @endphp
+                            <tr style="{{ $rowStyle }}">
+                                <td>{{ optional($variant->color)->color_code ?? '-' }}</td>
+                                <td>{{ optional($variant->size)->name ?? '-' }}</td>
+                                <td>{{ $variant->total_production }}</td>
+                                <td>{{ $variant->total_sold }}</td>
+                                <td>{!! $stockOutput !!}</td>
                             </tr>
                         @endforeach
                     </tbody>
+                    <tfoot>
+                        <tr class="font-weight-bold">
+                            <td>Total</td>
+                            <td></td>
+                            <td>{{ $totalProduction }}</td>
+                            <td>{{ $totalSold }}</td>
+                            <td>{{ $totalStock }}</td>
+                        </tr>
+                    </tfoot>
                 </table>
+                </div>
             @endif
           </div>
         </div>
@@ -141,5 +134,4 @@
     </div>
   </div>
 </div>
-
 @endsection

@@ -11,6 +11,9 @@ use App\Models\User;
 use App\Models\Item;
 use App\Models\Size;
 use App\Models\Color;
+use App\Models\ItemVariant;
+use App\Models\InventoryLog;
+
 use Carbon\Carbon;
 use Yajra\DataTables\Facades\DataTables;
 
@@ -295,26 +298,32 @@ class OrderMasterController extends Controller
         try {
             $fields = $this->orderFields($request);
             $authUser = auth()->user();
+
             if ($authUser && $authUser->hasRole('retailer')) {
-                $fields['distributor_id'] = $authUser->distributor_id;
-                $fields['distributor_approved'] = false;
-                $fields['approval_level'] = 0;
+                 // Retailer orders need distributor + superadmin approval
+                 $fields['distributor_id']        = $authUser->distributor_id;
+                 $fields['distributor_approved']  = false;
+                 $fields['approval_level']        = 0;
                 $fields['visible_to_superadmin'] = false;
             } elseif ($authUser && $authUser->hasRole('distributor')) {
-                // If a distributor creates an order, mark themselves as the distributor
+                // Distributor orders are auto-approved at distributor level
+                $fields['distributor_id']           = $authUser->id;
+                $fields['distributor_approved']     = true;
+                $fields['distributor_approved_at']  = now();
+                $fields['approval_level']           = 1;
+                $fields['visible_to_superadmin']    = true;
+            } elseif ($authUser && $authUser->hasRole(['super-admin', 'superadmin'])) {
+                // Superadmin orders are fully auto-approved — skip all approval steps
+                $fields['distributor_approved']     = true;
+                $fields['distributor_approved_at']  = now();
+                $fields['approval_level']           = 2;
+                $fields['visible_to_superadmin']    = true;
+            }
+            elseif ($authUser && ($authUser->hasRole('super-admin') || $authUser->hasRole('superadmin'))) {
+                // If a superadmin creates an order, auto-approve at superadmin level (level 2)
+                $fields['approval_level'] = 2;
                 $fields['distributor_id'] = $authUser->id;
-
-                // If distributor is creating the order for a retailer (i.e. user_id is provided
-                // and is different from the distributor), auto-approve distributor approval.
-                $targetUserId = $fields['user_id'] ?? null;
-                if ($targetUserId && $targetUserId != $authUser->id) {
-                    // $fields['distributor_approved'] = true;
-                    // $fields['distributor_approved_at'] = now();
-                    $fields['approval_level'] = 1;
-                    // $fields['visible_to_superadmin'] = true;
-                } else {
-                    $fields['approval_level'] = $fields['approval_level'] ?? 0;
-                }
+                $fields['visible_to_superadmin'] = true;
             }
             $order = OrderMaster::create($fields);
             $subtotal = $this->syncItems($order, $request->input('items', []));
@@ -347,9 +356,11 @@ class OrderMasterController extends Controller
             }
 
             $order->update(array_merge($this->calculatedTotals($request, $subtotal), ['status' => $orderStatus]));
+
             DB::commit();
 
             // If this order was created from cart, clear the session cart
+
             if ($request->input('from_cart')) {
                 session()->forget('cart');
             }
@@ -391,9 +402,11 @@ class OrderMasterController extends Controller
             // Super-admin may view all orders including those pending distributor approval.
         }
 
-        $colorsById = Color::pluck('name', 'id');
+        $colorsById = Color::pluck('color_code', 'id');
 
-        return view('admin.orders.show', compact('order', 'colorsById'));
+        $colorNameById = Color::pluck('name', 'id');
+
+        return view('admin.orders.show', compact('order', 'colorsById', 'colorNameById'));
     }
 
     // -----------------------------------------------------------------------
@@ -466,8 +479,16 @@ class OrderMasterController extends Controller
                 $order->distributor_id = $authUser->id;
                 $order->save();
             }
+            if ($authUser && ($authUser->hasRole('super-admin') || $authUser->hasRole('superadmin'))) {
+                $order->distributor_id = $authUser->id;
+                $order->approval_level = 2;
+                $order->visible_to_superadmin = true;
+                $order->save();
+            }
+
             $order->items()->delete();
             $subtotal = $this->syncItems($order, $request->input('items', []));
+
 
             // Determine overall order status from item statuses: if all items share the same
             // status, use that as the order status. Otherwise keep submitted order status.
@@ -498,7 +519,9 @@ class OrderMasterController extends Controller
             }
 
             $order->update(array_merge($this->calculatedTotals($request, $subtotal), ['status' => $orderStatus]));
+
             DB::commit();
+
 
             return redirect()->route('orders.index')->with('success', 'Order updated successfully.');
         } catch (\Exception $e) {
@@ -571,6 +594,14 @@ class OrderMasterController extends Controller
         $user = auth()->user();
         if ($user && $user->hasRole(['retailer', 'distributor']) && $order->user_id !== $user->id) {
             return redirect()->back()->with('error', 'You are not allowed to delete this order.');
+        }
+
+        $order->load('items');
+
+        foreach ($order->items as $item) {
+            if ($item->status === 'confirmed') {
+                $this->restoreStockForOrderItem($item);
+            }
         }
 
         $order->delete();
@@ -696,31 +727,31 @@ class OrderMasterController extends Controller
                 continue;
             }
 
+
             // determine article number: prefer submitted value, otherwise pull from Item model
             $articleNumber = $it['article_number'] ?? null;
-            $itemModel = null;
             if (empty($articleNumber) && $itemId) {
                 $itemModel = Item::find($itemId);
-                $articleNumber = $itemModel->article_number ?? $itemModel->sku ?? null;
+                $articleNumber = $itemModel?->article_number ?? $itemModel?->sku ?? null;
             }
 
             $sizeQuantities = $this->normalizeSizeQuantities($it);
 
-            if (!empty($sizeQuantities)) {
-                $sizeVal = implode(',', array_keys($sizeQuantities));
-                $quantity = array_sum($sizeQuantities);
-            } elseif (!empty($it['sizes'])) {
-                $selectedSizes = is_array($it['sizes']) ? $it['sizes'] : explode(',', $it['sizes']);
-                $selectedSizes = array_values(array_filter(array_map('trim', $selectedSizes), fn ($size) => $size !== ''));
-                $sizeVal = implode(',', $selectedSizes);
-                $quantity = (float) ($it['quantity'] ?? 0);
-            } elseif (!empty($it['size_from']) || !empty($it['size_to'])) {
-                $sizeVal = trim(($it['size_from'] ?? '') . '-' . ($it['size_to'] ?? ''), '-');
-                $quantity = (float) ($it['quantity'] ?? 0);
-            } else {
-                $sizeVal = null;
-                $quantity = (float) ($it['quantity'] ?? 0);
-            }
+                if (!empty($sizeQuantities)) {
+                    $sizeVal = implode(',', array_keys($sizeQuantities));
+                    $quantity = array_sum($sizeQuantities);
+                } elseif (!empty($it['sizes'])) {
+                    $selectedSizes = is_array($it['sizes']) ? $it['sizes'] : explode(',', $it['sizes']);
+                    $selectedSizes = array_values(array_filter(array_map('trim', $selectedSizes), fn ($size) => $size !== ''));
+                    $sizeVal = implode(',', $selectedSizes);
+                    $quantity = (float) ($it['quantity'] ?? 0);
+                } elseif (!empty($it['size_from']) || !empty($it['size_to'])) {
+                    $sizeVal = trim(($it['size_from'] ?? '') . '-' . ($it['size_to'] ?? ''), '-');
+                    $quantity = (float) ($it['quantity'] ?? 0);
+                } else {
+                    $sizeVal = null;
+                    $quantity = (float) ($it['quantity'] ?? 0);
+                }
 
             $rate = (float) ($it['rate'] ?? 0);
             $taxRate = (float) ($it['tax_rate'] ?? 0);
@@ -803,6 +834,178 @@ class OrderMasterController extends Controller
         ];
     }
 
+    private function deductStockForOrderItem(\App\Models\OrderItem $orderItem): void
+    {
+        DB::transaction(function () use ($orderItem) {
+            $itemId = $orderItem->item_id;
+
+            $colorIds = array_values(array_filter(array_map('trim', explode(',', (string) ($orderItem->color ?? ''))), fn ($v) => $v !== ''));
+            $colorId = $colorIds[0] ?? null;
+
+            $sizeQuantities = is_array($orderItem->size_quantities) ? $orderItem->size_quantities : [];
+
+            if (empty($sizeQuantities)) {
+                return;
+            }
+
+            foreach ($sizeQuantities as $sizeLabel => $orderQty) {
+                $sizeLabel = (string) $sizeLabel;
+                $orderQty = (int) $orderQty;
+                if ($orderQty <= 0) {
+                    continue;
+                }
+
+                $size = Size::where('name', $sizeLabel)->first();
+                if (!$size) {
+                    throw new \Exception("Size '{$sizeLabel}' not found");
+                }
+
+                $variant = ItemVariant::where('item_id', $itemId)
+                    ->where('color_id', $colorId)
+                    ->where('size_id', $size->id)
+                    ->first();
+
+                if (!$variant) {
+                    throw new \Exception("Variant not found for item #{$itemId} color #{$colorId} size {$sizeLabel}");
+                }
+
+                if (($variant->quantity ?? 0) < $orderQty) {
+                    throw new \Exception(
+                        "Insufficient stock for size {$sizeLabel}. Available: {$variant->quantity}, Ordered: {$orderQty}"
+                    );
+                }
+
+                $variant->quantity = (int) $variant->quantity - $orderQty;
+                $variant->save();
+
+                InventoryLog::create([
+                    'type' => 'deduct',
+                    'qty' => $orderQty,
+                    'item_variant_id' => $variant->id,
+                    'order_master_id' => $orderItem->order_master_id,
+                    'note' => 'Order confirmed',
+                    'created_by' => auth()->id(),
+                ]);
+            }
+        });
+    }
+
+    private function restoreStockForOrderItem(\App\Models\OrderItem $orderItem): void
+    {
+        DB::transaction(function () use ($orderItem) {
+            $itemId = $orderItem->item_id;
+
+            $colorIds = array_values(array_filter(array_map('trim', explode(',', (string) ($orderItem->color ?? ''))), fn ($v) => $v !== ''));
+            $colorId = $colorIds[0] ?? null;
+
+            $sizeQuantities = is_array($orderItem->size_quantities) ? $orderItem->size_quantities : [];
+
+            if (empty($sizeQuantities)) {
+                return;
+            }
+
+            foreach ($sizeQuantities as $sizeLabel => $orderQty) {
+                $sizeLabel = (string) $sizeLabel;
+                $orderQty = (int) $orderQty;
+                if ($orderQty <= 0) {
+                    continue;
+                }
+
+                $size = Size::where('name', $sizeLabel)->first();
+                if (!$size) {
+                    throw new \Exception("Size '{$sizeLabel}' not found");
+                }
+
+                $variant = ItemVariant::where('item_id', $itemId)
+                    ->where('color_id', $colorId)
+                    ->where('size_id', $size->id)
+                    ->first();
+
+                if (!$variant) {
+                    throw new \Exception("Variant not found for item #{$itemId} color #{$colorId} size {$sizeLabel}");
+                }
+
+                $variant->quantity = (int) $variant->quantity + $orderQty;
+                $variant->save();
+
+                InventoryLog::create([
+                    'type' => 'restock',
+                    'qty' => $orderQty,
+                    'item_variant_id' => $variant->id,
+                    'order_master_id' => $orderItem->order_master_id,
+                    'note' => 'Stock restored - order item reverted',
+                    'created_by' => auth()->id(),
+                ]);
+            }
+        });
+    }
+
+
+    public function checkStock(Request $request)
+    {
+        $request->validate([
+            'order_item_id' => 'required|integer|exists:order_items,id',
+        ]);
+
+        $orderItem = OrderItem::findOrFail($request->input('order_item_id'));
+
+        $itemId = $orderItem->item_id;
+        $colorIds = array_values(array_filter(array_map('trim', explode(',', (string) ($orderItem->color ?? ''))), fn ($v) => $v !== ''));
+        $colorId = $colorIds[0] ?? null;
+
+        $sizeQuantities = is_array($orderItem->size_quantities) ? $orderItem->size_quantities : [];
+        $issues = [];
+
+        foreach ($sizeQuantities as $sizeLabel => $orderQty) {
+            $sizeLabel = (string) $sizeLabel;
+            $orderQty = (int) $orderQty;
+            if ($orderQty <= 0) {
+                continue;
+            }
+
+            $size = Size::where('name', $sizeLabel)->first();
+            if (!$size) {
+                $issues[] = [
+                    'size'     => $sizeLabel,
+                    'available' => 0,
+                    'ordered'  => $orderQty,
+                    'message'  => "Size '{$sizeLabel}' not found",
+                ];
+                continue;
+            }
+
+            $variant = ItemVariant::where('item_id', $itemId)
+                ->where('color_id', $colorId)
+                ->where('size_id', $size->id)
+                ->first();
+
+            if (!$variant) {
+                $issues[] = [
+                    'size'     => $sizeLabel,
+                    'available' => 0,
+                    'ordered'  => $orderQty,
+                    'message'  => "Variant not found for item #{$itemId} color #{$colorId} size {$sizeLabel}",
+                ];
+                continue;
+            }
+
+            $available = (int) ($variant->quantity ?? 0);
+            if ($available < $orderQty) {
+                $issues[] = [
+                    'size'     => $sizeLabel,
+                    'available' => $available,
+                    'ordered'  => $orderQty,
+                    'message'  => "Only {$available} available for size {$sizeLabel}",
+                ];
+            }
+        }
+
+        return response()->json([
+            'ok'     => empty($issues),
+            'issues' => $issues,
+        ]);
+    }
+
     // -----------------------------------------------------------------------
     // AJAX: update single order item status
     // -----------------------------------------------------------------------
@@ -827,7 +1030,25 @@ class OrderMasterController extends Controller
             }
         }
 
-        $orderItem->status = $request->input('status');
+        $oldStatus = $orderItem->status;
+        $newStatus = $request->input('status');
+
+        if ($newStatus === 'confirmed' && $oldStatus !== 'confirmed') {
+            try {
+                $this->deductStockForOrderItem($orderItem);
+            } catch (\Exception $e) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $e->getMessage(),
+                ], 422);
+            }
+        }
+
+        if (($newStatus === 'pending' || $newStatus === 'draft') && $oldStatus === 'confirmed') {
+            $this->restoreStockForOrderItem($orderItem);
+        }
+
+        $orderItem->status = $newStatus;
         $orderItem->save();
 
         return response()->json(['success' => true, 'status' => $orderItem->status]);

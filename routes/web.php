@@ -28,6 +28,7 @@ use App\Http\Controllers\Admin\CartController;
 use App\Http\Controllers\FrontendController;    
 use Illuminate\Support\Facades\Artisan;
 
+
 //Route::get('/', function () {
   //  return view('frontend.home');
 //});
@@ -35,6 +36,8 @@ Route::get('/', [FrontendController::class, 'home'])->name('home');
 
 Route::get('/products', [FrontendController::class, 'products'])->name('products');
 Route::get('/api/category/{category}/items', [FrontendController::class, 'categoryItems'])->name('api.category.items');
+Route::middleware('auth')->get('/api/item-variants/sizes-by-color', [\App\Http\Controllers\ItemVariantController::class, 'sizesByColor'])->name('api.item-variants.sizes-by-color');
+
 Route::get('/products/{item}', [FrontendController::class, 'show'])->name('products.show');
 Route::view('/about', 'frontend.about')->name('about');
 Route::view('/contact', 'frontend.contact')->name('contact');
@@ -100,6 +103,7 @@ Route::group(['middleware' => ['auth']], function () {
     Route::post('orders/{order}/approve-distributor', [OrderMasterController::class, 'approveByDistributor'])->name('orders.approve.distributor');
     Route::post('orders/{order}/approve-superadmin', [OrderMasterController::class, 'approveBySuperAdmin'])->name('orders.approve.superadmin');
     Route::post('order-items/{orderItem}/status', [OrderMasterController::class, 'updateItemStatus'])->name('order-items.status.update');
+Route::get('api/item-variants/check-stock', [OrderMasterController::class, 'checkStock'])->name('api.item-variants.check-stock');
     Route::get('color-list', [ColorController::class,'list'])->name('color.list');
     Route::resource('color', ColorController::class);
     Route::get('tax-list', [TaxMasterController::class,'list'])->name('tax.list');
@@ -109,9 +113,9 @@ Route::group(['middleware' => ['auth']], function () {
     Route::resource('sub-category', SubCategoryController::class);
     Route::get('sub-group-list', [SubGroupController::class,'list'])->name('sub-group.list');
     Route::resource('sub-group', SubGroupController::class);
-  // RESTful cart resource (store, update, destroy, index)
+	// RESTful cart resource (store, update, destroy, index)
   Route::resource('cart', CartController::class);
-
+    Route::post('/item-variant/restock', [\App\Http\Controllers\ItemVariantController::class, 'restock'])->name('item-variant.restock');
 
     // Admin profile (admin area)
     Route::get('admin/profile', [AdminController::class, 'edit'])->name('admin.profile.edit');

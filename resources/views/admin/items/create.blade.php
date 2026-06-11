@@ -235,7 +235,8 @@
 											{{ $message }}
 										</div>
 									@enderror
-									<table class="table table-bordered mb-0" id="variantTable">
+								<table class="table table-bordered mb-0" id="variantTable">
+										<input type="hidden" id="itemVariantsSizesByColorEndpoint" value="{{ route('api.item-variants.sizes-by-color') }}">
 										<thead>
 											<tr>
 												<th width="35%">Color</th>
@@ -454,8 +455,10 @@
 })();
 
 let variantIndex = 1;
+window.__itemIdForVariant = '';
 
 function initSelect2(context = document) {
+
     $(context).find('.select2').each(function () {
 
         // prevent re-initialization issues
@@ -473,7 +476,61 @@ $(document).ready(function () {
     initSelect2();
 });
 
-document.getElementById('addVariantRow').addEventListener('click', function () {
+function replaceSizeOptionsForRow(selectEl) {
+		const row = selectEl.closest('tr');
+
+		if (!row) return;
+
+		const colorSelect = row.querySelector('select[name$="[color_id]"]');
+		const sizeSelect  = row.querySelector('select[name$="[size_id]"]');
+		if (!colorSelect || !sizeSelect) return;
+
+		const itemId = window.__itemIdForVariant ?? null; // optional
+		const endpoint = document.getElementById('itemVariantsSizesByColorEndpoint')?.value;
+		const itemIdInput = document.querySelector('input[name="item_id"]');
+		const resolvedItemId = itemId ?? (itemIdInput ? itemIdInput.value : null);
+
+		const colorId = colorSelect.value;
+		const prevSelectedSize = sizeSelect.value;
+
+		// Reset when color is not selected
+		if (!colorId || !endpoint || !resolvedItemId) {
+			sizeSelect.innerHTML = '<option value="">Select Size</option>';
+			return;
+		}
+
+		fetch(endpoint + '?item_id=' + encodeURIComponent(resolvedItemId) + '&color_id=' + encodeURIComponent(colorId), {
+			headers: {
+				'Accept': 'application/json'
+			}
+		})
+			.then(r => r.json())
+			.then(data => {
+				const sizes = data.sizes || [];
+				let options = '<option value="">Select Size</option>';
+				for (const s of sizes) {
+					options += '<option value="' + s.size_id + '">' + s.label + '</option>';
+				}
+				sizeSelect.innerHTML = options;
+
+				// Keep selected size if it's still available
+				if (prevSelectedSize) {
+					sizeSelect.value = prevSelectedSize;
+				}
+
+			// trigger change (select2 listens to change as well)
+					$(sizeSelect).trigger('change');
+
+				
+			})
+			.catch(() => {
+				// fallback: just clear
+				sizeSelect.innerHTML = '<option value="">Select Size</option>';
+			});
+	}
+
+	document.getElementById('addVariantRow').addEventListener('click', function () {
+
 
     let row = `
         <tr>
@@ -546,5 +603,12 @@ document.addEventListener('click', function (e) {
         }
     }
 });
+
+// color -> size filtering per row
+	document.addEventListener('change', function (e) {
+		if (!e.target || !e.target.matches('select[name$="[color_id]"]')) return;
+		replaceSizeOptionsForRow(e.target);
+	});
+
 </script>
 @endsection

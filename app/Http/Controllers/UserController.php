@@ -80,9 +80,13 @@ class UserController extends Controller
 
     public function show(User $user): View
     {
+        // Super-admin/admin can view any user. Distributors are limited to their own created users.
         if ($user->created_by !== auth()->id()) {
-            abort(403, 'Unauthorized action.');
+            if (! auth()->user()->hasRole(['super-admin', 'admin'])) {
+                abort(403, 'Unauthorized action.');
+            }
         }
+
 
         $user->load(['role']);
 
@@ -102,11 +106,15 @@ class UserController extends Controller
     {
         $user = User::with(['role'])->findOrFail($id);
 
+        // Super-admin/admin can edit any user. Distributors are limited to their own created users.
         if ($user->created_by !== auth()->id()) {
-            abort(403, 'Unauthorized action.');
+            if (! auth()->user()->hasRole(['super-admin', 'admin'])) {
+                abort(403, 'Unauthorized action.');
+            }
         }
 
         return view('admin.users.edit', array_merge(
+
             ['user' => $user],
             $this->formData($user)
         ));
@@ -116,9 +124,13 @@ class UserController extends Controller
     {
         $user = User::findOrFail($id);
 
+        // Super-admin/admin can update any user. Distributors are limited to their own created users.
         if ($user->created_by !== auth()->id()) {
-            abort(403, 'Unauthorized action.');
+            if (! auth()->user()->hasRole(['super-admin', 'admin'])) {
+                abort(403, 'Unauthorized action.');
+            }
         }
+
 
         $validated = $request->validate($this->rules($user));
 
@@ -157,9 +169,13 @@ class UserController extends Controller
 
     public function destroy(User $user): RedirectResponse
     {
+        // Super-admin/admin can delete any user. Distributors are limited to their own created users.
         if ($user->created_by !== auth()->id()) {
-            abort(403, 'Unauthorized action.');
+            if (! auth()->user()->hasRole(['super-admin', 'admin'])) {
+                abort(403, 'Unauthorized action.');
+            }
         }
+
 
         $loginUser = Auth::user();
 
