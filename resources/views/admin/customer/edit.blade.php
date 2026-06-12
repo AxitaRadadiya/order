@@ -133,7 +133,7 @@
                 <input id="mobile" type="tel" inputmode="numeric" pattern="[0-9]{10}"
                        class="form-control phone-only @error('mobile') is-invalid @enderror"
                        name="mobile" value="{{ old('mobile', $customer->mobile) }}"
-                       placeholder="10-digit mobile number" maxlength="10">
+                       placeholder="10-digit mobile number" maxlength="10" required>
                 @error('mobile')<div class="invalid-feedback">{{ $message }}</div>@enderror
               </div>
             </div>
@@ -154,10 +154,17 @@
 
             <div class="col-md-3">
               <div class="form-group">
-                <label>Profile Image</label>
+                <label>Profile Image <span class="text-danger">*</span></label>
                 <input type="file" name="profile_image" class="form-control">
                 @if(isset($customer) && $customer->profile_image)
+                  <div class="image-wrapper mt-2">
                     <img src="{{ asset('storage/' . $customer->profile_image) }}" width="80" class="mt-2 rounded">
+                    <button type="button"
+                        class="btn-danger btn-sm image-remove-btn"
+                        onclick="removeImage('profile_image')">&times;
+                    </button>
+                    <input type="hidden" id="profile_image_remove" name="profile_image_remove" value="0">
+                  </div>
                 @endif
               </div>
             </div>
@@ -167,7 +174,14 @@
                 <label>Shop Image</label>
                 <input type="file" name="shop_image" class="form-control">
                 @if(isset($customer) && $customer->shop_image)
+                  <div class="image-wrapper mt-2">
                     <img src="{{ asset('storage/' . $customer->shop_image) }}" width="80" class="mt-2 rounded">
+                    <button type="button"
+                        class="btn-danger btn-sm image-remove-btn"
+                        onclick="removeImage('shop_image')">&times;
+                    </button>
+                    <input type="hidden" name="shop_image_remove" id="shop_image_remove" value="0">
+                  </div>
                 @endif
               </div>
             </div>            
@@ -177,7 +191,14 @@
                 <label>PAN Card Image</label>
                 <input type="file" name="pan_card_image" class="form-control">
                 @if(isset($customer) && $customer->pan_card_image)
+                  <div class="image-wrapper mt-2">
                     <img src="{{ asset('storage/' . $customer->pan_card_image) }}" width="80" class="mt-2 rounded">
+                    <button type="button"
+                        class="btn-danger btn-sm image-remove-btn"
+                        onclick="removeImage('pan_card_image')">&times;
+                    </button>
+                    <input type="hidden" name="pan_card_image_remove" id="pan_card_image_remove" value="0">
+                  </div>
                 @endif
               </div>
             </div>
@@ -187,7 +208,14 @@
                 <label>GST Certificate Image</label>
                 <input type="file" name="gst_certificate_image" class="form-control">
                 @if(isset($customer) && $customer->gst_certificate_image)
+                  <div class="image-wrapper mt-2">
                     <img src="{{ asset('storage/' . $customer->gst_certificate_image) }}" width="80" class="mt-2 rounded">
+                    <button type="button"
+                        class="btn-danger btn-sm image-remove-btn"
+                        onclick="removeImage('gst_certificate_image')">&times;
+                    </button>
+                    <input type="hidden" name="gst_certificate_image_remove" id="gst_certificate_image_remove" value="0">
+                  </div>
                 @endif
               </div>
             </div>
@@ -234,7 +262,7 @@
             <div class="col-md-3">
               <div class="form-group">
                 <label>Payment Terms</label>
-                <select class="form-control" name="payment_terms">
+                <select class="form-control select2" name="payment_terms">
                   <option value="">-- Select --</option>
                   @foreach(['due_on_receipt'=>'Due on Receipt','net_15'=>'Net 15','net_30'=>'Net 30','net_45'=>'Net 45','net_60'=>'Net 60'] as $val=>$lbl)
                     <option value="{{ $val }}"
@@ -250,7 +278,7 @@
             <div class="col-md-3">
               <div class="form-group">
                 <label>Place of Supply</label>
-                <select class="form-control" name="place_of_supply">
+                <select class="form-control select2" name="place_of_supply">
                   <option value="">-- Select State --</option>
                   @foreach($states->pluck('name')->unique()->sort()->values() as $stateName)
                     <option value="{{ $stateName }}"
@@ -660,5 +688,22 @@ $(function () {
   toggleDistributor(); */
 
 });
+
+function removeImage(type) {
+  if (confirm('Are you sure you want to remove this image?')) {
+    // call ajax or set hidden input
+    document.getElementById(type + '_remove').value = 1;
+
+    if (type === 'profile_image') {
+        document.querySelector('input[name="profile_image"]')
+            .setAttribute('required', true);
+    }
+
+      // Hide image wrapper
+    document.getElementById(type + '_remove')
+        .closest('.image-wrapper')
+        .style.display = 'none';
+  }
+}
 </script>
 @endsection

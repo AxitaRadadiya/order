@@ -62,7 +62,7 @@
 						<div class="col-md-3">
 							<div class="form-group">
 								<label>Group</label>
-								<select name="group_id" class="form-control">
+								<select name="group_id" class="form-control select2">
 									<option value="">-- Select --</option>
 									@foreach($groups as $g)
 									<option value="{{ $g->id }}" {{ (old('group_id', $item->group_id) == $g->id) ? 'selected' : '' }}>{{ $g->name }}</option>
@@ -73,7 +73,7 @@
 						<div class="col-md-3">
 							<div class="form-group">
 								<label>Sub-Group</label>
-								<select name="sub_group" class="form-control">
+								<select name="sub_group" class="form-control select2">
 									<option value="">-- Select --</option>
 									@foreach($sub_groups as $subG)
 									<option value="{{ $subG->id }}" {{ (old('sub_group', $item->sub_group) == $subG->id) ? 'selected' : '' }}>{{ $subG->name }}</option>
@@ -84,7 +84,7 @@
 						<div class="col-md-3">
 							<div class="form-group">
 								<label>Category</label>
-								<select name="category_id" class="form-control">
+								<select name="category_id" class="form-control select2">
 									<option value="">-- Select --</option>
 									@foreach($categories as $cat)
 									<option value="{{ $cat->id }}" {{ (old('category_id', $item->category_id) == $cat->id) ? 'selected' : '' }}>{{ $cat->name }}</option>
@@ -95,7 +95,7 @@
 						<div class="col-md-3">
 							<div class="form-group">
 								<label>Sub-Category</label>
-								<select name="sub_category" class="form-control">
+								<select name="sub_category" class="form-control select2">
 									<option value="">-- Select --</option>
 									@foreach($sub_categories as $subCat)
 									<option value="{{ $subCat->id }}" {{ (old('sub_category', $item->sub_category) == $subCat->id) ? 'selected' : '' }}>{{ $subCat->name }}</option>
@@ -144,7 +144,7 @@
 						<div class="col-md-3">
 							<div class="form-group">
 								<label>MRP</label>
-								<input type="number" step="0.01" name="price" value="{{ old('price', $item->price) }}" class="form-control @error('price') is-invalid @enderror">
+								<input type="number" step="1" name="price" value="{{ old('price', $item->price) }}" min="0" class="form-control @error('price') is-invalid @enderror">
 								@error('price')<div class="invalid-feedback">{{ $message }}</div>@enderror
 							</div>
 						</div>

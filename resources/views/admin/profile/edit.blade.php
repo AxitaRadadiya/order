@@ -27,21 +27,28 @@
               @csrf
               @method('PATCH')
 
-              <div class="form-group">
-                <label class="font-weight-bold">Name</label>
-                <input type="text" name="name" class="form-control" value="{{ old('name', $user->name) }}" required>
-                @error('name') <small class="text-danger">{{ $message }}</small> @enderror
+              <div class="row">
+              <div class="form-group col-md-6">
+                <label class="font-weight-bold">First Name</label>
+                <input type="text" name="first_name" class="form-control" value="{{ old('first_name', $user->first_name) }}" required>
+                @error('first_name') <small class="text-danger">{{ $message }}</small> @enderror
+              </div>
+              <div class="form-group col-md-6">
+                <label class="font-weight-bold">Last Name</label>
+                <input type="text" name="last_name" class="form-control" value="{{ old('last_name', $user->last_name) }}" required>
+                @error('last_name') <small class="text-danger">{{ $message }}</small> @enderror
               </div>
 
-              <div class="form-group">
+              <div class="form-group col-md-6">
                 <label class="font-weight-bold">Email</label>
                 <input type="email" name="email" class="form-control" value="{{ old('email', $user->email) }}" readonly>
                 @error('email') <small class="text-danger">{{ $message }}</small> @enderror
               </div>
-              <div class="form-group">
+              <div class="form-group col-md-6">
                 <label class="font-weight-bold">Mobile</label>
-                <input type="text" name="mobile" class="form-control" value="{{ old('mobile', $user->mobile) }}">
+                <input type="text" name="mobile" class="form-control" value="{{ old('mobile', $user->mobile) }}" maxlength="10" oninput="this.value = this.value.replace(/[^0-9]/g, '')" inputmode="numeric">
                 @error('mobile') <small class="text-danger">{{ $message }}</small> @enderror
+              </div>
               </div>
 
               <div class="form-group">

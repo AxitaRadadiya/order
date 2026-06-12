@@ -13,6 +13,7 @@ use App\Models\Role;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
 
 class CustomerController extends Controller
 {
@@ -315,22 +316,63 @@ class CustomerController extends Controller
             $panImage = $customer->pan_card_image;
             $gstImage = $customer->gst_certificate_image;
 
+            // Remove Images
+            if ($request->profile_image_remove == 1) {
+                if ($profileImage) {
+                    Storage::disk('public')->delete($profileImage);
+                }
+                $profileImage = null;
+            }
+
+            if ($request->shop_image_remove == 1) {
+                if ($shopImage) {
+                    Storage::disk('public')->delete($shopImage);
+                }
+                $shopImage = null;
+            }
+
+            if ($request->pan_card_image_remove == 1) {
+                if ($panImage) {
+                    Storage::disk('public')->delete($panImage);
+                }
+                $panImage = null;
+            }
+
+            if ($request->gst_certificate_image_remove == 1) {
+                if ($gstImage) {
+                    Storage::disk('public')->delete($gstImage);
+                }
+                $gstImage = null;
+            }
+
             if ($request->hasFile('profile_image')) {
+                if ($profileImage && Storage::disk('public')->exists($profileImage)) {
+                    Storage::disk('public')->delete($profileImage);
+                }
                 $profileImage = $request->file('profile_image')
                     ->store('profiles', 'public');
             }
 
             if ($request->hasFile('shop_image')) {
+                if ($shopImage && Storage::disk('public')->exists($shopImage)) {
+                    Storage::disk('public')->delete($shopImage);
+                }
                 $shopImage = $request->file('shop_image')
                     ->store('users/shop', 'public');
             }
 
             if ($request->hasFile('pan_card_image')) {
+                if ($panImage && Storage::disk('public')->exists($panImage)) {
+                    Storage::disk('public')->delete($panImage);
+                }
                 $panImage = $request->file('pan_card_image')
                     ->store('users/pan', 'public');
             }
 
             if ($request->hasFile('gst_certificate_image')) {
+                if ($gstImage && Storage::disk('public')->exists($gstImage)) {
+                    Storage::disk('public')->delete($gstImage);
+                }
                 $gstImage = $request->file('gst_certificate_image')
                     ->store('users/gst', 'public');
             }

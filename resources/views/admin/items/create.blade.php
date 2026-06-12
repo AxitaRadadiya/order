@@ -141,7 +141,7 @@
 						<div class="col-md-3">
 							<div class="form-group">
 								<label>MRP</label>
-								<input type="number" step="0.01" name="price" value="{{ old('price', 0) }}" class="form-control @error('price') is-invalid @enderror">
+								<input type="number" step="1" name="price" value="{{ old('price', 0) }}" min="0" class="form-control @error('price') is-invalid @enderror">
 								@error('price')<div class="invalid-feedback">{{ $message }}</div>@enderror
 							</div>
 						</div>

@@ -43,7 +43,8 @@ class AdminController extends Controller
     public function update(Request $request): RedirectResponse
     {
         $validated = $request->validate([
-            'name' => 'required|string|max:255',
+            'first_name' => 'required|string|max:255',
+            'last_name' => 'required|string|max:255',
             'email' => 'required|email|max:255',
             'mobile' => 'nullable|string|max:20',
             'note' => 'nullable|string|max:1000',
@@ -52,7 +53,8 @@ class AdminController extends Controller
 
         $user = $request->user();
 
-        $user->name = $validated['name'];
+        $user->first_name = $validated['first_name'];
+        $user->last_name = $validated['last_name'];
         $user->email = $validated['email'];
         $user->mobile = $validated['mobile'] ?? $user->mobile;
         $user->note = $validated['note'] ?? $user->note;

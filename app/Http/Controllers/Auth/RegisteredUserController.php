@@ -41,7 +41,7 @@ class RegisteredUserController extends Controller
             'first_name' => ['required', 'string', 'max:255'],
             'last_name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:'.User::class],
-            'mobile' => ['nullable', 'string', 'max:30'],
+            'mobile' => ['nullable', 'digits:10'],
             'shop_name' => ['nullable', 'string', 'max:255'],
             'state_id' => ['required', 'exists:states,id'],
             'city_id' => ['required', 'exists:cities,id'],

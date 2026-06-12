@@ -47,7 +47,7 @@
                 <th>Article Number</th>
                 <th>Category</th>
                 <th>Group</th>
-                <th>Sizes</th>  
+                <!-- <th>Sizes</th>   -->
                 <th>Price</th>
                 <th>Status</th>
                 <th width="140">Action</th>
