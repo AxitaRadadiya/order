@@ -47,13 +47,16 @@ class ItemVariant extends Model
         return (int) $logs->where('type', 'restock')->sum('qty');
     }
 
-    public function getTotalSoldAttribute()
+   public function getTotalSoldAttribute()
     {
         $logs = $this->relationLoaded('inventoryLogs')
             ? $this->inventoryLogs
             : $this->inventoryLogs()->get();
 
-        return (int) $logs->where('type', 'deduct')->sum('qty');
+        $deductTotal = (int) $logs->where('type', 'deduct')->sum('qty');
+        $restoreTotal = (int) $logs->where('type', 'restore')->sum('qty');
+        
+        return $deductTotal - $restoreTotal;
     }
 
     public function getCurrentStockAttribute()

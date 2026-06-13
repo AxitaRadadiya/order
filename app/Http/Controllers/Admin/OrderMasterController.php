@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
@@ -202,6 +201,7 @@ class OrderMasterController extends Controller
             'data'            => $data,
         ]);
     }
+    
     public function customerAddresses(User $user)
     {
         $addr     = $user->address ?? null;
@@ -288,11 +288,6 @@ class OrderMasterController extends Controller
             'user_id' => 'required|exists:users,id',
             'date'    => 'required|date',
         ]);
-
-        // Prevent updating once order is delivered for any user
-        if (isset($order->status) && strtolower($order->status) === 'delivered') {
-            return back()->withInput()->with('error', 'Order has been delivered and cannot be edited.')->with(array_merge($this->viewData(), compact('order')));
-        }
 
         DB::beginTransaction();
         try {
@@ -598,9 +593,17 @@ class OrderMasterController extends Controller
 
         $order->load('items');
 
+        // Restore stock for ALL items that had stock deducted
         foreach ($order->items as $item) {
-            if ($item->status === 'confirmed') {
-                $this->restoreStockForOrderItem($item);
+            // Check if stock was deducted (confirmed, shipped, delivered)
+            $wasStockDeducted = in_array($item->status, ['confirmed', 'shipped', 'delivered']);
+            if ($wasStockDeducted) {
+                try {
+                    $this->restoreStockForOrderItem($item);
+                } catch (\Exception $e) {
+                    \Log::error("Failed to restore stock for order item #{$item->id} during order deletion: " . $e->getMessage());
+                    // Continue with deletion anyway
+                }
             }
         }
 
@@ -840,6 +843,11 @@ class OrderMasterController extends Controller
         ];
     }
 
+    /**
+     * Deduct stock for an order item by creating a DEDUCT inventory log
+     * This will increase total_sold and decrease current_stock
+     * Production quantity (total_production) remains unchanged
+     */
     private function deductStockForOrderItem(\App\Models\OrderItem $orderItem): void
     {
         DB::transaction(function () use ($orderItem) {
@@ -851,6 +859,7 @@ class OrderMasterController extends Controller
             $sizeQuantities = is_array($orderItem->size_quantities) ? $orderItem->size_quantities : [];
 
             if (empty($sizeQuantities)) {
+                \Log::warning('No size quantities found for order item #' . $orderItem->id . ' during stock deduction');
                 return;
             }
 
@@ -875,77 +884,125 @@ class OrderMasterController extends Controller
                     throw new \Exception("Variant not found for item #{$itemId} color #{$colorId} size {$sizeLabel}");
                 }
 
-                if (($variant->quantity ?? 0) < $orderQty) {
+                // Check if enough stock is available (current_stock is derived from logs)
+                $currentStock = $variant->current_stock;
+                if ($currentStock < $orderQty) {
                     throw new \Exception(
-                        "Insufficient stock for size {$sizeLabel}. Available: {$variant->quantity}, Ordered: {$orderQty}"
+                        "Insufficient stock for size {$sizeLabel}. Available: {$currentStock}, Ordered: {$orderQty}"
                     );
                 }
 
-                $variant->quantity = (int) $variant->quantity - $orderQty;
-                $variant->save();
-
+                // CREATE A DEDUCT LOG (this will increase total_sold and decrease current_stock)
                 InventoryLog::create([
                     'type' => 'deduct',
                     'qty' => $orderQty,
                     'item_variant_id' => $variant->id,
                     'order_master_id' => $orderItem->order_master_id,
-                    'note' => 'Order confirmed',
+                    'note' => 'Order confirmed - stock deducted',
                     'created_by' => auth()->id(),
                 ]);
+
+                \Log::info("Stock deducted for variant ID {$variant->id}: -{$orderQty} (Order Item #{$orderItem->id})");
             }
         });
     }
 
+    /**
+     * Restore stock for an order item by creating a NEGATIVE DEDUCT inventory log
+     * This will decrease total_sold and increase current_stock
+     * Production quantity (total_production) remains unchanged
+     */
+    
     private function restoreStockForOrderItem(\App\Models\OrderItem $orderItem): void
     {
         DB::transaction(function () use ($orderItem) {
             $itemId = $orderItem->item_id;
-
+            
             $colorIds = array_values(array_filter(array_map('trim', explode(',', (string) ($orderItem->color ?? ''))), fn ($v) => $v !== ''));
-            $colorId = $colorIds[0] ?? null;
-
-            $sizeQuantities = is_array($orderItem->size_quantities) ? $orderItem->size_quantities : [];
-
-            if (empty($sizeQuantities)) {
+            
+            if (empty($colorIds)) {
+                \Log::warning('No color found for order item #' . $orderItem->id . ' during stock restoration');
                 return;
             }
-
+            
+            $colorId = $colorIds[0] ?? null;
+            $sizeQuantities = is_array($orderItem->size_quantities) ? $orderItem->size_quantities : [];
+            
+            if (empty($sizeQuantities)) {
+                // Legacy format handling
+                $singleQty = (int) $orderItem->quantity;
+                if ($singleQty <= 0) {
+                    return;
+                }
+                
+                $size = Size::where('name', $orderItem->size)->first();
+                if (!$size) {
+                    \Log::error("Size '{$orderItem->size}' not found for order item #{$orderItem->id}");
+                    return;
+                }
+                
+                $variant = ItemVariant::where('item_id', $itemId)
+                    ->where('color_id', $colorId)
+                    ->where('size_id', $size->id)
+                    ->first();
+                    
+                if (!$variant) {
+                    \Log::error("Variant not found for item #{$itemId} color #{$colorId} size {$orderItem->size}");
+                    return;
+                }
+                
+                // USE 'restore' TYPE INSTEAD OF NEGATIVE DEDUCT
+                InventoryLog::create([
+                    'type' => 'restore',  // New type for cancellations
+                    'qty' => $singleQty,   // Positive quantity
+                    'item_variant_id' => $variant->id,
+                    'order_master_id' => $orderItem->order_master_id,
+                    'note' => 'Stock restored - order item cancelled (production unchanged)',
+                    'created_by' => auth()->id(),
+                ]);
+                
+                \Log::info("Stock restored for variant ID {$variant->id}: +{$singleQty} (Order Item #{$orderItem->id})");
+                return;
+            }
+            
+            // Process each size quantity - restore using 'restore' type
             foreach ($sizeQuantities as $sizeLabel => $orderQty) {
                 $sizeLabel = (string) $sizeLabel;
                 $orderQty = (int) $orderQty;
                 if ($orderQty <= 0) {
                     continue;
                 }
-
+                
                 $size = Size::where('name', $sizeLabel)->first();
                 if (!$size) {
-                    throw new \Exception("Size '{$sizeLabel}' not found");
+                    \Log::error("Size '{$sizeLabel}' not found during stock restoration");
+                    continue;
                 }
-
+                
                 $variant = ItemVariant::where('item_id', $itemId)
                     ->where('color_id', $colorId)
                     ->where('size_id', $size->id)
                     ->first();
-
+                    
                 if (!$variant) {
-                    throw new \Exception("Variant not found for item #{$itemId} color #{$colorId} size {$sizeLabel}");
+                    \Log::error("Variant not found for item #{$itemId} color #{$colorId} size {$sizeLabel}");
+                    continue;
                 }
-
-                $variant->quantity = (int) $variant->quantity + $orderQty;
-                $variant->save();
-
+                
+                // USE 'restore' TYPE INSTEAD OF NEGATIVE DEDUCT
                 InventoryLog::create([
-                    'type' => 'restock',
-                    'qty' => $orderQty,
+                    'type' => 'restore',  // New type for cancellations
+                    'qty' => $orderQty,   // Positive quantity
                     'item_variant_id' => $variant->id,
                     'order_master_id' => $orderItem->order_master_id,
-                    'note' => 'Stock restored - order item reverted',
+                    'note' => 'Stock restored - order item cancelled (production unchanged)',
                     'created_by' => auth()->id(),
                 ]);
+                
+                \Log::info("Stock restored for variant ID {$variant->id}: +{$orderQty} (Order Item #{$orderItem->id})");
             }
         });
     }
-
 
     public function checkStock(Request $request)
     {
@@ -995,7 +1052,7 @@ class OrderMasterController extends Controller
                 continue;
             }
 
-            $available = (int) ($variant->quantity ?? 0);
+            $available = (int) $variant->current_stock;
             if ($available < $orderQty) {
                 $issues[] = [
                     'size'     => $sizeLabel,
@@ -1023,6 +1080,7 @@ class OrderMasterController extends Controller
 
         $order = $orderItem->order;
         $user = auth()->user();
+        
         // Retailers are not allowed to change an item's status at all.
         if ($user && $user->hasRole('retailer')) {
             abort(403);
@@ -1039,52 +1097,46 @@ class OrderMasterController extends Controller
         $oldStatus = strtolower((string) $orderItem->status);
         $newStatus = strtolower((string) $request->input('status'));
 
-        // Used for stock operations to prevent double-restores/deductions.
-        $willBeConfirmed = $newStatus === 'confirmed';
-        $wasConfirmed = $oldStatus === 'confirmed';
-        $willBeCancelled = $newStatus === 'canceled' || $newStatus === 'cancelled';
-        $wasCancelled = $oldStatus === 'canceled' || $oldStatus === 'cancelled';
-
-        $fromConfirmed = $oldStatus === 'confirmed' || in_array($oldStatus, ['shipped', 'delivered'], true);
-        if ($fromConfirmed) {
-            // Center checkpoint: once reached, cannot go back.
-            if (in_array($newStatus, ['pending', 'draft'], true)) {
-                return response()->json([
-                    'success' => false,
-                    'message' => "Invalid status transition from {$oldStatus} to {$newStatus}",
-                ], 422);
-            }
+        // Check if the old status represents a "stock deducted" state
+        $wasStockDeducted = in_array($oldStatus, ['confirmed', 'shipped', 'delivered']);
+        
+        // Check if the new status represents a "stock deducted" state
+        $willBeStockDeducted = in_array($newStatus, ['confirmed', 'shipped', 'delivered']);
+        
+        // Check if we are canceling (any status -> cancelled)
+        $isCancelling = ($newStatus === 'canceled' || $newStatus === 'cancelled');
+        
+        // Check if we are moving from cancelled to something else
+        $isUnCancelling = ($oldStatus === 'canceled' || $oldStatus === 'cancelled') && 
+                        ($newStatus !== 'canceled' && $newStatus !== 'cancelled');
+        
+        // Center checkpoint: once stock is deducted, cannot go back to pending/draft
+        if ($wasStockDeducted && in_array($newStatus, ['pending', 'draft'])) {
+            return response()->json([
+                'success' => false,
+                'message' => "Invalid status transition from {$oldStatus} to {$newStatus}",
+            ], 422);
         }
-
-        // Must be confirmed before reaching higher levels.
+        
+        // Must be confirmed before reaching higher levels
         if (in_array($newStatus, ['shipped', 'delivered'], true) && $oldStatus !== 'confirmed') {
             return response()->json([
                 'success' => false,
                 'message' => "Cannot move to {$newStatus} unless current status is confirmed.",
             ], 422);
         }
-
-        // pending -> shipped not allowed.
+        
+        // pending -> shipped not allowed
         if ($oldStatus === 'pending' && $newStatus === 'shipped') {
             return response()->json([
                 'success' => false,
                 'message' => 'Cannot move from pending to shipped. Confirmed is required first.',
             ], 422);
         }
-
-        // canceled rules
-        if ($oldStatus === 'canceled' && $newStatus === 'draft') {
-            return response()->json([
-                'success' => false,
-                'message' => 'Cannot move from canceled to draft. canceled can only revert to pending.',
-            ], 422);
-        }
-
-
-
-        // confirmed <-> cancelled stock adjustment
-        // - confirmed -> cancelled : restore stock (increase qty back)
-        if ($willBeCancelled && $wasConfirmed) {
+        
+        // ========== STOCK RESTORATION: Cancelling an item ==========
+        // If moving to cancelled AND stock was previously deducted, restore stock
+        if ($isCancelling && $wasStockDeducted) {
             try {
                 $this->restoreStockForOrderItem($orderItem);
             } catch (\Exception $e) {
@@ -1094,9 +1146,10 @@ class OrderMasterController extends Controller
                 ], 422);
             }
         }
-
-        // - cancelled -> confirmed : deduct stock again (decrease qty)
-        if ($willBeConfirmed && $wasCancelled) {
+        
+        // ========== STOCK DEDUCTION: Moving from cancelled to active ==========
+        // If moving from cancelled to any status that requires stock deduction
+        if ($isUnCancelling && $willBeStockDeducted) {
             try {
                 $this->deductStockForOrderItem($orderItem);
             } catch (\Exception $e) {
@@ -1106,10 +1159,30 @@ class OrderMasterController extends Controller
                 ], 422);
             }
         }
-
+        
+        // ========== STOCK DEDUCTION: Moving from non-deducted to deducted ==========
+        // If moving from non-deducted to a status that requires deduction (e.g., draft -> confirmed)
+        if (!$wasStockDeducted && $willBeStockDeducted && !$isUnCancelling) {
+            try {
+                $this->deductStockForOrderItem($orderItem);
+            } catch (\Exception $e) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $e->getMessage(),
+                ], 422);
+            }
+        }
+        
+        // ========== UPDATE STATUS ==========
         $orderItem->status = $newStatus;
-
         $orderItem->save();
+
+        // Log the status change
+        \Log::info("Order item #{$orderItem->id} status changed from {$oldStatus} to {$newStatus}", [
+            'order_id' => $order->id,
+            'item_id' => $orderItem->item_id,
+            'user_id' => auth()->id()
+        ]);
 
         return response()->json(['success' => true, 'status' => $orderItem->status]);
     }
