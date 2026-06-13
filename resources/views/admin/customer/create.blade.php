@@ -80,7 +80,7 @@
             </div>
             <div class="col-md-3">
               <div class="form-group">
-                <label>Customer Type</label>
+                <label>Customer Type <span class="text-danger">*</span></label>
                 @if(!empty($isDistributorPanel) && $isDistributorPanel)
                   <input type="text" class="form-control" value="Retailer" disabled>
                 @else
@@ -564,26 +564,76 @@ $(function () {
     if (!/[0-9]/.test(String.fromCharCode(e.which))) e.preventDefault();
   });
 
-  /* ── Client-side validation for mobile & email ───────────────────── */
+  /* ── Client-side validation (required + format) ───────────────── */
   var mobileInput = document.getElementById('mobile');
-  var emailInput = document.getElementById('email');
+  var emailInput  = document.getElementById('email');
+  var firstNameInput = document.querySelector('input[name="first_name"]');
+  var lastNameInput  = document.querySelector('input[name="last_name"]');
+  var profileImageInput = document.querySelector('input[name="profile_image"]');
+
+  // Distributor is required only when the distributor field is visible
+  function isDistributorFieldVisible() {
+    return ($('#distributor_field').is(':visible'));
+  }
+  function getDistributorSelect() {
+    if (!isDistributorFieldVisible()) return null;
+    return document.querySelector('#distributor_field select[name="distributor_id"], #distributor_field input[name="distributor_id"]');
+  }
 
   var mobilePattern = /^\d{10}$/;
   var emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+  var pinPattern = /^\d{1,6}$/;
+  // Simple name-only restrictions (letters, spaces, dot, dash, apostrophe)
+  var namePattern = /^[A-Za-z][A-Za-z\s.'-]*$/;
+  var gstPattern = /^[0-9A-Za-z]{15}$/;
+  var panPattern = /^[A-Z]{5}[0-9]{4}[A-Z]$/;
+  var googleUrlPattern = /^(https?:\/\/)?([\w-]+\.)+[\w-]{2,}(\/.*)?$/i;
+
+  function showError(msg, el) {
+    toastr.error(msg, 'Validation Error');
+    if (el && typeof el.focus === 'function') el.focus();
+  }
+
+  function validateTextRequired(input, label) {
+    if (!input) return true;
+    var value = String(input.value || '').trim();
+    if (!value) {
+      showError(label + ' is required.', input);
+      return false;
+    }
+    return true;
+  }
+
+  function validateName(input, label) {
+    if (!input) return true;
+    var value = String(input.value || '').trim();
+    if (!value) {
+      showError(label + ' is required.', input);
+      return false;
+    }
+    if (value.length < 2) {
+      showError(label + ' must be at least 2 characters.', input);
+      return false;
+    }
+    if (!namePattern.test(value)) {
+      showError(label + ' contains invalid characters.', input);
+      return false;
+    }
+    return true;
+  }
 
   function validateMobile() {
     if (!mobileInput) return true;
     var value = mobileInput.value.trim();
 
     if (!value) {
-      toastr.error('Mobile number is required.', 'Validation Error');
-      mobileInput.focus();
+      showError('Mobile number is required.', mobileInput);
       return false;
     }
 
     if (!mobilePattern.test(value)) {
-      toastr.error('Mobile number must be exactly 10 digits.', 'Validation Error');
-      mobileInput.focus();
+      showError('Mobile number must be exactly 10 digits.', mobileInput);
       return false;
     }
     return true;
@@ -592,22 +642,134 @@ $(function () {
   function validateEmail() {
     if (!emailInput) return true;
     var value = emailInput.value.trim();
+
     if (!value) {
-      toastr.error('Email is required.', 'Validation Error');
-      emailInput.focus();
+      showError('Email is required.', emailInput);
       return false;
     }
+
     if (!emailPattern.test(value)) {
-      toastr.error('Enter a valid email address.', 'Validation Error');
-      emailInput.focus();
+      showError('Enter a valid email address.', emailInput);
       return false;
     }
     return true;
   }
 
+  function validateOptionalPattern(input, pattern, label) {
+    if (!input) return true;
+    var raw = String(input.value || '').trim();
+    if (!raw) return true;
+    if (!pattern.test(raw)) {
+      showError(label + ' format is invalid.', input);
+      return false;
+    }
+    return true;
+  }
+
+  function validateProfileImageRequiredOnCreate() {
+    if (!profileImageInput) return true;
+
+    var files = profileImageInput.files;
+    if (!files || files.length === 0) {
+      showError('Profile image is required.', profileImageInput);
+      return false;
+    }
+
+    var file = files[0];
+    if (file && file.size > 5 * 1024 * 1024) {
+      showError('Profile image must be <= 5MB.', profileImageInput);
+      return false;
+    }
+    return true;
+  }
+
+  function validateCustomerTypeRequired() {
+    // role_id (customer type) is required when NOT in distributor panel
+    // In distributor panel it is fixed via hidden input.
+    var roleSelect = document.querySelector('select[name="role_id"]');
+    var roleFixed = document.querySelector('input[name="role_id"]');
+
+    if (roleFixed && roleFixed.value) return true;
+    if (!roleSelect) return true; // distributor panel or missing UI
+
+    var val = String(roleSelect.value || '');
+    if (!val) {
+      showError('Customer Type is required.', roleSelect);
+      return false;
+    }
+    return true;
+  }
+
+  function validateDistributorIfVisible() { 
+    var el = getDistributorSelect();
+    if (!el) return true;
+
+    // select
+      if (el.tagName && el.tagName.toLowerCase() === 'select') {
+      var val = String(el.value || '');
+      if (!val) {
+        showError('Distributor is required.', el);
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+  function validatePinOnSubmit(prefix) {
+    // prefix: b or s
+    var input = document.getElementById(prefix + '_pin');
+    if (!input) return true;
+    var value = String(input.value || '').trim();
+    if (!value) return true; // currently no * in UI
+
+    // Inputs use maxlength=6. Enforce exactly 6 digits when provided.
+    var maxLen = input.getAttribute('maxlength') || '6';
+    if (!pinPattern.test(value) || value.length !== Number(maxLen)) {
+      showError('PIN Code must be exactly ' + maxLen + ' digits.', input);
+      return false;
+    }
+    return true;
+  }
+
+  function validateGoogleLocationLink() {
+    var input = document.querySelector('input[name="google_location_link"]');
+    if (!input) return true;
+    var value = String(input.value || '').trim();
+    if (!value) return true;
+    if (!googleUrlPattern.test(value)) {
+      showError('Google Location Link must be a valid URL.', input);
+      return false;
+    }
+    return true;
+  }
+
+  function validateShippingFieldsIfNeeded() {
+    // Only validate shipping when same_as is unchecked
+    var sameAs = document.getElementById('same_as');
+    if (sameAs && sameAs.checked) return true;
+
+    // PIN only in UI
+    return validatePinOnSubmit('s');
+  }
+
   // Validate on submit
   $('#customerForm').on('submit', function (e) {
-    if (!validateMobile() || !validateEmail()) {
+    if (
+      !validateName(firstNameInput, 'First Name') ||
+      !validateName(lastNameInput, 'Last Name') ||
+      !validateEmail() ||
+      !validateMobile() ||
+      !validateProfileImageRequiredOnCreate() ||
+      !validateCustomerTypeRequired() ||
+      !validateDistributorIfVisible() ||
+
+      !validateOptionalPattern(document.querySelector('input[name="pan_number"]'), panPattern, 'PAN Number') ||
+      !validateOptionalPattern(document.querySelector('input[name="gst_number"]'), gstPattern, 'GST Number') ||
+      !validateGoogleLocationLink() ||
+      !validatePinOnSubmit('b') ||
+      !validateShippingFieldsIfNeeded()
+    ) {
       e.preventDefault();
       return false;
     }

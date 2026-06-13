@@ -213,15 +213,25 @@ class CustomerController extends Controller
         $customer->load(['role', 'address', 'bankDetail']);
 
         // Show users created by this customer (only meaningful for distributor profiles)
-        $createdUsers = collect();
+        $createdUsers = new \Illuminate\Pagination\LengthAwarePaginator([], 0, 5);
+        $retailersUnderDistributor = new \Illuminate\Pagination\LengthAwarePaginator([], 0, 5);
+
         if (strtolower(optional($customer->role)->name ?? '') === 'distributor') {
             $createdUsers = Customer::with('role')
                 ->where('created_by', $customer->id)
                 ->orderBy('id', 'desc')
-                ->get();
+                ->paginate(5, ['*'], 'users_page');
+
+            $retailersUnderDistributor = \App\Models\User::where('distributor_id', $customer->id)
+                ->whereHas('role', function ($q) {
+                    $q->where('name', 'retailer');
+                })
+                ->orderBy('id', 'desc')
+                ->paginate(5, ['*'], 'retailers_page');
         }
 
-        return view('admin.customer.show', compact('customer', 'createdUsers'));
+
+        return view('admin.customer.show', compact('customer', 'createdUsers', 'retailersUnderDistributor'));
     }
 
     public function edit(Customer $customer)

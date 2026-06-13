@@ -610,5 +610,186 @@ document.addEventListener('click', function (e) {
 		replaceSizeOptionsForRow(e.target);
 	});
 
+(function () {
+    // JS validation for create form
+    const form = document.querySelector('form[action="' + (window.location.origin ? window.location.origin : '') + '{{ route('items.store') }}' + '"]') || document.querySelector('form[action="{{ route('items.store') }}"]');
+    if (!form) return;
+
+
+
+    function setFieldError(el, message) {
+        if (!el) return;
+        el.classList.add('is-invalid');
+        let feedback = el.parentElement ? el.parentElement.querySelector('.invalid-feedback') : null;
+        if (!feedback) {
+            feedback = document.createElement('div');
+            feedback.className = 'invalid-feedback';
+            if (el.parentElement) el.parentElement.appendChild(feedback);
+        }
+        feedback.textContent = message;
+        feedback.style.display = 'block';
+    }
+
+    function clearFieldError(el) {
+        if (!el) return;
+        el.classList.remove('is-invalid');
+        const feedback = el.parentElement ? el.parentElement.querySelector('.invalid-feedback') : null;
+        if (feedback) feedback.style.display = 'none';
+    }
+
+    function isValidUrl(url) {
+        try {
+            const u = new URL(url);
+            return u.protocol === 'http:' || u.protocol === 'https:';
+        } catch (e) {
+            return false;
+        }
+    }
+
+    function getVariantRows() {
+        const table = document.getElementById('variantTable');
+        if (!table) return [];
+        return Array.from(table.querySelectorAll('tbody tr'));
+    }
+
+    form.addEventListener('submit', function (e) {
+        const nameEl = form.querySelector('input[name="name"]');
+        const articleEl = form.querySelector('input[name="article_number"]');
+        const priceEl = form.querySelector('input[name="price"]');
+        const groupEl = form.querySelector('select[name="group_id"]');
+        const subGroupEl = form.querySelector('select[name="sub_group"]');
+        const categoryEl = form.querySelector('select[name="category_id"]');
+        const subCategoryEl = form.querySelector('select[name="sub_category"]');
+        const taxEl = form.querySelector('select[name="tax_id"]');
+
+        const imageInput = form.querySelector('#itemImages');
+
+        let valid = true;
+        let firstInvalid = null;
+
+        // Clear previous errors (basic)
+        [nameEl, articleEl, priceEl, videoEl].forEach(el => clearFieldError(el));
+
+        // Required text validations
+        const name = (nameEl?.value || '').trim();
+        if (!name) {
+            valid = false;
+            setFieldError(nameEl, 'Item Name is required.');
+            firstInvalid = nameEl;
+        }
+
+        const article = (articleEl?.value || '').trim();
+        if (!article) {
+            valid = false;
+            setFieldError(articleEl, 'Article Number is required.');
+            firstInvalid = firstInvalid || articleEl;
+        }
+
+        // Required selects
+        const requireSelect = (selectEl, label) => {
+            if (!selectEl) return;
+            const v = (selectEl.value || '').trim();
+            if (!v) {
+                valid = false;
+                setFieldError(selectEl, label + ' is required.');
+                firstInvalid = firstInvalid || selectEl;
+            }
+        };
+
+        requireSelect(groupEl, 'Group');
+        requireSelect(subGroupEl, 'Sub-Group');
+        requireSelect(categoryEl, 'Category');
+        requireSelect(subCategoryEl, 'Sub-Category');
+        requireSelect(taxEl, 'Tax');
+
+        // For visibility: mark invalid Select2 wrappers if present
+        [groupEl, subGroupEl, categoryEl, subCategoryEl, taxEl].forEach(function (sel) {
+            if (!sel || !sel.closest) return;
+            const wrapper = sel.closest('.select2-container');
+            if (!wrapper) return;
+            if (!valid) {
+                // no-op; styles rely on is-invalid on the select itself
+            }
+        });
+
+
+        // Price
+        const rawPrice = priceEl?.value;
+        const price = rawPrice === '' || rawPrice === null || rawPrice === undefined ? NaN : Number(rawPrice);
+        if (!Number.isFinite(price) || price < 0) {
+            valid = false;
+            setFieldError(priceEl, 'Price must be a number and >= 0.');
+            firstInvalid = firstInvalid || priceEl;
+        }
+
+
+        // Video link (optional)
+        const videoLinkEl = form.querySelector('input[name="video_link"]');
+        const videoLink = (videoLinkEl?.value || '').trim();
+        if (videoLink) {
+            if (!isValidUrl(videoLink)) {
+                valid = false;
+                setFieldError(videoLinkEl, 'Video Link must be a valid URL (http/https).');
+                firstInvalid = firstInvalid || videoLinkEl;
+            }
+        }
+
+        // Variants
+        const rows = getVariantRows();
+        for (const row of rows) {
+            const colorSel = row.querySelector('select[name*="[color_id]"]');
+            const sizeSel = row.querySelector('select[name*="[size_id]"]');
+            const qtyEl = row.querySelector('input[type="number"][name*="[quantity]"]');
+
+            const colorVal = (colorSel?.value || '').trim();
+            const sizeVal = (sizeSel?.value || '').trim();
+
+            // If one of them is selected, the other must be selected too
+            if ((colorVal && !sizeVal) || (!colorVal && sizeVal)) {
+                valid = false;
+                // mark both selects
+                if (colorSel && colorVal && !sizeVal) setFieldError(sizeSel, 'Select size when color is selected.');
+                if (sizeSel && sizeVal && !colorVal) setFieldError(colorSel, 'Select color when size is selected.');
+                firstInvalid = firstInvalid || colorSel || sizeSel;
+                break;
+            }
+
+            // Quantity validation (if row is meaningful)
+            const qtyRaw = qtyEl?.value;
+            const qty = qtyRaw === '' || qtyRaw === null || qtyRaw === undefined ? NaN : Number(qtyRaw);
+            if (!Number.isFinite(qty) || qty < 0) {
+                valid = false;
+                if (qtyEl) setFieldError(qtyEl, 'Quantity must be >= 0.');
+                firstInvalid = firstInvalid || qtyEl;
+                break;
+            }
+        }
+
+        // Images: validate using existing preview logic globals if present
+        // In create.blade, `accepted` is scoped inside IIFE. We can only validate by file input.
+        // If user didn't select images, allow; if selected, rely on existing upload UI checks.
+        // However, ensure primary_image is set when images are selected.
+        if (imageInput && imageInput.files && imageInput.files.length > 0) {
+            const primary = form.querySelector('#primary_image');
+            if (primary && !String(primary.value || '').trim()) {
+                valid = false;
+                const imgErr = document.getElementById('imageError');
+                if (imgErr) {
+                    imgErr.textContent = 'Please select a primary image.';
+                    imgErr.style.display = 'block';
+                }
+                firstInvalid = firstInvalid || imageInput;
+            }
+        }
+
+        if (!valid) {
+            e.preventDefault();
+            if (firstInvalid && typeof firstInvalid.focus === 'function') firstInvalid.focus();
+            // Also scroll to first invalid field
+            try { firstInvalid?.scrollIntoView?.({ behavior: 'smooth', block: 'center' }); } catch (err) {}
+        }
+    });
+})();
+
 </script>
 @endsection

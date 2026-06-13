@@ -1,6 +1,45 @@
 @extends('admin.layouts.app')
 @section('title', 'Create Order')
 
+@section('style')
+<style>
+  .flash-warning {
+    animation: flashWarn 0.6s ease;
+  }
+  @keyframes flashWarn {
+    0% { background-color: transparent; }
+    30% { background-color: #ffe0e0; }
+    100% { background-color: transparent; }
+  }
+  #variantSaveBtn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+  .variant-drawer-size {
+    background: #f0f0f0;
+    color: #333;
+    border: 2px solid #ccc;
+    border-radius: 8px;
+    padding: 6px 14px;
+    margin: 4px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+  .variant-drawer-size.active {
+    background: #7F53AC;
+    color: #fff;
+    border-color: #7F53AC;
+    font-weight: 700;
+    box-shadow: 0 2px 6px rgba(127, 83, 172, 0.3);
+  }
+  .variant-drawer-size:hover:not(.active) {
+    background: #e0d4f5;
+    border-color: #7F53AC;
+  }
+</style>
+@endsection
+
 @section('content')
 <div class="content-header">
   <div class="container-fluid">
@@ -136,7 +175,7 @@
                   <tr>
                     <th>Article Number</th>
                     <th>Item</th>
-                    <th>Color</th>
+                    <th>Color code</th>
                     <th>Size(s)</th>
                     <th>Description</th>
                     <th>Qty</th>
@@ -426,13 +465,13 @@
                     @endif
                   </div>
                   <div class="d-flex justify-content-between py-1">
-                    <strong>Discount</strong>
+                    <strong>Discount (%)</strong>
                     @if(auth()->user() && auth()->user()->hasRole(['super-admin', 'superadmin']))
-                    <input type="number" step="0.01" name="discount" id="discount"
+                    <input type="number" step="0.01" min="0" max="100" name="discount" id="discount"
                       class="form-control form-control-sm w-50 text-right"
                       value="{{ old('discount', 0) }}">
                     @else
-                    <input type="number" step="0.01" name="discount" id="discount"
+                    <input type="number" step="0.01" min="0" max="100" name="discount" id="discount"
                       class="form-control form-control-sm w-50 text-right" readonly
                       value="{{ old('discount', 0) }}">
                     @endif
@@ -644,11 +683,10 @@
 
     function colorOpts(colors, sel) {
       sel = normalizeArr(sel);
-      colors = (colors && colors.length) ? colors : COLORS;
-      return colors.map(function(c) {
-        return '<option value="' + esc(c.id) + '"' + (sel.indexOf(String(c.id)) !== -1 ? ' selected' : '') + '>' + esc(c.color_code ? c.color_code : c.name) + '</option>';
-      }).join('');
+       colors = (colors && colors.length) ? colors : COLORS;
+      
     }
+
 
     function populateColorSelect($row, colors, sel) {
       var $cs = $row.find('.color-select');
@@ -701,9 +739,11 @@
       });
       $('#subtotal').val(sub.toFixed(2));
       var markdownPercent = parseFloat($('#markdown').val()) || 0;
+      var discountPercent = parseFloat($('#discount').val()) || 0;
+      var discountAmount = sub * discountPercent / 100;
       var grand = sub -
         (sub * markdownPercent / 100) -
-        (parseFloat($('#discount').val()) || 0) +
+        discountAmount +
         (parseFloat($('#adjustment').val()) || 0);
       $('#grand_total').val(grand.toFixed(2));
     }
@@ -947,7 +987,7 @@
       $row.find('.tax').val(found.tax || 0);
       if (!$row.find('.desc').val()) $row.find('.desc').val(found.desc || '');
 
-      // Populate colors — this does NOT affect qty
+      // Populate colors from this selected item ONLY (many-to-many)
       populateColorSelect($row, found.colors || []);
 
       var sizeChoices = (found.sizes && found.sizes.length) ? found.sizes : ALL_SIZES;

@@ -675,6 +675,7 @@ class OrderMasterController extends Controller
             'shipping_address',
             'subtotal',
             'discount',
+            'markdown',
             'adjustment',
             'grand_total',
             'terms',
@@ -825,12 +826,17 @@ class OrderMasterController extends Controller
 
     private function calculatedTotals(Request $request, float $subtotal): array
     {
-        $discount = (float) $request->input('discount', 0);
+        $markdownPercent = (float) $request->input('markdown', 0);
+        $markdownAmount = $subtotal * $markdownPercent / 100;
+        $discountPercent = (float) $request->input('discount', 0);
+        $discountAmount = $subtotal * $discountPercent / 100;
         $adjustment = (float) $request->input('adjustment', 0);
 
         return [
             'subtotal' => round($subtotal, 2),
-            'grand_total' => round($subtotal - $discount + $adjustment, 2),
+            'markdown' => round($markdownPercent, 2),
+            'discount' => round($discountPercent, 2),
+            'grand_total' => round($subtotal - $markdownAmount - $discountAmount + $adjustment, 2),
         ];
     }
 
@@ -1030,10 +1036,67 @@ class OrderMasterController extends Controller
             }
         }
 
-        $oldStatus = $orderItem->status;
-        $newStatus = $request->input('status');
+        $oldStatus = strtolower((string) $orderItem->status);
+        $newStatus = strtolower((string) $request->input('status'));
 
-        if ($newStatus === 'confirmed' && $oldStatus !== 'confirmed') {
+        // Used for stock operations to prevent double-restores/deductions.
+        $willBeConfirmed = $newStatus === 'confirmed';
+        $wasConfirmed = $oldStatus === 'confirmed';
+        $willBeCancelled = $newStatus === 'canceled' || $newStatus === 'cancelled';
+        $wasCancelled = $oldStatus === 'canceled' || $oldStatus === 'cancelled';
+
+        $fromConfirmed = $oldStatus === 'confirmed' || in_array($oldStatus, ['shipped', 'delivered'], true);
+        if ($fromConfirmed) {
+            // Center checkpoint: once reached, cannot go back.
+            if (in_array($newStatus, ['pending', 'draft'], true)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => "Invalid status transition from {$oldStatus} to {$newStatus}",
+                ], 422);
+            }
+        }
+
+        // Must be confirmed before reaching higher levels.
+        if (in_array($newStatus, ['shipped', 'delivered'], true) && $oldStatus !== 'confirmed') {
+            return response()->json([
+                'success' => false,
+                'message' => "Cannot move to {$newStatus} unless current status is confirmed.",
+            ], 422);
+        }
+
+        // pending -> shipped not allowed.
+        if ($oldStatus === 'pending' && $newStatus === 'shipped') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Cannot move from pending to shipped. Confirmed is required first.',
+            ], 422);
+        }
+
+        // canceled rules
+        if ($oldStatus === 'canceled' && $newStatus === 'draft') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Cannot move from canceled to draft. canceled can only revert to pending.',
+            ], 422);
+        }
+
+
+
+        // confirmed <-> cancelled stock adjustment
+        // - confirmed -> cancelled : restore stock (increase qty back)
+        if ($willBeCancelled && $wasConfirmed) {
+            try {
+                $this->restoreStockForOrderItem($orderItem);
+            } catch (\Exception $e) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $e->getMessage(),
+                ], 422);
+            }
+        }
+
+        // - cancelled -> confirmed : deduct stock again (decrease qty)
+        if ($willBeConfirmed && $wasCancelled) {
             try {
                 $this->deductStockForOrderItem($orderItem);
             } catch (\Exception $e) {
@@ -1044,11 +1107,8 @@ class OrderMasterController extends Controller
             }
         }
 
-        if (($newStatus === 'pending' || $newStatus === 'draft') && $oldStatus === 'confirmed') {
-            $this->restoreStockForOrderItem($orderItem);
-        }
-
         $orderItem->status = $newStatus;
+
         $orderItem->save();
 
         return response()->json(['success' => true, 'status' => $orderItem->status]);

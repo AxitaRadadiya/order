@@ -171,12 +171,62 @@ class ItemController extends Controller
         return redirect()->route('items.index')->withSuccess('Item created successfully.');
     }
 
-    public function show(Item $item): View
+    public function show(Item $item, Request $request): View
     {
-        $item->load(['variants.color', 'variants.size', 'variants.inventoryLogs']);
+        $item->load([
+            'variants.inventoryLogs',
+            'category',
+            'group',
+            'subCategory',
+            'subGroup',
+            'tax',
+        ]);
 
-        return view('admin.items.show', compact('item'));
+        $totalProduction = 0;
+        $totalSold = 0;
+        $totalStock = 0;
+        foreach($item->variants as $variant) {
+            $totalProduction += $variant->total_production;
+            $totalSold += $variant->total_sold;
+            $totalStock += $variant->current_stock;
+        }
+
+        $variants = $this->getVariantsPaginator($item->id, $request);
+
+        return view('admin.items.show', compact('item', 'variants', 'totalProduction', 'totalSold', 'totalStock'));
     }
+
+
+    private function getVariantsPaginator(int $itemId, Request $request)
+    {
+        $q = trim((string) $request->input('q', ''));
+        $perPage = (int) $request->input('per_page', 5);
+        if ($perPage <= 0) {
+            $perPage = 5;
+        }
+
+        $query = \App\Models\ItemVariant::query()
+            ->with(['color', 'size', 'inventoryLogs'])
+            ->where('item_id', $itemId);
+
+        if ($q !== '') {
+            $query->where(function ($sub) use ($q) {
+                $sub->whereHas('color', function ($c) use ($q) {
+                    $c->where('name', 'like', "%{$q}%")
+                      ->orWhere('color_code', 'like', "%{$q}%");
+                })
+                ->orWhereHas('size', function ($s) use ($q) {
+                    $s->where('name', 'like', "%{$q}%");
+                });
+            });
+        }
+
+        return $query
+            ->orderBy('color_id')
+            ->orderBy('size_id')
+            ->paginate($perPage);
+    }
+
 
     public function edit(Item $item): View
     {

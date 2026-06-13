@@ -2,75 +2,236 @@
 @section('title','Order #'.$order->id)
 
 @section('content')
-<div class="content-header">
-  <div class="container-fluid">
-    <div class="row mb-2">
-      <div class="col-sm-6">
-        <h1 class="m-0">Order Details</h1>
-      </div>
-      <div class="col-sm-6">
-        <ol class="breadcrumb float-sm-right">
-          <li class="breadcrumb-item"><a href="{{ route('dashboard') }}">Home</a></li>
-          <li class="breadcrumb-item"><a href="{{ route('orders.index') }}">Orders</a></li>
-          <li class="breadcrumb-item active">show</li>
-        </ol>
-      </div>
-    </div>
-  </div>
-</div>
+@php
+  $statusKey = strtolower(str_replace(' ', '-', $order->status ?? 'default'));
+  $statusClass = in_array($statusKey, ['pending','confirmed','shipped','delivered','cancelled'])
+    ? 'order-status-' . $statusKey : 'order-status-default';
+  $statusIcons = [
+    'pending'   => 'fa-clock',
+    'confirmed' => 'fa-check-circle',
+    'shipped'   => 'fa-truck',
+    'delivered' => 'fa-box-open',
+    'cancelled' => 'fa-times-circle',
+  ];
+  $statusIcon = $statusIcons[$statusKey] ?? 'fa-circle';
 
-<section class="content">
-  <div class="container-fluid">
-    <div class="mb-3 mr-3 d-flex justify-content-end">
-      <a href="{{ route('orders.index') }}" class="btn-cancel mr-1"><i class="fas fa-arrow-left mr-1"></i>Back</a>
-      <a href="{{ route('orders.edit', $order) }}" class="btn-submit"><i class="fas fa-edit mr-1"></i>Edit</a>
+  $subtotal = (float) ($order->subtotal ?: $order->items->sum('total'));
+  $markdownPercent = (float) ($order->markdown ?? 0);
+  $markdownAmount = round($subtotal * $markdownPercent / 100, 2);
+  $discountPercent = (float) ($order->discount ?? 0);
+  $discountAmount = round($subtotal * $discountPercent / 100, 2);
+  $adjustment = (float) ($order->adjustment ?? 0);
+@endphp
+
+<div class="order-detail-container">
+    <div class="content-header py-4">
+        <div class="container-fluid">
+            <div class="row align-items-center">
+                <div class="col-md-6 mb-3 mb-md-0">
+                    <div class="d-flex align-items-center flex-wrap">
+                        <span class="text-muted font-weight-medium mr-2" style="font-size: 0.9rem;">Dashboard</span>
+                        <i class="fas fa-chevron-right text-muted mx-2" style="font-size: 0.75rem;"></i>
+                        <a href="{{ route('orders.index') }}" class="text-theme font-weight-bold mx-2" style="font-size: 0.9rem;">Orders</a>
+                        <i class="fas fa-chevron-right text-muted mx-2" style="font-size: 0.75rem;"></i>
+                        <span class="text-muted font-weight-medium mx-2" style="font-size: 0.9rem;">Order #{{ $order->id }}</span>
+                    </div>
+                </div>
+                <div class="col-md-6 text-md-right">
+                    <a href="{{ route('orders.index') }}" class="btn btn-outline-custom mr-2">
+                        <i class="fas fa-arrow-left mr-1"></i> Back
+                    </a>
+                    <a href="{{ route('orders.edit', $order) }}" class="btn btn-create">
+                        <i class="fas fa-edit mr-1"></i> Edit Order
+                    </a>
+                </div>
+            </div>
+        </div>
     </div>
-    <div class="card card-outline card-primary">
-      <div class="card-header">
-        <h3 class="card-title"><i class="fas fa-file-invoice mr-1"></i>Order Information</h3>
-      </div>
-      <div class="card-body">
-        <div class="row mb-3">
-          <div class="col-md-3 mb-3"><strong>Order ID:</strong> {{ $order->id }}</div>
-          <div class="col-md-3 mb-3"><strong>Customer:</strong> {{ $order->customer?->name }}</div>
-          <div class="col-md-3 mb-3"><strong>Date:</strong> {{ $order->date?->format('d-m-Y') }}</div>
-          <div class="col-md-3 mb-3"><strong>Expected Delivery Date:</strong> {{ $order->expected_date?->format('d-m-Y') }}</div>
-          <div class="col-md-3 mb-3"><strong>E-way Bill Number:</strong> {{ $order->eway_bill_number }}</div>
-          <div class="col-md-3 mb-3"><strong>Transport Number:</strong> {{ $order->transport_number }}</div>
-          <div class="col-md-3 mb-3"><strong>LR Number:</strong> {{ $order->lr_number }}</div>
-          <div class="col-md-3 mb-3"><strong>Status:</strong> {{ $order->status }}</div>
+
+    <section class="content pb-4">
+        <div class="container-fluid">
+
+            {{-- Order Information --}}
+            <div class="order-card">
+                <div class="order-card-header">
+                    <i class="fas fa-file-invoice"></i>
+                    <h5>Order Information</h5>
+                </div>
+                <div class="order-card-body flush">
+                    <div class="order-info-grid">
+                        <div class="order-info-cell">
+                            <div class="order-info-label">Order ID</div>
+                            <div class="order-info-value">#{{ $order->id }}</div>
+                        </div>
+                        <div class="order-info-cell">
+                            <div class="order-info-label">Customer</div>
+                            <div class="order-info-value">{{ $order->customer?->name ?? '—' }}</div>
+                        </div>
+                        <div class="order-info-cell">
+                            <div class="order-info-label">Order Date</div>
+                            <div class="order-info-value">{{ $order->date?->format('d M Y') ?? '—' }}</div>
+                        </div>
+                        <div class="order-info-cell">
+                            <div class="order-info-label">Expected Delivery</div>
+                            <div class="order-info-value">{{ $order->expected_date?->format('d M Y') ?? '—' }}</div>
+                        </div>
+                        <div class="order-info-cell">
+                            <div class="order-info-label">E-way Bill No.</div>
+                            <div class="order-info-value">{{ $order->eway_bill_number ?: '—' }}</div>
+                        </div>
+                        <div class="order-info-cell">
+                            <div class="order-info-label">Transport No.</div>
+                            <div class="order-info-value">{{ $order->transport_number ?: '—' }}</div>
+                        </div>
+                        <div class="order-info-cell">
+                            <div class="order-info-label">LR Number</div>
+                            <div class="order-info-value">{{ $order->lr_number ?: '—' }}</div>
+                        </div>
+                        <div class="order-info-cell">
+                            <div class="order-info-label">Status</div>
+                            <div class="order-info-value">
+                                <span class="order-status-badge {{ $statusClass }}">
+                                    <i class="fas {{ $statusIcon }}" style="font-size:10px;"></i>
+                                    {{ ucfirst($order->status ?? '—') }}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {{-- Addresses --}}
+            <div class="order-card">
+                <div class="order-card-header">
+                    <i class="fas fa-map-marker-alt"></i>
+                    <h5>Addresses</h5>
+                </div>
+                <div class="order-card-body">
+                    <div class="order-addr-grid">
+                        <div class="order-addr-box">
+                            <div class="order-addr-label">
+                                <i class="fas fa-file-invoice" style="font-size:12px;"></i> Billing Address
+                            </div>
+                            <div class="order-addr-value">{{ $order->billing_address ?: '—' }}</div>
+                        </div>
+                        <div class="order-addr-box">
+                            <div class="order-addr-label">
+                                <i class="fas fa-truck" style="font-size:12px;"></i> Shipping Address
+                            </div>
+                            <div class="order-addr-value">{{ $order->shipping_address ?: '—' }}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {{-- Items --}}
+            <div class="order-card">
+                <div class="order-card-header">
+                    <i class="fas fa-box"></i>
+                    <h5>Items</h5>
+                </div>
+                <div class="order-card-body flush">
+                    <div class="table-responsive">
+                        <table class="order-items-table">
+                            <thead>
+                                <tr>
+                                    <th>Article No.</th>
+                                    <th>Item</th>
+                                    <th>Color</th>
+                                    <th>Size</th>
+                                    <th>Description</th>
+                                    <th>Qty</th>
+                                    <th>MRP</th>
+                                    <th>Total</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach($order->items as $it)
+                                    @php
+                                        $sizeText = $it->size;
+                                        if (!empty($it->size_quantities)) {
+                                            $sizeText = collect($it->size_quantities)
+                                                ->map(fn($qty, $size) => $size . ': ' . (int) round((float) $qty))
+                                                ->implode(', ');
+                                        }
+                                        $colorText = collect(explode(',', (string) $it->color))
+                                            ->map(fn($c) => trim($c))
+                                            ->filter()
+                                            ->map(fn($c) => $colorsById[$c] ?? $c)
+                                            ->implode(', ');
+
+                                        $itStatusKey = strtolower($it->status ?? 'default');
+                                        $itStatusClass = in_array($itStatusKey, ['pending','confirmed','shipped','delivered','cancelled'])
+                                            ? 'order-status-' . $itStatusKey : 'order-status-default';
+                                    @endphp
+                                    <tr>
+                                        <td><span class="order-chip-article">{{ $it->article_number }}</span></td>
+                                        <td class="font-weight-bold">{{ $it->item_name }}</td>
+                                        <td><span class="order-chip-color">{{ $colorText ?: '—' }}</span></td>
+                                        <td>{{ $sizeText ?: '—' }}</td>
+                                        <td class="text-muted" style="font-size:0.8rem;">{{ $it->description ?: '—' }}</td>
+                                        <td class="font-weight-bold">{{ number_format((float) $it->quantity, 0) }}</td>
+                                        <td>₹{{ number_format($it->rate, 2) }}</td>
+                                        <td class="font-weight-bold">₹{{ number_format($it->total, 2) }}</td>
+                                        <td><span class="order-status-badge {{ $itStatusClass }}">{{ ucfirst($it->status ?? '—') }}</span></td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="order-card-body" style="border-top: 1px solid #f1f5f9;">
+                        <div class="order-footer-layout">
+                            <div class="order-footer-grid">
+                                <div>
+                                    <div class="order-footer-label">Terms &amp; Conditions</div>
+                                    <div class="order-footer-value {{ empty($order->terms) ? 'empty' : '' }}">
+                                        {{ $order->terms ?: 'No terms specified' }}
+                                    </div>
+                                </div>
+                                <div>
+                                    <div class="order-footer-label">Notes</div>
+                                    <div class="order-footer-value {{ empty($order->notes) ? 'empty' : '' }}">
+                                        {{ $order->notes ?: 'No notes added' }}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="order-totals-summary">
+                                <div class="order-totals-row subtotal">
+                                    <span class="label">Sub Total</span>
+                                    <span class="value">₹{{ number_format($subtotal, 2) }}</span>
+                                </div>
+                                <div class="order-totals-row {{ $markdownAmount > 0 ? 'deduction' : '' }}">
+                                    <span class="label">Mark Down ({{ rtrim(rtrim(number_format($markdownPercent, 2), '0'), '.') }}%)</span>
+                                    <span class="value">{{ $markdownAmount > 0 ? '− ' : '' }}₹{{ number_format($markdownAmount, 2) }}</span>
+                                </div>
+                                <div class="order-totals-row {{ $discountAmount > 0 ? 'deduction' : '' }}">
+                                    <span class="label">Discount ({{ rtrim(rtrim(number_format($discountPercent, 2), '0'), '.') }}%)</span>
+                                    <span class="value">{{ $discountAmount > 0 ? '− ' : '' }}₹{{ number_format($discountAmount, 2) }}</span>
+                                </div>
+                                <div class="order-totals-row {{ $adjustment > 0 ? 'addition' : ($adjustment < 0 ? 'deduction' : '') }}">
+                                    <span class="label">Adjustment</span>
+                                    <span class="value">
+                                        @if($adjustment > 0)+ @elseif($adjustment < 0)− @endif
+                                        ₹{{ number_format(abs($adjustment), 2) }}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="order-grand-total-wrap">
+                            <div class="order-grand-total-box">
+                                <span class="order-grand-total-label">Grand Total</span>
+                                <span class="order-grand-total-amount">₹{{ number_format($order->grand_total, 2) }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
         </div>
-        <h5>Addresses</h5>
-        <div class="row mb-3">
-          <div class="col-md-6 mb-3"><strong>Billing Address:</strong><br>{{ $order->billing_address }}</div>
-          <div class="col-md-6 mb-3"><strong>Shipping Address:</strong><br>{{ $order->shipping_address }}</div>
-        </div>
-        <h5>Items</h5>
-        <table class="table table-sm table-bordered"><thead><tr><th width="100">Article No.</th><th width="100">Item</th><th width="140">Color</th><th width="140">Size</th><th>Desc</th><th width="80">Qty</th><th width="100">MRP</th><th width="100">Total</th><th>Status</th></tr></thead><tbody>
-          @foreach($order->items as $it)
-            @php
-              $sizeText = $it->size;
-              if (!empty($it->size_quantities)) {
-                $sizeText = collect($it->size_quantities)
-                  ->map(fn($qty, $size) => $size . ': ' . $qty)
-                  ->implode(', ');
-              }
-              $colorText = collect(explode(',', (string) $it->color))
-                ->map(fn($color) => trim($color))
-                ->filter()
-                ->map(fn($color) => $colorsById[$color] ?? $color)
-                ->implode(', ');
-            @endphp
-            <tr><td>{{ $it->article_number }}</td><td>{{ $it->item_name }}</td><td>{{ $colorText }}</td><td>{{ $sizeText }}</td><td>{{ $it->description }}</td><td>{{ $it->quantity }}</td><td>{{ number_format($it->rate,2) }}</td><td>{{ number_format($it->total,2) }}</td><td>{{ $it->status }}</td></tr>
-          @endforeach
-        </tbody></table>
-        <div class="row mb-2 mt-5">
-          <div class="col-md-6 mb-3"><strong>Terms and Conditions:</strong> {{ $order->terms }}</div>
-          <div class="col-md-6 mb-3"><strong>Notes:</strong> {{ $order->notes }}</div>
-        </div>
-        <h5 class="text-right mt-3"><strong style="color: #7F53AC;">Grand Total: </strong>{{ number_format($order->grand_total,2) }}</h5>
-      </div>
-    </div>
-  </div>
-</section>
+    </section>
+</div>
 @endsection

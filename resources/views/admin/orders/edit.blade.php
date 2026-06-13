@@ -1,6 +1,45 @@
 @extends('admin.layouts.app')
 @section('title', 'Edit Order')
 
+@section('style')
+<style>
+  .flash-warning {
+    animation: flashWarn 0.6s ease;
+  }
+  @keyframes flashWarn {
+    0% { background-color: transparent; }
+    30% { background-color: #ffe0e0; }
+    100% { background-color: transparent; }
+  }
+  #variantSaveBtn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+  .variant-drawer-size {
+    background: #f0f0f0;
+    color: #333;
+    border: 2px solid #ccc;
+    border-radius: 8px;
+    padding: 6px 14px;
+    margin: 4px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+  .variant-drawer-size.active {
+    background: #7F53AC;
+    color: #fff;
+    border-color: #7F53AC;
+    font-weight: 700;
+    box-shadow: 0 2px 6px rgba(127, 83, 172, 0.3);
+  }
+  .variant-drawer-size:hover:not(.active) {
+    background: #e0d4f5;
+    border-color: #7F53AC;
+  }
+</style>
+@endsection
+
 @section('content')
 <div class="content-header">
   <div class="container-fluid">
@@ -139,7 +178,7 @@
                 <tr>
                   <th>Article Number</th>
                   <th>Item</th>
-                  <th>Color</th>
+                  <th>Color code</th>
                   <th>Size(s)</th>
                   <th>Description</th>
                   <th>Qty</th>
@@ -498,13 +537,13 @@
                     @endif
                   </div>
                   <div class="d-flex justify-content-between py-1">
-                    <strong>Discount</strong>
+                    <strong>Discount (%)</strong>
                     @if(auth()->user() && auth()->user()->hasRole(['super-admin', 'superadmin']))
-                    <input type="number" step="0.01" name="discount" id="discount"
+                    <input type="number" step="0.01" min="0" max="100" name="discount" id="discount"
                       class="form-control form-control-sm w-50 text-right"
                       value="{{ old('discount', $order->discount ?? 0) }}">
                     @else
-                    <input type="number" step="0.01" name="discount" id="discount"
+                    <input type="number" step="0.01" min="0" max="100" name="discount" id="discount"
                       class="form-control form-control-sm w-50 text-right" readonly
                       value="{{ old('discount', $order->discount ?? 0) }}">
                     @endif
@@ -882,9 +921,11 @@
       });
       $('#subtotal').val(subtotal.toFixed(2));
       var markdownPercent = parseFloat($('#markdown').val()) || 0;
+      var discountPercent = parseFloat($('#discount').val()) || 0;
+      var discountAmount = subtotal * discountPercent / 100;
       var grand = subtotal -
         (subtotal * markdownPercent / 100) -
-        (parseFloat($('#discount').val()) || 0) +
+        discountAmount +
         (parseFloat($('#adjustment').val()) || 0);
       $('#grand_total').val(grand.toFixed(2));
     }
