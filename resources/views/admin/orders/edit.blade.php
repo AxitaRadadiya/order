@@ -20,11 +20,19 @@
     color: #333;
     border: 2px solid #ccc;
     border-radius: 8px;
-    padding: 6px 14px;
+    padding: 6px 10px;
     margin: 4px;
     font-weight: 500;
     cursor: pointer;
     transition: all 0.15s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .variant-drawer-size small {
+    opacity: 0.75;
+    font-size: 11px;
+    font-weight: 600;
   }
   .variant-drawer-size.active {
     background: #7F53AC;
@@ -245,7 +253,16 @@
                     }
                     $selectedColors = array_map('trim', $selectedColors);
                     $rowItem = !empty($itemId) ? $items->firstWhere('id', $itemId) : null;
-                    $rowColors = ($rowItem && $rowItem->colors->isNotEmpty()) ? $rowItem->colors : $colors;
+                    $rowVariantColors = ($rowItem && $rowItem->relationLoaded('variants'))
+                      ? $rowItem->variants->map(fn($variant) => $variant->color)->filter()->unique('id')->values()
+                      : collect();
+                    $rowColors = $rowVariantColors->isNotEmpty()
+                      ? $rowVariantColors
+                      : ($rowItem ? $rowItem->colors : collect());
+                    $selectedColors = collect($selectedColors)
+                      ->filter(fn($id) => $rowColors->contains('id', $id))
+                      ->values()
+                      ->all();
                     $selectedColorNames = [];
                     foreach ($selectedColors as $sc) {
                     $cobj = $rowColors->firstWhere('id', $sc) ?: $colors->firstWhere('id', $sc);
@@ -366,9 +383,7 @@
                   <td>
                     @if(auth()->user() && auth()->user()->hasRole(['super-admin', 'superadmin']))
                     <select name="items[0][color][]" class="form-control color-select select2">
-                      @foreach($colors as $col)
-                      <option value="{{ $col->id }}">{{ $col->name }}</option>
-                      @endforeach
+                      <option value="">--</option>
                     </select>
                     @else
                     <input type="text" class="form-control color-read" readonly value="">
@@ -659,11 +674,19 @@
     color: #333;
     border: 2px solid #ccc;
     border-radius: 8px;
-    padding: 6px 14px;
+    padding: 6px 10px;
     margin: 4px;
     font-weight: 500;
     cursor: pointer;
     transition: all 0.15s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .variant-drawer-size small {
+    opacity: 0.75;
+    font-size: 11px;
+    font-weight: 600;
   }
   .variant-drawer-size.active {
     background: #7F53AC;
@@ -720,9 +743,24 @@
       });
     }
 
+    function variantStockMap($row) {
+      var stockMap = {};
+      if (!$row) return stockMap;
+      try {
+        stockMap = JSON.parse($row.attr('data-stock-map') || '{}');
+      } catch (e) {
+        stockMap = {};
+      }
+      return stockMap && typeof stockMap === 'object' ? stockMap : {};
+    }
+
+    function variantSizeLabel(size, stockMap) {
+      return String(size || '');
+    }
+
     function colorOptions(colors, selected) {
       selected = normalizeSelected(selected);
-      colors = (colors && colors.length) ? colors : COLORS;
+      colors = (colors && colors.length) ? colors : [];
 
       return colors.map(function(c) {
         var id = String(c.id);
@@ -736,16 +774,24 @@
     function populateColorSelect($row, colors, sel) {
       var $cs = $row.find('.color-select');
       sel = sel || ($cs.length ? $cs.val() : []) || [];
+      var availableIds = [];
+      if (colors && colors.length) {
+        availableIds = colors.map(function(c) {
+          return String(c.id);
+        });
+      }
+      var selArr = normalizeSelected(sel).filter(function(id) {
+        return availableIds.indexOf(id) !== -1;
+      });
       if ($cs.length) {
         if ($cs.hasClass('select2-hidden-accessible')) $cs.select2('destroy');
-        $cs.html(colorOptions(colors, sel));
+        $cs.html(colorOptions(colors, selArr));
         $cs.select2({
           placeholder: 'Colors',
           width: '100%'
         });
       } else {
         // no select present (non-super-admin) — show readonly text and hidden inputs
-        var selArr = normalizeSelected(sel);
         var names = selArr.map(function(id) {
           var c = COLORS.find(function(x) {
             return String(x.id) == String(id);
@@ -991,7 +1037,7 @@
 
           var $sz = $row.find('.size-select');
           $sz.html(availableSizes.map(function(s) {
-            return '<option value="' + esc(s) + '">' + esc(s) + '</option>';
+            return '<option value="' + esc(s) + '">' + esc(variantSizeLabel(s, stockMap)) + '</option>';
           }).join(''));
 
           if (IS_SUPER_ADMIN) {
@@ -1055,25 +1101,22 @@
         $row.find('.desc').val(found.desc || '');
       }
       // populate color select from the selected article's colors
-      populateColorSelect($row, found.colors || []);
+      populateColorSelect($row, found.colors || [], []);
 
-      // populate size select (use item's sizes if present else ALL_SIZES)
-      var sizeChoices = (found.sizes && found.sizes.length) ? found.sizes : ALL_SIZES;
-      var sizeOpts = sizeChoices.map(function(s) {
-        return '<option value="' + s + '">' + s + '</option>';
-      }).join('');
+      // Keep sizes empty until a color is selected; the color change handler loads only sizes available for that color.
+      $row.attr('data-available-sizes', '[]');
+      $row.attr('data-stock-map', '{}');
+      var sizeChoices = [];
+      var sizeOpts = '';
       var $size = $row.find('.size-select');
       if ($size.hasClass('select2-hidden-accessible')) {
         $size.select2('destroy');
       }
       $size.html(sizeOpts);
       if (IS_SUPER_ADMIN) {
-        // build chips
         var $chips = $row.find('.size-chips-wrap');
-        $chips.html(sizeChoices.map(function(s) {
-          return '<button type="button" class="size-chip" data-size="' + escapeHtml(s) + '">' + escapeHtml(s) + '</button>';
-        }).join(''));
-        rebuildSizePanel($row);
+        $chips.empty();
+        $row.find('.size-qty-wrapper').hide().html('');
       } else {
         $size.select2({
           placeholder: 'Sizes',
@@ -1081,7 +1124,16 @@
         });
         syncSizeQtyInputs($row);
       }
-      recalc();
+
+      if (($row.find('.color-select').val() || []).length) {
+        try {
+          $row.find('.color-select').trigger('change');
+        } catch (e) {}
+      } else {
+        $row.find('.size-select').val([]);
+        $row.find('.qty').val(0);
+        recalc();
+      }
     });
 
     // ── Build a new row ───────────────────────────────────────────────────────
@@ -1097,8 +1149,8 @@
           '>' + (m.article_number || '') + '</option>';
       }).join('');
 
-      // color select options (article colors when available, otherwise global COLORS)
-      var colorOpts = colorOptions(it.colors || COLORS, it.color || it.color_id || []);
+      // color select options (article colors only; no global fallback)
+      var colorOpts = colorOptions(it.colors || [], it.color || it.color_id || []);
 
       // size options (use ALL_SIZES for chips; per-item selected sizes may be prefilled)
       var sizeOpts = (it.sizes && it.sizes.length) ? it.sizes.map(function(s) {
@@ -1133,14 +1185,15 @@
           '<input type="hidden" name="items[' + idx + '][order_item_id]" class="order-item-id-hidden" value="' + (it.id || '') + '">' +
           '</td>';
       }
-      '<td><input type="text" name="items[' + idx + '][item_name]" class="form-control item-name-input" value="' + (it.item_name || '') + '" readonly></td>' +
+      return '<tr>' +
+        '<td><input type="text" name="items[' + idx + '][item_name]" class="form-control item-name-input" value="' + (it.item_name || '') + '" readonly></td>' +
         (IS_SUPER_ADMIN ? '<td><select name="items[' + idx + '][color][]" class="form-control color-select" multiple>' + colorOpts + '</select></td>' : (function() {
           var sel = normalizeSelected(it.color || it.color_id || []);
           var names = sel.map(function(id) {
             var m = (COLORS || []).find(function(c) {
               return String(c.id) == String(id);
             });
-            return m ? m.name : '';
+            return m ? (m.color_code || m.name) : '';
           }).filter(Boolean).join(', ');
           var hidden = sel.map(function(id) {
             return '<input type="hidden" name="items[' + idx + '][color][]" value="' + escapeHtml(id) + '">';
@@ -1405,30 +1458,16 @@
       return article ? item + ' (' + article + ')' : item;
     }
 
-    function variantSizeOptions($row) {
-      // Try to parse data-available-sizes attribute from $row
-      var availableSizes = [];
+   function variantSizeOptions($row) {
+      if (!$row) return [];
+      var raw = $row.attr('data-available-sizes');
+      if (!raw) return [];
       try {
-        var raw = $row ? ($row.attr('data-available-sizes') || '') : '';
-        if (raw) availableSizes = JSON.parse(raw);
+        var arr = JSON.parse(raw);
+        return Array.isArray(arr) ? arr.map(String).filter(Boolean) : [];
       } catch (e) {
-        availableSizes = [];
+        return [];
       }
-
-      if (Array.isArray(availableSizes) && availableSizes.length) {
-        return availableSizes.map(String);
-      }
-
-      // Fallback: options already in the hidden size-select
-      var opts = [];
-      if ($row) {
-        $row.find('.size-select option').each(function() {
-          opts.push(String($(this).val()));
-        });
-      }
-
-      // If still empty, return ALL_SIZES
-      return opts.length ? opts : ALL_SIZES.map(String);
     }
 
     function variantSelectedSizes($row) {
@@ -1486,24 +1525,20 @@
     }
 
     function renderVariantDrawer() {
+      var stockMap = variantStockMap(activeVariantRow);
+      var hasStockMap = Object.keys(stockMap).length > 0;
+
       $('#variantDrawerSizes').html(
         variantSizeOptions(activeVariantRow).map(function(size) {
           var active = drawerSizes.indexOf(String(size)) !== -1 ? ' active' : '';
           return '<button type="button" class="variant-drawer-size' + active + '"' +
-            ' data-size="' + variantEscape(size) + '">' + variantEscape(size) + '</button>';
-        }).join('')
+            ' data-size="' + variantEscape(size) + '">' +
+            '<span>' + variantEscape(size) + '</span>' +
+            '</button>';
+        }).join('') || '<div class="variant-size-empty text-muted small">No sizes available for selected color</div>'
       );
 
       // Read stockMap from activeVariantRow
-      var stockMap = {};
-      try {
-        if (activeVariantRow) {
-          var rawMap = activeVariantRow.attr('data-stock-map') || '{}';
-          stockMap = JSON.parse(rawMap);
-        }
-      } catch (e) {
-        stockMap = {};
-      }
 
       var hasStockWarning = false;
 
@@ -1572,6 +1607,9 @@
       activeVariantRow = $row;
       drawerSizes = variantSelectedSizes($row);
       drawerQtys = variantQtyMap($row);
+      drawerSizes = drawerSizes.filter(function(size) {
+        return variantSizeOptions(activeVariantRow).indexOf(String(size)) !== -1;
+      });
       drawerSizes.forEach(function(size) {
         if (!drawerQtys[size]) drawerQtys[size] = 1;
       });
