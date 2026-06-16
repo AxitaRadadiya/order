@@ -35,11 +35,13 @@ use Illuminate\Support\Facades\Artisan;
 Route::get('/', [FrontendController::class, 'home'])->name('home');
 
 Route::get('/products', [FrontendController::class, 'products'])->name('products');
+Route::get('/products/filter', [FrontendController::class, 'filterProducts'])->name('products.filter');
 Route::get('/api/category/{category}/items', [FrontendController::class, 'categoryItems'])->name('api.category.items');
 Route::middleware('auth')->get('/api/item-variants/sizes-by-color', [\App\Http\Controllers\ItemVariantController::class, 'sizesByColor'])->name('api.item-variants.sizes-by-color');
 
 Route::get('/products/{item}', [FrontendController::class, 'show'])->name('products.show');
 Route::view('/about', 'frontend.about')->name('about');
+Route::view('/network', 'frontend.network')->name('network');
 Route::view('/contact', 'frontend.contact')->name('contact');
 //Route::get('/catalog', [ItemController::class, 'catalogs'])->name('catalog');
 

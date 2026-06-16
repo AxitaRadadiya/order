@@ -4,7 +4,38 @@
 
 @section('content')
 
-<section class="hero-banner py-4">
+<section class="top-banner mt-2">
+    <a href="{{ route('products') }}">
+        <img src="{{ asset('admin/dist/img/top-banner.jpg') }}"
+             alt="Promotional Banner"
+             class="img-fluid w-100"
+             style="max-height:600px; object-fit:cover;">
+    </a>
+</section>
+
+<!-- <section class="video-banner">
+    <div class="video-container">
+        <iframe
+            src="https://www.youtube.com/embed/1PIHGMkAdag?autoplay=1&mute=1&loop=1&playlist=1PIHGMkAdag&controls=0&showinfo=0&rel=0&modestbranding=1"
+            frameborder="0"
+            allow="autoplay; fullscreen"
+            allowfullscreen>
+        </iframe>
+    </div>
+
+    <div class="banner-overlay"></div>
+
+    <div class="banner-content">
+        <h1>LIVE BY STYLE</h1>
+        <p>Streetwear For Every Move</p>
+
+        <a href="{{ route('products') }}" class="btn btn-dark btn-lg">
+            Shop Now
+        </a>
+    </div>
+</section> -->
+
+<!-- <section class="hero-banner py-4">
   <div class="container-fluid">
     <div class="row align-items-center" style="background:#ffffff; padding: 20px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
       <div class="col-lg-6 text-left px-5">
@@ -19,7 +50,7 @@
       </div>
     </div>
   </div>
-</section>
+</section> -->
 
 <section class="py-4">
   <div class="container front">
@@ -104,7 +135,7 @@
 </section>
 
 {{-- OUR CLIENTS (marquee) --}}
-<section class="py-3 marquee-top marquee-top--gray">
+<!-- <section class="py-3 marquee-top marquee-top--gray">
   <div class="container mb-4">
     <h3 class="mb-4">Our Clients</h3>
     <p class="text-muted mb-3">Trusted by brands and manufacturers. Click a logo to visit the client's website.</p>
@@ -127,9 +158,6 @@
     </div>
 
   </div>
-</section>
+</section> -->
 
 @endsection
-
-@push('styles')
-@endpush
