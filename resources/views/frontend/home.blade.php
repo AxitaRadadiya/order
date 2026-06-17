@@ -134,30 +134,4 @@
   </div>
 </section>
 
-{{-- OUR CLIENTS (marquee) --}}
-<!-- <section class="py-3 marquee-top marquee-top--gray">
-  <div class="container mb-4">
-    <h3 class="mb-4">Our Clients</h3>
-    <p class="text-muted mb-3">Trusted by brands and manufacturers. Click a logo to visit the client's website.</p>
-
-    <div class="marquee" aria-hidden="false">
-      <div class="marquee-track">
-        <a href="https://denimjeans.in" target="_blank" rel="noopener" class="mx-3 d-inline-block"><img src="{{ asset('admin/dist/img/c1.jpg') }}" alt="Denim Jeans" class="client-logo" onerror="this.onerror=null;this.src='{{ asset('admin/dist/img/clients/placeholder.png') }}'"></a>
-        <a href="#" target="_blank" rel="noopener" class="mx-3 d-inline-block"><img src="{{ asset('admin/dist/img/c2.jpg') }}" alt="Client 2" class="client-logo" onerror="this.onerror=null;this.src='{{ asset('admin/dist/img/clients/placeholder.png') }}'"></a>
-        <a href="#" target="_blank" rel="noopener" class="mx-3 d-inline-block"><img src="{{ asset('admin/dist/img/c3.jpg') }}" alt="Client 3" class="client-logo" onerror="this.onerror=null;this.src='{{ asset('admin/dist/img/clients/placeholder.png') }}'"></a>
-        <a href="#" target="_blank" rel="noopener" class="mx-3 d-inline-block"><img src="{{ asset('admin/dist/img/c4.jpg') }}" alt="Client 4" class="client-logo" onerror="this.onerror=null;this.src='{{ asset('admin/dist/img/clients/placeholder.png') }}'"></a>
-        <a href="#" target="_blank" rel="noopener" class="mx-3 d-inline-block"><img src="{{ asset('admin/dist/img/c5.png') }}" alt="Client 5" class="client-logo" onerror="this.onerror=null;this.src='{{ asset('admin/dist/img/clients/placeholder.png') }}'"></a>
-      </div>
-      <div class="marquee-track" aria-hidden="true">
-        <a href="https://denimjeans.in" target="_blank" rel="noopener" class="mx-3 d-inline-block"><img src="{{ asset('admin/dist/img/c1.jpg') }}" alt="Denim Jeans" class="client-logo" onerror="this.onerror=null;this.src='{{ asset('admin/dist/img/clients/placeholder.png') }}'"></a>
-        <a href="#" target="_blank" rel="noopener" class="mx-3 d-inline-block"><img src="{{ asset('admin/dist/img/c2.jpg') }}" alt="Client 2" class="client-logo" onerror="this.onerror=null;this.src='{{ asset('admin/dist/img/clients/placeholder.png') }}'"></a>
-        <a href="#" target="_blank" rel="noopener" class="mx-3 d-inline-block"><img src="{{ asset('admin/dist/img/c3.jpg') }}" alt="Client 3" class="client-logo" onerror="this.onerror=null;this.src='{{ asset('admin/dist/img/clients/placeholder.png') }}'"></a>
-        <a href="#" target="_blank" rel="noopener" class="mx-3 d-inline-block"><img src="{{ asset('admin/dist/img/c4.jpg') }}" alt="Client 4" class="client-logo" onerror="this.onerror=null;this.src='{{ asset('admin/dist/img/clients/placeholder.png') }}'"></a>
-        <a href="#" target="_blank" rel="noopener" class="mx-3 d-inline-block"><img src="{{ asset('admin/dist/img/c5.png') }}" alt="Client 5" class="client-logo" onerror="this.onerror=null;this.src='{{ asset('admin/dist/img/clients/placeholder.png') }}'"></a>
-      </div>
-    </div>
-
-  </div>
-</section> -->
-
 @endsection

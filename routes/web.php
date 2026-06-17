@@ -25,7 +25,8 @@ use App\Http\Controllers\Admin\OrderMasterController;
 use App\Http\Controllers\Admin\SubGroupController;
 use App\Http\Controllers\Admin\SubCategoryController;
 use App\Http\Controllers\Admin\CartController;
-use App\Http\Controllers\FrontendController;    
+use App\Http\Controllers\FrontendController;
+use App\Http\Controllers\Admin\ContactController;    
 use Illuminate\Support\Facades\Artisan;
 
 
@@ -41,9 +42,10 @@ Route::middleware('auth')->get('/api/item-variants/sizes-by-color', [\App\Http\C
 
 Route::get('/products/{item}', [FrontendController::class, 'show'])->name('products.show');
 Route::view('/about', 'frontend.about')->name('about');
-Route::view('/network', 'frontend.network')->name('network');
+Route::get('/network', [FrontendController::class, 'network'])->name('network');
 Route::view('/contact', 'frontend.contact')->name('contact');
 //Route::get('/catalog', [ItemController::class, 'catalogs'])->name('catalog');
+Route::post('/contact', [ContactController::class, 'store'])->name('contact.store');
 
 Route::get('/clear-caches', function () {
     Artisan::call('route:clear');

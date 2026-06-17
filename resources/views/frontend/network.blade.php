@@ -99,17 +99,20 @@
                         </div>
                         <div class="col-md-6 mb-4">
                             <label class="form-label">City</label>
-                            <input type="text" class="form-control" placeholder="Your City">
+                            <select name="city_id" class="form-select form-control">
+                                <option value="">Select City</option>
+                                @foreach($cities as $city)
+                                    <option value="{{ $city->id }}">{{ $city->name }}</option>
+                                @endforeach
+                            </select>
                         </div>
                         <div class="col-md-6 mb-4">
                             <label class="form-label">State</label>
-                            <select class="form-select form-control">
-                                <option>Select State</option>
-                                <option>Gujarat</option>
-                                <option>Maharashtra</option>
-                                <option>Rajasthan</option>
-                                <option>Madhya Pradesh</option>
-                                <option>Uttar Pradesh</option>
+                            <select name="state_id" class="form-select form-control">
+                                <option value="">Select State</option>
+                                @foreach($states as $state)
+                                    <option value="{{ $state->id }}">{{ $state->name }}</option>
+                                @endforeach
                             </select>
                         </div>
                         <div class="col-12 mb-4">

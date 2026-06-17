@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\Item;
 use App\Models\Category;
+use App\Models\State;
+use App\Models\City;
 use Illuminate\Http\Request;
 
 class FrontendController extends Controller
@@ -119,5 +121,12 @@ class FrontendController extends Controller
         }
 
         return view('frontend.product-details', compact('item'));
+    }
+    public function network()
+    {
+        $states = State::orderBy('name')->get();
+        $cities = City::orderBy('name')->get();
+
+        return view('frontend.network', compact('states', 'cities'));
     }
 }

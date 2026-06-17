@@ -69,28 +69,39 @@
                     <div class="contact-form-card">
                         <h3 class="contact-section-title mb-4">Send us a Message</h3>
 
-                        <form method="POST" action="#">
+                        @if(session('success'))
+                            <div class="alert alert-success">
+                                {{ session('success') }}
+                            </div>
+                        @endif
+
+                        <form method="POST" action="{{ route('contact.store') }}">
                             @csrf
                             <div class="row">
                                 <div class="col-md-6 mb-4">
                                     <label class="form-label">Name</label>
-                                    <input type="text" class="form-control premium-input" placeholder="Your Name">
+                                    <input type="text" name="name" class="form-control premium-input" value="{{ old('name') }}" placeholder="Your Name" required>
+                                    @error('name')<span class="text-danger">{{ $message }}</span>@enderror
                                 </div>
                                 <div class="col-md-6 mb-4">
                                     <label class="form-label">Email</label>
-                                    <input type="email" class="form-control premium-input" placeholder="Email Address">
+                                    <input type="email" name="email" class="form-control premium-input" value="{{ old('email') }}" placeholder="Email Address">
+                                    @error('email')<span class="text-danger">{{ $message }}</span>@enderror
                                 </div>
                                 <div class="col-md-6 mb-4">
                                     <label class="form-label">Mobile Number</label>
-                                    <input type="text" class="form-control premium-input" placeholder="Mobile Number">
+                                    <input type="text" name="mobile" class="form-control premium-input" value="{{ old('mobile') }}" placeholder="Mobile Number" maxlength="10" oninput="this.value = this.value.replace(/[^0-9]/g, '')" inputmode="numeric">
+                                    @error('mobile')<span class="text-danger">{{ $message }}</span>@enderror
                                 </div>
                                 <div class="col-md-6 mb-4">
                                     <label class="form-label">Subject</label>
-                                    <input type="text" class="form-control premium-input" placeholder="Subject">
+                                    <input type="text" name="subject" class="form-control premium-input" value="{{ old('subject') }}" placeholder="Subject">
+                                    @error('subject')<span class="text-danger">{{ $message }}</span>@enderror
                                 </div>
                                 <div class="col-12 mb-4">
                                     <label class="form-label">Message</label>
-                                    <textarea rows="5" class="form-control premium-input" placeholder="Write your message here..."></textarea>
+                                    <textarea name="message" rows="5" class="form-control premium-input" value="{{ old('message') }}" placeholder="Write your message here..." required></textarea>
+                                    @error('message')<span class="text-danger">{{ $message }}</span>@enderror
                                 </div>
                                 <div class="col-12 mt-2">
                                     <button type="submit" class="contact-cta-btn w-100 justify-content-center">
