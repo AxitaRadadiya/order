@@ -18,10 +18,13 @@ Route::middleware('guest')->group(function () {
 
     Route::post('register', [RegisteredUserController::class, 'store']);
 
-    Route::get('login', [AuthenticatedSessionController::class, 'create'])
+    Route::get('login', [\App\Http\Controllers\Auth\WhatsAppLoginController::class, 'showRequestForm'])
         ->name('login');
 
-    Route::post('login', [AuthenticatedSessionController::class, 'store']);
+    Route::post('login', [\App\Http\Controllers\Auth\WhatsAppLoginController::class, 'requestOtp'])
+        ->name('login.request.otp');
+    Route::post('login/verify-otp', [\App\Http\Controllers\Auth\WhatsAppLoginController::class, 'verifyOtp'])
+        ->name('login.verify.otp');
 
     Route::get('forgot-password', [OtpPasswordResetController::class, 'create'])
         ->name('password.request');
