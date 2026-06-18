@@ -17,8 +17,8 @@
   }
   .remove-item:disabled,
   .deleteButton:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
+    opacity: 0.5;
+    cursor: not-allowed;
   }
   .variant-drawer-size {
     background: #f0f0f0;
@@ -676,8 +676,8 @@
   }
   .remove-item:disabled,
   .deleteButton:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
+    opacity: 0.5;
+    cursor: not-allowed;
   }
   .variant-drawer-size {
     background: #f0f0f0;
@@ -1244,6 +1244,23 @@
       });
     }
 
+    /* ── Remove Row (last remaining row can never be deleted) ─────────────── */
+    function updateRemoveButtonsState() {
+      var onlyOneRow = $('#itemsTable tbody tr').length <= 1;
+      $('#itemsTable tbody .remove-item')
+        .prop('disabled', onlyOneRow)
+        .toggleClass('disabled', onlyOneRow);
+    }
+
+    $(document).on('click', '.remove-item', function() {
+      if ($('#itemsTable tbody tr').length <= 1) {
+        return;
+      }
+      $(this).closest('tr').remove();
+      updateRemoveButtonsState();
+      recalc();
+    });
+
     $('#addItem').on('click', function() {
       $('#itemsTable tbody').append(buildRow(rowCounter));
       // initialize Select2 on newly appended row
@@ -1278,20 +1295,6 @@
           $s.remove();
         }
       }
-    });
-
-    function updateRemoveButtonsState() {
-      var onlyOneRow = $('#itemsTable tbody tr').length <= 1;
-      $('#itemsTable tbody .remove-item')
-        .prop('disabled', onlyOneRow)
-        .toggleClass('disabled', onlyOneRow);
-    }
-
-    $(document).on('click', '.remove-item', function() {
-      if ($('#itemsTable tbody tr').length <= 1) return;
-      $(this).closest('tr').remove();
-      updateRemoveButtonsState();
-      recalc();
     });
 
     // ── Customer → address auto-fill (fetch from server)
@@ -1454,6 +1457,7 @@
       $tr.append('<input type="hidden" name="items[' + idx + '][sets]"      value="' + sets + '">');
 
       recalc();
+      updateRemoveButtonsState();
     });
 
     var activeVariantRow = null;
@@ -1503,6 +1507,46 @@
         }
       });
       return qtys;
+    }
+
+    function preloadRowAvailableSizes($row) {
+      var itemId = String($row.find('.item-id-hidden').val() || '').trim();
+      var colorVal = $row.find('.color-select').val() || [];
+      var colorId = colorVal.length ? String(colorVal[0]) : '';
+
+      if (!itemId || !colorId) {
+        return;
+      }
+
+      $.ajax({
+        url: '/api/item-variants/sizes-by-color',
+        type: 'GET',
+        dataType: 'json',
+        data: { item_id: itemId, color_id: colorId },
+        success: function(res) {
+          var sizes = (res && res.sizes) ? res.sizes : [];
+          var availableSizes = sizes.map(function(s) { return String(s.label); });
+          var stockMap = {};
+          sizes.forEach(function(s) {
+            stockMap[String(s.label)] = parseInt(s.available_qty, 10) || 0;
+          });
+
+          // Never let a size that's already saved on this row disappear from
+          // the drawer just because it's missing from the stock-list response.
+          var savedSizes = ($row.find('.size-select').val() || []).map(String);
+          savedSizes.forEach(function(sz) {
+            if (availableSizes.indexOf(sz) === -1) availableSizes.push(sz);
+          });
+
+          $row.attr('data-available-sizes', JSON.stringify(availableSizes));
+          $row.attr('data-stock-map', JSON.stringify(stockMap));
+        },
+        error: function() {
+          var savedSizes = ($row.find('.size-select').val() || []).map(String);
+          $row.attr('data-available-sizes', JSON.stringify(savedSizes));
+          $row.attr('data-stock-map', '{}');
+        }
+      });
     }
 
     function refreshVariantCell($row) {
@@ -1951,6 +1995,17 @@
         }
       }
     });
+
+    // Preload available-sizes/stock data for rows that already have a saved
+    // color, so the Edit Variants drawer isn't empty for existing items.
+    if (IS_SUPER_ADMIN) {
+      $('#itemsTable tbody tr').each(function() {
+        var $row = $(this);
+        if (($row.find('.color-select').val() || []).length) {
+          preloadRowAvailableSizes($row);
+        }
+      });
+    }
 
     // trigger customer change on load to auto-fill addresses
     $('#customer_id').trigger('change');
