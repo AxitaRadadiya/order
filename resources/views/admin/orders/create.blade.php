@@ -217,18 +217,27 @@
                       }
                       $selectedColors = array_map('trim', $selectedColors);
                       $rowItem = !empty($it['item_id'] ?? null) ? $items->firstWhere('id', $it['item_id']) : null;
-                      $rowColors = ($rowItem && $rowItem->colors->isNotEmpty()) ? $rowItem->colors : $colors;
+                      $rowVariantColors = ($rowItem && $rowItem->relationLoaded('variants'))
+                        ? $rowItem->variants->map(fn($variant) => $variant->color)->filter()->unique('id')->values()
+                        : collect();
+                      $rowColors = $rowVariantColors->isNotEmpty()
+                        ? $rowVariantColors
+                        : ($rowItem ? $rowItem->colors : collect());
+                      $selectedColors = collect($selectedColors)
+                        ->filter(fn($id) => $rowColors->contains('id', $id))
+                        ->values()
+                        ->all();
                       @endphp
                       @if(auth()->user() && auth()->user()->hasRole(['super-admin', 'superadmin']))
                       <select name="items[{{ $i }}][color][]" class="form-control color-select select2"> @foreach($rowColors as $col)
-                        <option value="{{ $col->id }}" {{ in_array((string)$col->id, $selectedColors) ? 'selected' : '' }}>{{ $col->name }}</option>
+                        <option value="{{ $col->id }}" {{ in_array((string)$col->id, $selectedColors) ? 'selected' : '' }}>{{ $col->color_code ?? $col->name }}</option>
                         @endforeach
                       </select>
                       @else
                       @php
                       $selectedNames = [];
                       foreach($rowColors as $col) {
-                      if (in_array((string)$col->id, $selectedColors)) $selectedNames[] = $col->name;
+                      if (in_array((string)$col->id, $selectedColors)) $selectedNames[] = $col->color_code ?? $col->name;
                       }
                       @endphp
                       <input type="text" class="form-control color-read" readonly value="{{ implode(', ', $selectedNames) }}">
@@ -299,9 +308,9 @@
                     <td><input type="text" name="items[0][item_name]" class="form-control item-name-input" value="" readonly></td>
                     <td>
                       @if(auth()->user() && auth()->user()->hasRole(['super-admin', 'superadmin']))
-                      <select name="items[0][color][]" class="form-control color-select select2"> @foreach($colors as $col)
-                        <option value="{{ $col->id }}">{{ $col->color_code }}</option>
-                        @endforeach
+                      {{-- keep placeholder until article is selected; JS will load assigned colors on article change --}}
+                      <select name="items[0][color][]" class="form-control color-select select2">
+                        <option value="">--</option>
                       </select>
                       @else
                       <input type="text" class="form-control color-read" readonly value="">
@@ -604,11 +613,20 @@
     color: #333;
     border: 2px solid #ccc;
     border-radius: 8px;
-    padding: 6px 14px;
+    padding: 6px 10px;
     margin: 4px;
     font-weight: 500;
     cursor: pointer;
     transition: all 0.15s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .variant-drawer-size small {
+    opacity: 0.75;
+    font-size: 11px;
+    font-weight: 600;
   }
 
   /* Size drawer buttons — selected */
@@ -667,6 +685,21 @@
         return x.trim();
       });
     }
+
+    function variantStockMap($row) {
+      var stockMap = {};
+      if (!$row) return stockMap;
+      try {
+        stockMap = JSON.parse($row.attr('data-stock-map') || '{}');
+      } catch (e) {
+        stockMap = {};
+      }
+      return stockMap && typeof stockMap === 'object' ? stockMap : {};
+    }
+
+    function variantSizeLabel(size, stockMap) {
+      return String(size || '');
+    }
     // Returns the number of colors selected in a row.
     // Rule: only ONE color code is allowed per row.
     // If user selects multiple colors by mistake, qty should be based on 1 color only.
@@ -683,26 +716,48 @@
 
     function colorOpts(colors, sel) {
       sel = normalizeArr(sel);
-       colors = (colors && colors.length) ? colors : COLORS;
-      
+      // Use only the passed colors (article-specific). Never fall back to global COLORS.
+      // Build <option> list for Select2 dropdown.
+      colors = (colors && colors.length) ? colors : [];
+
+      return colors.map(function(c) {
+        var id = String(c.id);
+        return '<option value="' + esc(id) + '"' +
+          (sel.indexOf(id) !== -1 ? ' selected' : '') +
+          '>' + esc(c.color_code ? c.color_code : c.name) +
+          '</option>';
+      }).join('');
     }
 
 
     function populateColorSelect($row, colors, sel) {
       var $cs = $row.find('.color-select');
       sel = sel || ($cs.length ? $cs.val() : []) || [];
+      var availableIds = [];
+      if (colors && colors.length) {
+        availableIds = colors.map(function(c) {
+          return String(c.id);
+        });
+      }
+      var selArr = normalizeArr(sel).filter(function(id) {
+        return availableIds.indexOf(id) !== -1;
+      });
       if ($cs.length) {
         // Temporarily detach the change listener so rebuilding Select2 does NOT fire recalc
-        $cs.off('change.colorrebuild');
+      $cs.off('change.colorrebuild');
         if ($cs.hasClass('select2-hidden-accessible')) $cs.select2('destroy');
-        $cs.html(colorOpts(colors, sel));
+        // If colors are empty, keep a placeholder option so Select2 doesn't render empty.
+        var html = colorOpts(colors, selArr);
+        if (!html) {
+          html = '<option value="">--</option>';
+        }
+        $cs.html(html);
         $cs.select2({
           placeholder: 'Colors…',
           width: '100%'
         });
 
       } else {
-        var selArr = normalizeArr(sel);
         var names = selArr.map(function(id) {
           var c = COLORS.find(function(x) {
             return String(x.id) == String(id);
@@ -933,7 +988,7 @@
           var $sz = $row.find('.size-select');
           if ($sz.hasClass('select2-hidden-accessible')) $sz.select2('destroy');
           $sz.html(availableSizes.map(function(sz) {
-            return '<option value="' + esc(sz) + '">' + esc(sz) + '</option>';
+            return '<option value="' + esc(sz) + '">' + esc(variantSizeLabel(sz, stockMap)) + '</option>';
           }).join(''));
 
           // Rebuild .size-chips-wrap only if IS_SUPER_ADMIN
@@ -988,21 +1043,20 @@
       if (!$row.find('.desc').val()) $row.find('.desc').val(found.desc || '');
 
       // Populate colors from this selected item ONLY (many-to-many)
-      populateColorSelect($row, found.colors || []);
+      populateColorSelect($row, found.colors || [], []);
 
-      var sizeChoices = (found.sizes && found.sizes.length) ? found.sizes : ALL_SIZES;
+      // Keep sizes empty until a color is selected; the color change handler loads only sizes available for that color.
+      $row.attr('data-available-sizes', JSON.stringify([]));
+      $row.attr('data-stock-map', JSON.stringify({}));
+      var sizeChoices = [];
       var $sz = $row.find('.size-select');
       if ($sz.hasClass('select2-hidden-accessible')) $sz.select2('destroy');
-      $sz.html(sizeChoices.map(function(s) {
-        return '<option value="' + s + '">' + s + '</option>';
-      }).join(''));
+      $sz.html('');
 
       // Rebuild chips
       var $chips = $row.find('.size-chips-wrap');
       if (IS_SUPER_ADMIN) {
-        $chips.html(sizeChoices.map(function(s) {
-          return '<button type="button" class="size-chip" data-size="' + esc(s) + '">' + esc(s) + '</button>';
-        }).join(''));
+        $chips.empty();
       } else {
         $chips.empty();
       }
@@ -1013,7 +1067,13 @@
       $row.find('.size-qty-wrapper').hide().html('');
       $row.find('.qty').val(0);
 
-      rebuildSizePanel($row);
+      if (($row.find('.color-select').val() || []).length) {
+        try {
+          $row.find('.color-select').trigger('change');
+        } catch (e) {}
+      } else {
+        rebuildSizePanel($row);
+      }
       recalc();
     });
 
@@ -1030,7 +1090,7 @@
           '>' + esc(m.article_number || '') + '</option>';
       }).join('');
 
-      var colOpts = colorOpts(it.colors || COLORS, it.color || it.color_id || []);
+      var colOpts = colorOpts(it.colors || [], it.color || it.color_id || []);
 
       var sizeChips = IS_SUPER_ADMIN ?
         ALL_SIZES.map(function(s) {
@@ -1173,6 +1233,14 @@
           placeholder: 'Article',
           width: '100%'
         });
+      });
+      $('#itemTable tbody tr').each(function() {
+        var $row = $(this);
+        if (($row.find('.color-select').val() || []).length) {
+          setTimeout(function() {
+            $row.find('.color-select').trigger('change');
+          }, 0);
+        }
       });
     }
 
@@ -1332,27 +1400,15 @@
     }
 
     function variantSizeOptions($row) {
+      if (!$row) return [];
       var raw = $row.attr('data-available-sizes');
-      var arr = [];
+      if (!raw) return [];
       try {
-        arr = raw ? JSON.parse(raw) : [];
+        var arr = JSON.parse(raw);
+        return Array.isArray(arr) ? arr.map(String).filter(Boolean) : [];
       } catch (e) {
-        arr = [];
+        return [];
       }
-
-      if (Array.isArray(arr) && arr.length > 0) {
-        return arr.map(String);
-      }
-
-      // fallback: collect options from .size-select
-      var opts = [];
-      $row.find('.size-select option').each(function() {
-        var v = String($(this).val());
-        if (v) opts.push(v);
-      });
-
-      if (opts.length) return opts;
-      return ALL_SIZES.map(String);
     }
 
 
@@ -1412,22 +1468,18 @@
     }
 
     function renderVariantDrawer() {
+      var stockMap = variantStockMap(activeVariantRow);
       $('#variantDrawerSizes').html(
         variantSizeOptions(activeVariantRow).map(function(size) {
           var active = drawerSizes.indexOf(String(size)) !== -1 ? ' active' : '';
-          return '<button type="button" class="variant-drawer-size' + active + '" data-size="' + variantEscape(size) + '">' + variantEscape(size) + '</button>';
-        }).join('')
+          var label = variantSizeLabel(size, stockMap);
+          return '<button type="button" class="variant-drawer-size' + active + '" data-size="' + variantEscape(size) + '">' +
+            '<span>' + variantEscape(size) + '</span>' +
+            '</button>';
+        }).join('') || '<div class="variant-size-empty text-muted small">No sizes available for selected color</div>'
       );
 
-      var $stockContainerRow = activeVariantRow;
-      var stockMap = {};
-      var rawStock = $stockContainerRow ? $stockContainerRow.attr('data-stock-map') : null;
-      try {
-        stockMap = rawStock ? JSON.parse(rawStock) : {};
-      } catch (e) {
-        stockMap = {};
-      }
-      var hasStockMap = stockMap && typeof stockMap === 'object' && Object.keys(stockMap).length > 0;
+      var hasStockMap = Object.keys(stockMap).length > 0;
 
       $('#variantSelectedList').html(
         drawerSizes.map(function(size) {
@@ -1490,6 +1542,9 @@
       activeVariantRow = $row;
       drawerSizes = variantSelectedSizes($row);
       drawerQtys = variantQtyMap($row);
+      drawerSizes = drawerSizes.filter(function(size) {
+        return variantSizeOptions(activeVariantRow).indexOf(String(size)) !== -1;
+      });
       drawerSizes.forEach(function(size) {
         if (!drawerQtys[size]) drawerQtys[size] = 1;
       });
