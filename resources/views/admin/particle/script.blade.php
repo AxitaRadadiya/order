@@ -152,7 +152,7 @@ $(document).ready(function () {
             { data: 'id' },
             { data: 'name' },
             { data: 'email' },
-            // { data: 'mobile' },
+            { data: 'mobile' },
             { data: 'role' },
             { data: 'status' },
             { data: 'action' }

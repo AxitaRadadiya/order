@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\Item;
 use App\Models\Category;
+use App\Models\State;
+use App\Models\City;
 use Illuminate\Http\Request;
 
 class FrontendController extends Controller
@@ -75,6 +77,43 @@ class FrontendController extends Controller
         return response()->json(['items' => $items]);
     }
 
+    public function filterProducts(Request $request)
+    {
+        $query = Item::with('category')
+            ->where('status', 1)
+            ->where('show_item_on_web', 1);
+
+        if ($request->filled('category_id')) {
+            $query->where('category_id', $request->category_id);
+        }
+
+        if ($request->filled('max_price')) {
+            $query->where('price', '<=', $request->max_price);
+        }
+
+        $items = $query->latest()->get()->map(function ($it) {
+
+            $image = $it->image_urls[0] ?? null;
+
+            if ($image && !preg_match('/^https?:\/\//', $image)) {
+                $image = asset('storage/' . ltrim($image, '/'));
+            }
+
+            return [
+                'id'       => $it->id,
+                'name'     => $it->name,
+                'price'    => number_format($it->price, 2),
+                'image'    => $image ?: asset('no-image.png'),
+                'category' => optional($it->category)->name,
+                'url'      => route('products.show', $it),
+            ];
+        });
+
+        return response()->json([
+            'items' => $items
+        ]);
+    }
+
     public function show(Item $item)
     {
         if (! $item->show_item_on_web) {
@@ -82,5 +121,12 @@ class FrontendController extends Controller
         }
 
         return view('frontend.product-details', compact('item'));
+    }
+    public function network()
+    {
+        $states = State::orderBy('name')->get();
+        $cities = City::orderBy('name')->get();
+
+        return view('frontend.network', compact('states', 'cities'));
     }
 }

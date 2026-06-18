@@ -13,11 +13,32 @@
     <div class="row">
 
       <div class="col-lg-3 mb-4">
-        <h5 class="mb-3">All Categories</h5>
-        <div class="list-group">
+        <h5 class="mb-3">Categories</h5>
+        <div class="list-group mb-4">
+          <a href="#" class="list-group-item list-group-item-action category-link active" data-id="">
+            All Products
+        </a>
           @foreach($categories ?? [] as $cat)
             <a href="#" class="list-group-item list-group-item-action category-link" data-id="{{ $cat->id }}">{{ $cat->name }}</a>
           @endforeach
+        </div>
+
+        <!-- Price Filter -->
+        <h5 class="mb-3">Filter By Price</h5>
+
+        <div class="card p-3">
+            <input type="range"
+                  id="priceRange"
+                  min="0"
+                  max="3000"
+                  step="100"
+                  value="3000"
+                  class="form-range">
+
+            <div class="d-flex justify-content-between mt-2">
+                <span>₹0</span>
+                <span id="priceValue">₹3000</span>
+            </div>
         </div>
       </div>
 
@@ -86,6 +107,17 @@
 
     </div>
 
+    <div class="inquiry-card my-5">
+      <div class="inquiry-content text-center">
+        <h2>CAN'T FIND YOUR SIZE?</h2>
+        <p>Send us an inquiry and we'll help you find the perfect fit.</p>
+
+        <a href="{{ route('contact') }}" class="btn inquiry-btn">
+            SEND INQUIRY
+        </a>
+      </div>
+    </div>
+
     {{-- PAGINATION --}}
     <div class="d-flex justify-content-center mt-4">
       {{ $items->links() }}
@@ -98,6 +130,10 @@
 
 @push('scripts')
 <script>
+const urlParams = new URLSearchParams(window.location.search);
+let selectedCategory = urlParams.get('category_id') || '';
+let selectedPrice = 3000;
+
 document.addEventListener('DOMContentLoaded', function () {
   function renderItems(items) {
     var grid = document.getElementById('itemsGrid');
@@ -113,28 +149,88 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   }
 
-  function loadCategory(id, name) {
-    var title = document.getElementById('itemsTitle');
-        if (title) title.textContent = 'Products — ' + name;
+  function loadProducts() {
 
-    var pag = document.getElementById('itemsPagination'); if (pag) pag.innerHTML = '';
-    fetch("{{ url('/') }}" + '/api/category/' + id + '/items')
-      .then(function (r) { return r.json(); })
-      .then(function (data) { renderItems(data.items || []); })
-      .catch(function () { document.getElementById('itemsGrid').innerHTML = '<div class="col-12 text-danger">Failed to load items.</div>'; });
-  }
+        let url =
+            "{{ route('products.filter') }}" +
+            "?category_id=" + selectedCategory +
+            "&max_price=" + selectedPrice;
 
-  document.querySelectorAll('.category-link, .category-tile').forEach(function (el) {
-    el.addEventListener('click', function (e) {
-      e.preventDefault();
-      var id = this.dataset.id;
-      var name = this.textContent.trim();
-      loadCategory(id, name);
-      document.querySelectorAll('.list-group .active').forEach(function(a){ a.classList.remove('active'); });
-      if (this.classList.contains('list-group-item')) this.classList.add('active');
-      window.scrollTo({ top: 200, behavior: 'smooth' });
+        const pag = document.getElementById('itemsPagination');
+        if (pag) pag.innerHTML = '';
+
+        fetch(url)
+            .then(response => response.json())
+            .then(data => {
+                renderItems(data.items || []);
+            })
+            .catch(error => {
+                console.error(error);
+
+                document.getElementById('itemsGrid').innerHTML =
+                    '<div class="col-12 text-danger">Failed to load products.</div>';
+            });
+    }
+
+    // Category click
+    document.querySelectorAll('.category-link').forEach(function (el) {
+        el.addEventListener('click', function (e) {
+            e.preventDefault();
+            selectedCategory = this.dataset.id || '';
+            document
+                .querySelectorAll('.category-link')
+                .forEach(a => a.classList.remove('active'));
+
+            this.classList.add('active');
+            loadProducts();
+        });
     });
-  });
+
+    // Price range change
+    const priceRange = document.getElementById('priceRange');
+    if (priceRange) {
+        priceRange.addEventListener('input', function () {
+            selectedPrice = this.value;
+            document.getElementById('priceValue').innerText =
+                '₹' + this.value;
+
+            loadProducts();
+        });
+    }
+
+    // If a category was passed in the URL parameters, trigger filtering on load
+    if (selectedCategory) {
+        const activeLink = document.querySelector(`.category-link[data-id="${selectedCategory}"]`);
+        if (activeLink) {
+            document.querySelectorAll('.category-link').forEach(a => a.classList.remove('active'));
+            activeLink.classList.add('active');
+        }
+        loadProducts();
+    }
+
+
+  // function loadCategory(id, name) {
+  //   var title = document.getElementById('itemsTitle');
+  //       if (title) title.textContent = 'Products — ' + name;
+
+  //   var pag = document.getElementById('itemsPagination'); if (pag) pag.innerHTML = '';
+  //   fetch("{{ url('/') }}" + '/api/category/' + id + '/items')
+  //     .then(function (r) { return r.json(); })
+  //     .then(function (data) { renderItems(data.items || []); })
+  //     .catch(function () { document.getElementById('itemsGrid').innerHTML = '<div class="col-12 text-danger">Failed to load items.</div>'; });
+  // }
+
+  // document.querySelectorAll('.category-link, .category-tile').forEach(function (el) {
+  //   el.addEventListener('click', function (e) {
+  //     e.preventDefault();
+  //     var id = this.dataset.id;
+  //     var name = this.textContent.trim();
+  //     loadCategory(id, name);
+  //     document.querySelectorAll('.list-group .active').forEach(function(a){ a.classList.remove('active'); });
+  //     if (this.classList.contains('list-group-item')) this.classList.add('active');
+  //     window.scrollTo({ top: 200, behavior: 'smooth' });
+  //   });
+  // });
 });
 </script>
 @endpush

@@ -85,6 +85,16 @@
                 @error('email')<span class="invalid-feedback">{{ $message }}</span>@enderror
               </div>
             </div>
+            
+            <div class="col-md-6">
+              <div class="form-group">
+                <label class="font-weight-bold">Mobile Number <span class="text-danger">*</span></label>
+                <input id="mobile" name="mobile" type="text" maxlength="10" oninput="this.value = this.value.replace(/[^0-9]/g, '')" inputmode="numeric"
+                       class="form-control @error('mobile') is-invalid @enderror"
+                       value="{{ old('mobile', $user->mobile) }}" placeholder="98765 43210" required>
+                @error('mobile')<span class="invalid-feedback">{{ $message }}</span>@enderror
+              </div>
+            </div>
             <div class="col-md-6">
               <div class="form-group">
                 <label class="font-weight-bold">Role <span class="text-danger">*</span></label>
