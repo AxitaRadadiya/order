@@ -61,8 +61,8 @@
                   <dt class="col-sm-4">Email</dt>
                   <dd class="col-sm-8">{{ $user->email }}</dd>
 
-                  <!-- <dt class="col-sm-4">Mobile</dt>
-                  <dd class="col-sm-8">{{ $user->mobile ?? '-' }}</dd> -->
+                  <dt class="col-sm-4">Mobile</dt>
+                  <dd class="col-sm-8">{{ $user->mobile ?? '-' }}</dd>
 
                   <dt class="col-sm-4">Role</dt>
                   <dd class="col-sm-8">{{ $user->role->name ?? '-' }}</dd>

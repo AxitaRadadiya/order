@@ -68,65 +68,16 @@
                 </div>
             </div>
         </div>
-    </section>
 
-    <!-- Join Section -->
-    <section class="join-section">
-        <div class="container">
-            <div class="join-box text-center">
-                <h2 class="join-title">Join With Us</h2>
-                <p class="join-desc mx-auto">
-                    Become our dealer in your city. Fill the form below and our team will contact you within 24 hours.
-                </p>
+        <div class="inquiry-card my-5">
+        <div class="inquiry-content text-center">
+            <h2>JOIN WITH US</h2>
+            <p>Become our dealer in your city. Register with us and our team will contact you within 24 hours.</p>
 
-                <form class="network-form text-left mt-4">
-                    <div class="row">
-                        <div class="col-md-6 mb-4">
-                            <label class="form-label">First Name</label>
-                            <input type="text" class="form-control" placeholder="First Name">
-                        </div>
-                        <div class="col-md-6 mb-4">
-                            <label class="form-label">Last Name</label>
-                            <input type="text" class="form-control" placeholder="Last Name">
-                        </div>
-                        <div class="col-md-6 mb-4">
-                            <label class="form-label">Mobile Number</label>
-                            <input type="text" class="form-control" placeholder="Mobile Number">
-                        </div>
-                        <div class="col-md-6 mb-4">
-                            <label class="form-label">Email</label>
-                            <input type="email" class="form-control" placeholder="Email Address">
-                        </div>
-                        <div class="col-md-6 mb-4">
-                            <label class="form-label">City</label>
-                            <select name="city_id" class="form-select form-control">
-                                <option value="">Select City</option>
-                                @foreach($cities as $city)
-                                    <option value="{{ $city->id }}">{{ $city->name }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-                        <div class="col-md-6 mb-4">
-                            <label class="form-label">State</label>
-                            <select name="state_id" class="form-select form-control">
-                                <option value="">Select State</option>
-                                @foreach($states as $state)
-                                    <option value="{{ $state->id }}">{{ $state->name }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-                        <div class="col-12 mb-4">
-                            <label class="form-label">Requirement / Message</label>
-                            <textarea rows="4" class="form-control" placeholder="Tell us about your dealership requirement..."></textarea>
-                        </div>
-                        <div class="col-12 text-center mt-2">
-                            <button type="submit" class="about-cta-btn">
-                                Submit Inquiry <i class="fas fa-arrow-right ml-2"></i>
-                            </button>
-                        </div>
-                    </div>
-                </form>
-            </div>
+            <a href="{{ route('register') }}" class="btn inquiry-btn">
+                JOIN NOW
+            </a>
+        </div>
         </div>
     </section>
 </div>
