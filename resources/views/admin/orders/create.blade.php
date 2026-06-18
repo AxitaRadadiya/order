@@ -15,6 +15,11 @@
     opacity: 0.5;
     cursor: not-allowed;
   }
+  .remove-item:disabled,
+  .deleteButton:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+  }
   .variant-drawer-size {
     background: #f0f0f0;
     color: #333;
@@ -606,6 +611,11 @@
     opacity: 0.5;
     cursor: not-allowed;
   }
+  .remove-item:disabled,
+  .deleteButton:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+  }
 
   /* Size drawer buttons — unselected */
   .variant-drawer-size {
@@ -1183,13 +1193,22 @@
       rowCounter++;
       recalc();
       updateRowNumbers();
+      updateRemoveButtonsState();
     });
 
     /* ── Remove Row ─────────────────────────────────────────────────────── */
-    $(document).on('click', '.remove-item', function() {
+    function updateRemoveButtonsState() {
+      var onlyOneRow = $('#itemTable tbody tr').length <= 1;
+      $('#itemTable tbody .remove-item, #itemTable tbody .deleteButton')
+        .prop('disabled', onlyOneRow)
+        .toggleClass('disabled', onlyOneRow);
+    }
+
+    $(document).on('click', '.remove-item, .deleteButton', function() {
       if ($('#itemTable tbody tr').length <= 1) return;
       $(this).closest('tr').remove();
       updateRowNumbers();
+      updateRemoveButtonsState();
       recalc();
     });
 
@@ -1373,6 +1392,7 @@
       });
 
       updateRowNumbers();
+      updateRemoveButtonsState();
       recalc();
     }
 
@@ -1761,6 +1781,7 @@
     });
 
     refreshAllVariantCells();
+    updateRemoveButtonsState();
     recalc();
   });
 </script>

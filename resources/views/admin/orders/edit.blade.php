@@ -15,6 +15,11 @@
     opacity: 0.5;
     cursor: not-allowed;
   }
+  .remove-item:disabled,
+  .deleteButton:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+  }
   .variant-drawer-size {
     background: #f0f0f0;
     color: #333;
@@ -669,6 +674,11 @@
     opacity: 0.5;
     cursor: not-allowed;
   }
+  .remove-item:disabled,
+  .deleteButton:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+  }
   .variant-drawer-size {
     background: #f0f0f0;
     color: #333;
@@ -1255,6 +1265,7 @@
       }
       rowCounter++;
       recalc();
+      updateRemoveButtonsState();
       if (IS_RETAILER) {
         var $last = $('#itemsTable tbody tr:last');
         var $s = $last.find('.status-select');
@@ -1269,8 +1280,17 @@
       }
     });
 
+    function updateRemoveButtonsState() {
+      var onlyOneRow = $('#itemsTable tbody tr').length <= 1;
+      $('#itemsTable tbody .remove-item')
+        .prop('disabled', onlyOneRow)
+        .toggleClass('disabled', onlyOneRow);
+    }
+
     $(document).on('click', '.remove-item', function() {
+      if ($('#itemsTable tbody tr').length <= 1) return;
       $(this).closest('tr').remove();
+      updateRemoveButtonsState();
       recalc();
     });
 
@@ -1901,6 +1921,7 @@
     }
 
     refreshAllVariantCells();
+    updateRemoveButtonsState();
     recalc();
     srRecalc();
 
