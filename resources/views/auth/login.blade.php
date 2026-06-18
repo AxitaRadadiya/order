@@ -47,16 +47,15 @@
     .register-link a {color: #6c63ff;text-decoration: none;font-weight: 600;}
     .register-link a:hover { text-decoration: underline; }
 
-    .hidden { display: none; }
-
     /* resend + timer row */
     .resend-row {display: flex;align-items: center;justify-content: space-between;background: #f0f3fe;border-radius: 10px;padding: 10px 14px;margin: 6px 0 16px 0;font-size: 0.8rem;color: #1c2333;}
     .resend-row .left {display: flex;align-items: center;gap: 8px;}
     .resend-row .left .check {color: #22c55e;font-weight: 700;}
-    .resend-row .resend-btn {background: none;border: none;color: #6c63ff;font-weight: 700;font-family: 'Syne', sans-serif;font-size: 0.8rem;cursor: pointer;padding: 4px 8px;border-radius: 6px;transition: background 0.2s;}
-    .resend-row .resend-btn:hover:not(:disabled) {background: rgba(108, 99, 255, 0.08);}
-    .resend-row .resend-btn:disabled {color: #a0aec0;cursor: not-allowed;}
-    .resend-row .timer {font-weight: 600;color: #1c2333;font-family: 'JetBrains Mono', monospace;margin-left: 4px;}
+    .resend-form {display: inline;}
+    .resend-btn {background: none;border: none;color: #6c63ff;font-weight: 700;font-family: 'Syne', sans-serif;font-size: 0.8rem;cursor: pointer;padding: 4px 8px;border-radius: 6px;transition: background 0.2s;}
+    .resend-btn:hover:not(:disabled) {background: rgba(108, 99, 255, 0.08);}
+    .resend-btn:disabled {color: #a0aec0;cursor: not-allowed;}
+    .timer {font-weight: 600;color: #1c2333;font-family: 'JetBrains Mono', monospace;margin-left: 4px;}
     .btn-verify {margin-top: 4px;}
     .new-here {margin-top: 18px;text-align: center;font-size: 0.8rem;color: #6b7a8f;}
     .new-here a {color: #6c63ff;font-weight: 600;text-decoration: none;}
@@ -75,253 +74,126 @@
       <p>Sign in to continue to your dashboard</p>
     </div>
 
-    <!-- status / session message (demo) -->
-    <div id="statusMessage" class="status-ok hidden">
-      <svg width="14" height="14" fill="#22c55e" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
-      <span id="statusText">OTP sent successfully</span>
-    </div>
-
-    <!-- Step 1: mobile form (always visible) -->
-    <form id="mobileForm" method="POST" action="#">
-      @csrf
-      <div class="field">
-        <label for="mobile">Mobile number</label>
-        <div class="input-wrap">
-          <span class="input-icon">
-            <svg viewBox="0 0 24 24"><path d="M6.62 10.79a15.05 15.05 0 006.59 6.59l2.2-2.2a1 1 0 011.01-.24c1.12.37 2.33.57 3.58.57a1 1 0 011 1V20a1 1 0 01-1 1C10.07 21 3 13.93 3 5a1 1 0 011-1h3.5a1 1 0 011 1c0 1.25.2 2.46.57 3.58a1 1 0 01-.25 1.01l-2.2 2.2z"/></svg>
-          </span>
-          <input id="mobile" type="text" inputmode="numeric" name="mobile" maxlength="10"minlength="10"pattern="[0-9]{10}"
-                 placeholder="Enter mobile (e.g. 919999999999)"
-                 required autofocus autocomplete="username">
-        </div>
-        <div id="mobileError" class="err hidden">Please enter a valid mobile number</div>
+    @if (session('status'))
+      <div class="status-ok">
+        <svg width="14" height="14" fill="#22c55e" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
+        <span>{{ session('status') }}</span>
       </div>
+    @endif
 
-      <!-- primary button: Send OTP (will be replaced by resend row + verify) -->
-      <button type="submit" id="sendOtpBtn" class="btn-submit">
-        Send OTP
-        <svg class="arrow" width="15" height="15" fill="#fff" viewBox="0 0 24 24"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6z"/></svg>
-      </button>
-    </form>
+    @if (! session('whatsapp_login_mobile'))
 
-    <!-- Step 2: OTP section (hidden by default, shown after "Send OTP") -->
-    <div id="otpSection" class="otp-section hidden">
-      <!-- resend row: "OTP has been sent to ...  Resend OTP  00:42" -->
-      <div id="resendRow" class="resend-row">
-        <div class="left">
-          <span class="check">✔</span>
-          <span>OTP has been sent to <strong id="otpSentToDisplay">8849304935</strong></span>
-        </div>
-        <div>
-          <button id="resendBtn" class="resend-btn" disabled>Resend OTP</button>
-          <span class="timer" id="timerDisplay">00:42</span>
-        </div>
-      </div>
-
-      <form id="otpForm" method="POST" action="#">
+      {{-- STEP 1: request OTP. Server decides which step to render. --}}
+      <form method="POST" action="{{ route('login.request.otp') }}">
         @csrf
-        <input type="hidden" name="mobile" id="otpMobileHidden" value="">
-
         <div class="field">
-          <label for="otp">Enter OTP</label>
+          <label for="mobile">Mobile number</label>
           <div class="input-wrap">
             <span class="input-icon">
-              <svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 1010 10A10 10 0 0012 2zm1 15h-2v-2h2zm0-4h-2V7h2z"/></svg>
+              <svg viewBox="0 0 24 24"><path d="M6.62 10.79a15.05 15.05 0 006.59 6.59l2.2-2.2a1 1 0 011.01-.24c1.12.37 2.33.57 3.58.57a1 1 0 011 1V20a1 1 0 01-1 1C10.07 21 3 13.93 3 5a1 1 0 011-1h3.5a1 1 0 011 1c0 1.25.2 2.46.57 3.58a1 1 0 01-.25 1.01l-2.2 2.2z"/></svg>
             </span>
-            <input id="otp" type="text" inputmode="numeric" name="otp"
-                   placeholder="6-digit OTP"
-                   required autocomplete="one-time-code">
+            <input id="mobile" type="text" inputmode="numeric" name="mobile" maxlength="10" minlength="10" pattern="[0-9]{10}"
+                   placeholder="Enter 10-digit mobile number"
+                   value="{{ old('mobile') }}"
+                   required autofocus autocomplete="username">
           </div>
-          <div id="otpError" class="err hidden">Invalid OTP</div>
+          @error('mobile')
+            <div class="err">{{ $message }}</div>
+          @enderror
         </div>
 
-        <button type="submit" id="verifyOtpBtn" class="btn-submit btn-verify">
-          Verify OTP
+        <button type="submit" class="btn-submit">
+          Send OTP
           <svg class="arrow" width="15" height="15" fill="#fff" viewBox="0 0 24 24"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6z"/></svg>
         </button>
       </form>
 
-      <div class="new-here">
-        New here? <a href="#">Create an account</a>
+      <div class="register-link">
+        <a href="{{ route('register') }}">Create an account</a>
       </div>
-    </div>
 
-    <!-- fallback register link (visible only when OTP section hidden) -->
-    <div id="registerLinkFallback" class="register-link">
-      <a href="{{ route('register') }}">Create an account</a>
-    </div>
+    @else
+
+      {{-- STEP 2: verify OTP. Mobile comes from the session the
+           controller set in requestOtp(), not from client JS. --}}
+      <div class="otp-section">
+        <div class="resend-row">
+          <div class="left">
+            <span class="check">✔</span>
+            <span>OTP sent to <strong>{{ session('whatsapp_login_mobile') }}</strong></span>
+          </div>
+          <div>
+            <form class="resend-form" method="POST" action="{{ route('login.request.otp') }}">
+              @csrf
+              <input type="hidden" name="mobile" value="{{ session('whatsapp_login_mobile') }}">
+              <button type="submit" id="resendBtn" class="resend-btn" disabled>Resend OTP</button>
+            </form>
+            <span class="timer" id="timerDisplay">00:42</span>
+          </div>
+        </div>
+
+        <form method="POST" action="{{ route('login.verify.otp') }}">
+          @csrf
+          <input type="hidden" name="mobile" value="{{ session('whatsapp_login_mobile') }}">
+
+          <div class="field">
+            <label for="otp">Enter OTP</label>
+            <div class="input-wrap">
+              <span class="input-icon">
+                <svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 1010 10A10 10 0 0012 2zm1 15h-2v-2h2zm0-4h-2V7h2z"/></svg>
+              </span>
+              <input id="otp" type="text" inputmode="numeric" name="otp" maxlength="6" pattern="[0-9]{6}"
+                     placeholder="6-digit OTP"
+                     value="{{ old('otp') }}"
+                     required autofocus autocomplete="one-time-code">
+            </div>
+            @error('otp')
+              <div class="err">{{ $message }}</div>
+            @enderror
+          </div>
+
+          <button type="submit" class="btn-submit btn-verify">
+            Verify OTP
+            <svg class="arrow" width="15" height="15" fill="#fff" viewBox="0 0 24 24"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6z"/></svg>
+          </button>
+        </form>
+
+        <div class="new-here">
+          Wrong number? <a href="{{ route('login', ['change' => 1]) }}">Change mobile number</a>
+        </div>
+      </div>
+
+    @endif
 
   </div>
 </div>
 
 <script>
-  (function() {
+  (function () {
     "use strict";
-
-    // DOM refs
-    const mobileForm = document.getElementById('mobileForm');
-    const otpSection = document.getElementById('otpSection');
-    const sendOtpBtn = document.getElementById('sendOtpBtn');
-    const verifyOtpBtn = document.getElementById('verifyOtpBtn');
-    const mobileInput = document.getElementById('mobile');
-    const otpInput = document.getElementById('otp');
-    const otpMobileHidden = document.getElementById('otpMobileHidden');
-    const otpSentToDisplay = document.getElementById('otpSentToDisplay');
-    const mobileError = document.getElementById('mobileError');
-    const otpError = document.getElementById('otpError');
-    const statusMessage = document.getElementById('statusMessage');
-    const statusText = document.getElementById('statusText');
     const resendBtn = document.getElementById('resendBtn');
     const timerDisplay = document.getElementById('timerDisplay');
-    const registerFallback = document.getElementById('registerLinkFallback');
+    if (!resendBtn || !timerDisplay) return;
 
-    let timerInterval = null;
-    let timerSeconds = 42;
+    let seconds = 42;
 
-    // Helper: show status (green message)
-    function showStatus(msg) {
-      statusText.textContent = msg;
-      statusMessage.classList.remove('hidden');
-      clearTimeout(window.statusTimeout);
-      window.statusTimeout = setTimeout(() => {
-        statusMessage.classList.add('hidden');
-      }, 5000);
+    function render() {
+      const m = String(Math.floor(seconds / 60)).padStart(2, '0');
+      const s = String(seconds % 60).padStart(2, '0');
+      timerDisplay.textContent = `${m}:${s}`;
     }
 
-    function hideStatus() {
-      statusMessage.classList.add('hidden');
-      clearTimeout(window.statusTimeout);
-    }
-
-    // Timer logic
-    function startTimer(seconds) {
-      clearInterval(timerInterval);
-      timerSeconds = seconds;
-      updateTimerDisplay();
-      resendBtn.disabled = true;
-
-      timerInterval = setInterval(() => {
-        timerSeconds--;
-        if (timerSeconds <= 0) {
-          clearInterval(timerInterval);
-          timerDisplay.textContent = '00:00';
-          resendBtn.disabled = false;
-          resendBtn.textContent = 'Resend OTP';
-        } else {
-          updateTimerDisplay();
-        }
-      }, 1000);
-    }
-
-    function updateTimerDisplay() {
-      const mins = String(Math.floor(timerSeconds / 60)).padStart(2, '0');
-      const secs = String(timerSeconds % 60).padStart(2, '0');
-      timerDisplay.textContent = `${mins}:${secs}`;
-    }
-
-    function resetTimer() {
-      clearInterval(timerInterval);
-      timerSeconds = 42;
-      updateTimerDisplay();
-      resendBtn.disabled = true;
-      resendBtn.textContent = 'Resend OTP';
-    }
-
-    // Show OTP section and start timer
-    function showOtpSection(mobile) {
-      // hide fallback register
-      registerFallback.classList.add('hidden');
-
-      otpMobileHidden.value = mobile;
-      otpSentToDisplay.textContent = mobile;
-
-      // show section
-      otpSection.classList.remove('hidden');
-      // focus OTP
-      setTimeout(() => otpInput.focus(), 150);
-
-      sendOtpBtn.style.display = 'none';
-
-      // start timer
-      resetTimer();
-      startTimer(42);
-
-      // show status
-      showStatus(`OTP sent to ${mobile}`);
-    }
-
-    // Step 1: Send OTP (simulate)
-    function handleSendOTP(e) {
-      e.preventDefault();
-      hideStatus();
-      mobileError.classList.add('hidden');
-
-      const mobile = mobileInput.value.trim();
-      if (!mobile || !/^\d{10,15}$/.test(mobile.replace(/\s/g,''))) {
-        mobileError.classList.remove('hidden');
+    render();
+    const interval = setInterval(() => {
+      seconds--;
+      if (seconds <= 0) {
+        clearInterval(interval);
+        timerDisplay.textContent = '00:00';
+        resendBtn.disabled = false;
         return;
       }
-
-      // store mobile
-      showOtpSection(mobile);
-    }
-
-    // Resend OTP
-    function handleResend() {
-      if (resendBtn.disabled) return;
-      const mobile = mobileInput.value.trim();
-      if (!mobile || !/^\d{10,15}$/.test(mobile.replace(/\s/g,''))) {
-        mobileError.classList.remove('hidden');
-        return;
-      }
-      // reset timer and show message
-      resetTimer();
-      startTimer(42);
-      showStatus(`OTP resent to ${mobile}`);
-      // update sent to
-      otpSentToDisplay.textContent = mobile;
-      otpMobileHidden.value = mobile;
-    }
-
-    // Step 2: Verify OTP (simulate)
-    function handleVerifyOTP(e) {
-      e.preventDefault();
-      hideStatus();
-      otpError.classList.add('hidden');
-
-      const otp = otpInput.value.trim();
-      if (!otp || !/^\d{6}$/.test(otp)) {
-        otpError.textContent = 'Enter a valid 6-digit OTP';
-        otpError.classList.remove('hidden');
-        return;
-      }
-
-      showStatus('✅ Login successful! Redirecting...');
-      // you could redirect or do something.
-    }
-
-    // Attach events
-    mobileForm.addEventListener('submit', handleSendOTP);
-    document.getElementById('otpForm').addEventListener('submit', handleVerifyOTP);
-    resendBtn.addEventListener('click', handleResend);
-
-    // Clear error on input
-    mobileInput.addEventListener('input', function() {
-      mobileError.classList.add('hidden');
-    });
-    otpInput.addEventListener('input', function() {
-      otpError.classList.add('hidden');
-    });
-    mobileInput.addEventListener('input', function () {
-    this.value = this.value.replace(/\D/g, '').slice(0, 10);
-    mobileError.classList.add('hidden');
-    });
-
-    // Prefill demo: if you want to show OTP section already? hidden by default.
-
-    // If user clicks on "Send OTP" again? we handle it.
-
-    console.log('✅ Two-step OTP flow ready with timer & resend.');
+      render();
+    }, 1000);
   })();
 </script>
 </body>

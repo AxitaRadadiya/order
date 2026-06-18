@@ -14,8 +14,12 @@ use Illuminate\View\View;
 
 class WhatsAppLoginController extends Controller
 {
-    public function showRequestForm(): View
+    public function showRequestForm(Request $request): View
     {
+        if ($request->boolean('change')) {
+            $request->session()->forget('whatsapp_login_mobile');
+        }
+
         return view('auth.login');
     }
 
@@ -62,12 +66,10 @@ class WhatsAppLoginController extends Controller
                 'mobile' => 'We could not send the OTP right now. Please try again in a moment.',
             ]);
         }
+    
 
         // Keep mobile in session for verify step
         $request->session()->put('whatsapp_login_mobile', $mobile);
-
-        // Reuse the same `mobile` name in verify form submit payload.
-        $request->session()->put('whatsapp_login_mobile_verified_input', $mobile);
 
 
         // Stay on same login page and show OTP field.

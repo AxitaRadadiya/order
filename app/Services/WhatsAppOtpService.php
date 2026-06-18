@@ -38,7 +38,7 @@ class WhatsAppOtpService
                     'policy' => 'deterministic',
                     'code' => $templateLanguageCode,
                 ],
-                'name' => $templateName,
+                'name' => $templateName,    
                 'components' => [
                     [
                         'type' => 'body',
