@@ -83,6 +83,7 @@ Route::group(['middleware' => ['auth']], function () {
 
     // Master data consolidated index
     Route::get('master', [MasterController::class, 'index'])->name('master.index');
+    Route::post('master/settings', [MasterController::class, 'saveSettings'])->name('master.settings.save');
     Route::get('countries-list', [CountryController::class,'list'])->name('country.list');
     Route::resource('country', CountryController::class);
     Route::get('states-list', [StateController::class,'list'])->name('state.list');

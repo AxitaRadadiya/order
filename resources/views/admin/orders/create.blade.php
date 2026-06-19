@@ -517,7 +517,7 @@
           <div class="row">
             <div class="form-group col-md-6">
               <label>Terms &amp; Conditions</label>
-              <textarea name="terms" class="form-control" rows="2">{{ old('terms') }}</textarea>
+              <textarea name="terms" class="form-control" rows="2">{{ old('terms', $terms ?? '') }}</textarea>
             </div>
             <div class="form-group col-md-6">
               <label>Notes</label>

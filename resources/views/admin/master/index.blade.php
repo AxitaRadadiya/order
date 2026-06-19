@@ -22,7 +22,7 @@
     <div class="col-xl-12">
         @php
                     // Allowed tabs — default to 'country'
-                    $allowedTabs = ['country', 'state', 'city'];
+                    $allowedTabs = ['country', 'state', 'city', 'terms'];
                     $activeTab   = in_array(request()->get('tab'), $allowedTabs)
                                     ? request()->get('tab')
                                     : 'country';
@@ -53,6 +53,14 @@
                         </a>
                     </li>
 
+                    <li class="nav-item">
+                        <a href="#terms" data-toggle="tab" aria-expanded="false"
+                           class="nav-link {{ $activeTab === 'terms' ? 'active' : '' }}">
+                            <i class="mdi mdi-file-document d-lg-none d-block"></i>
+                            <span class="font-weight-bold">Terms</span>
+                        </a>
+                    </li>
+
                     {{-- Customer Type tab removed (roles replace this) --}}
 
                 </ul>
@@ -75,6 +83,10 @@
 
                     <div class="tab-pane {{ $activeTab === 'city' ? 'show active' : '' }}" id="city">
                         @include('admin.master.city.index')
+                    </div>
+
+                    <div class="tab-pane {{ $activeTab === 'terms' ? 'show active' : '' }}" id="terms">
+                        @include('admin.master.terms')
                     </div>
 
                     {{-- Customer Type pane removed (roles replace this) --}}

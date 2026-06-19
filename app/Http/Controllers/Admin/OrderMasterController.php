@@ -12,6 +12,7 @@ use App\Models\Size;
 use App\Models\Color;
 use App\Models\ItemVariant;
 use App\Models\InventoryLog;
+use App\Models\Setting;
 
 use Carbon\Carbon;
 use Yajra\DataTables\Facades\DataTables;
@@ -237,6 +238,7 @@ class OrderMasterController extends Controller
             abort(403);
         }
         $data = $this->viewData();
+        $data['terms'] = Setting::getValue('terms_and_conditions', '');
 
         $data['pre_item_id'] = $request->query('item_id');
 
@@ -438,10 +440,13 @@ class OrderMasterController extends Controller
         if (isset($order->status) && strtolower($order->status) === 'delivered') {
             return back()->with('error', 'Order has been delivered and cannot be edited.');
         }
-        return view('admin.orders.edit', array_merge(
+        $data = array_merge(
             $this->viewData(),
             compact('order')
-        ));
+        );
+        $data['terms'] = Setting::getValue('terms_and_conditions', '');
+
+        return view('admin.orders.edit', $data);
     }
 
     public function update(Request $request, OrderMaster $order)
