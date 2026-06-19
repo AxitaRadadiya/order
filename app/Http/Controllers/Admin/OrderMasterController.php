@@ -896,11 +896,7 @@ class OrderMasterController extends Controller
         ];
     }
 
-    /**
-     * Deduct stock for an order item by creating a DEDUCT inventory log
-     * This will increase total_sold and decrease current_stock
-     * Production quantity (total_production) remains unchanged
-     */
+  
     private function deductStockForOrderItem(\App\Models\OrderItem $orderItem): void
     {
         DB::transaction(function () use ($orderItem) {
@@ -912,7 +908,7 @@ class OrderMasterController extends Controller
             $sizeQuantities = is_array($orderItem->size_quantities) ? $orderItem->size_quantities : [];
 
             if (empty($sizeQuantities)) {
-                \Log::warning('No size quantities found for order item #' . $orderItem->id . ' during stock deduction');
+                \Log::warning('No size quantities found for order item #' . $orderItem->id);
                 return;
             }
 
@@ -937,15 +933,19 @@ class OrderMasterController extends Controller
                     throw new \Exception("Variant not found for item #{$itemId} color #{$colorId} size {$sizeLabel}");
                 }
 
-                // Check if enough stock is available (current_stock is derived from logs)
-                $currentStock = $variant->current_stock;
-                if ($currentStock < $orderQty) {
+                // Check if enough stock is available
+                if ($variant->quantity < $orderQty) {
                     throw new \Exception(
-                        "Insufficient stock for size {$sizeLabel}. Available: {$currentStock}, Ordered: {$orderQty}"
+                        "Insufficient stock for size {$sizeLabel}. Available: {$variant->quantity}, Ordered: {$orderQty}"
                     );
                 }
 
-                // CREATE A DEDUCT LOG (this will increase total_sold and decrease current_stock)
+                // Update variant table columns
+                $variant->sold_quantity = $variant->sold_quantity + $orderQty;
+                $variant->quantity = $variant->quantity - $orderQty;  // Current stock
+                $variant->save();
+
+                // Create inventory log
                 InventoryLog::create([
                     'type' => 'deduct',
                     'qty' => $orderQty,
@@ -955,16 +955,11 @@ class OrderMasterController extends Controller
                     'created_by' => auth()->id(),
                 ]);
 
-                \Log::info("Stock deducted for variant ID {$variant->id}: -{$orderQty} (Order Item #{$orderItem->id})");
+                \Log::info("Stock deducted for variant ID {$variant->id}: -{$orderQty}");
             }
         });
     }
 
-    /**
-     * Restore stock for an order item by creating a RESTORE inventory log
-     * This will decrease total_sold and increase current_stock
-     * Production quantity (total_production) remains unchanged
-     */
     private function restoreStockForOrderItem(\App\Models\OrderItem $orderItem): void
     {
         DB::transaction(function () use ($orderItem) {
@@ -973,7 +968,7 @@ class OrderMasterController extends Controller
             $colorIds = array_values(array_filter(array_map('trim', explode(',', (string) ($orderItem->color ?? ''))), fn ($v) => $v !== ''));
             
             if (empty($colorIds)) {
-                \Log::warning('No color found for order item #' . $orderItem->id . ' during stock restoration');
+                \Log::warning('No color found for order item #' . $orderItem->id);
                 return;
             }
             
@@ -989,7 +984,7 @@ class OrderMasterController extends Controller
                 
                 $size = Size::where('name', $orderItem->size)->first();
                 if (!$size) {
-                    \Log::error("Size '{$orderItem->size}' not found for order item #{$orderItem->id}");
+                    \Log::error("Size '{$orderItem->size}' not found");
                     return;
                 }
                 
@@ -997,26 +992,30 @@ class OrderMasterController extends Controller
                     ->where('color_id', $colorId)
                     ->where('size_id', $size->id)
                     ->first();
-                    
+                        
                 if (!$variant) {
-                    \Log::error("Variant not found for item #{$itemId} color #{$colorId} size {$orderItem->size}");
+                    \Log::error("Variant not found");
                     return;
                 }
+                
+                // Update variant table columns
+                $variant->sold_quantity = $variant->sold_quantity - $singleQty;
+                $variant->quantity = $variant->quantity + $singleQty;  // Current stock
+                $variant->save();
                 
                 InventoryLog::create([
                     'type' => 'restore',
                     'qty' => $singleQty,
                     'item_variant_id' => $variant->id,
                     'order_master_id' => $orderItem->order_master_id,
-                    'note' => 'Stock restored - order item cancelled (production unchanged)',
+                    'note' => 'Stock restored - order item cancelled',
                     'created_by' => auth()->id(),
                 ]);
                 
-                \Log::info("Stock restored for variant ID {$variant->id}: +{$singleQty} (Order Item #{$orderItem->id})");
                 return;
             }
             
-            // Process each size quantity - restore using 'restore' type
+            // Process each size quantity
             foreach ($sizeQuantities as $sizeLabel => $orderQty) {
                 $sizeLabel = (string) $sizeLabel;
                 $orderQty = (int) $orderQty;
@@ -1026,7 +1025,7 @@ class OrderMasterController extends Controller
                 
                 $size = Size::where('name', $sizeLabel)->first();
                 if (!$size) {
-                    \Log::error("Size '{$sizeLabel}' not found during stock restoration");
+                    \Log::error("Size '{$sizeLabel}' not found");
                     continue;
                 }
                 
@@ -1034,22 +1033,25 @@ class OrderMasterController extends Controller
                     ->where('color_id', $colorId)
                     ->where('size_id', $size->id)
                     ->first();
-                    
+                        
                 if (!$variant) {
-                    \Log::error("Variant not found for item #{$itemId} color #{$colorId} size {$sizeLabel}");
+                    \Log::error("Variant not found");
                     continue;
                 }
+                
+                // Update variant table columns
+                $variant->sold_quantity = $variant->sold_quantity - $orderQty;
+                $variant->quantity = $variant->quantity + $orderQty;  // Current stock
+                $variant->save();
                 
                 InventoryLog::create([
                     'type' => 'restore',
                     'qty' => $orderQty,
                     'item_variant_id' => $variant->id,
                     'order_master_id' => $orderItem->order_master_id,
-                    'note' => 'Stock restored - order item cancelled (production unchanged)',
+                    'note' => 'Stock restored - order item cancelled',
                     'created_by' => auth()->id(),
                 ]);
-                
-                \Log::info("Stock restored for variant ID {$variant->id}: +{$orderQty} (Order Item #{$orderItem->id})");
             }
         });
     }
@@ -1097,12 +1099,13 @@ class OrderMasterController extends Controller
                     'size'     => $sizeLabel,
                     'available' => 0,
                     'ordered'  => $orderQty,
-                    'message'  => "Variant not found for item #{$itemId} color #{$colorId} size {$sizeLabel}",
+                    'message'  => "Variant not found",
                 ];
                 continue;
             }
 
-            $available = (int) $variant->current_stock;
+            // Use quantity (current stock) directly
+            $available = (int) $variant->quantity;
             if ($available < $orderQty) {
                 $issues[] = [
                     'size'     => $sizeLabel,

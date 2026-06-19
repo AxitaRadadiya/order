@@ -18,7 +18,6 @@ class ItemVariantController extends Controller
             'color_id' => ['required', 'integer', 'exists:colors,id'],
         ]);
 
-        // Eager load the size relationship.
         $variants = \App\Models\ItemVariant::with('size')
             ->where('item_id', $validated['item_id'])
             ->where('color_id', $validated['color_id'])
@@ -28,9 +27,8 @@ class ItemVariantController extends Controller
             ->groupBy('size_id')
             ->map(function ($group) {
                 $size = $group->first()->size;
-                $available = $group->sum(function ($variant) {
-                    return $variant->current_stock;
-                });
+                // Use quantity (current stock) directly
+                $available = $group->sum('quantity');
 
                 return [
                     'size_id' => (int) $group->first()->size_id,
@@ -62,7 +60,13 @@ class ItemVariantController extends Controller
         $addQty = (int) $validated['qty'];
 
         DB::transaction(function () use ($variant, $addQty, $validated) {
-            InventoryLog::create([
+            // Update variant table columns
+            $variant->production_quantity = $variant->production_quantity + $addQty;
+            $variant->quantity = $variant->quantity + $addQty;  // Current stock
+            $variant->save();
+
+            // Create inventory log
+            \App\Models\InventoryLog::create([
                 'item_variant_id' => $variant->id,
                 'order_master_id' => null,
                 'type' => 'restock',
@@ -74,7 +78,7 @@ class ItemVariantController extends Controller
 
         return response()->json([
             'success' => true,
-            'new_qty' => $variant->fresh()->current_stock,
+            'new_qty' => $variant->fresh()->quantity,
         ]);
     }
 }

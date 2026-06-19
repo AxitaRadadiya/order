@@ -4,7 +4,6 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use App\Traits\LogsActivity;
-use Illuminate\Support\Facades\Cache;
 
 class ItemVariant extends Model
 {
@@ -14,7 +13,9 @@ class ItemVariant extends Model
         'item_id',
         'color_id',
         'size_id',
-        'quantity',
+        'quantity',          // Current stock
+        'production_quantity',
+        'sold_quantity',
     ];
 
     protected $appends = ['total_production', 'total_sold', 'current_stock'];
@@ -41,56 +42,28 @@ class ItemVariant extends Model
 
     public function getTotalProductionAttribute()
     {
-        $logs = $this->relationLoaded('inventoryLogs')
-            ? $this->inventoryLogs
-            : $this->inventoryLogs()->get();
-
-        return (int) $logs->where('type', 'restock')->sum('qty');
+        return (int) $this->production_quantity;
     }
 
     public function getTotalSoldAttribute()
     {
-        $logs = $this->relationLoaded('inventoryLogs')
-            ? $this->inventoryLogs
-            : $this->inventoryLogs()->get();
-
-        $deductTotal = (int) $logs->where('type', 'deduct')->sum('qty');
-        $restoreTotal = (int) $logs->where('type', 'restore')->sum('qty');
-        
-        return $deductTotal - $restoreTotal;
+        return (int) $this->sold_quantity;
     }
 
     public function getCurrentStockAttribute()
     {
-        if (!$this->id) {
-            return $this->total_production - $this->total_sold;
-        }
-
-        $cacheKey = "variant_stock_{$this->id}";
-        
-        return Cache::remember($cacheKey, 60, function () {
-            $logs = $this->inventoryLogs()->get();
-            
-            $production = (int) $logs->where('type', 'restock')->sum('qty');
-            $deducted = (int) $logs->where('type', 'deduct')->sum('qty');
-            $restored = (int) $logs->where('type', 'restore')->sum('qty');
-            
-            return $production - $deducted + $restored;
-        });
+        return (int) $this->quantity;
     }
 
-    protected static function booted()
+    public function syncStockFromLogs()
     {
-        static::saved(function ($variant) {
-            if ($variant->id) {
-                Cache::forget("variant_stock_{$variant->id}");
-            }
-        });
+        $production = (int) $this->inventoryLogs()->where('type', 'restock')->sum('qty');
+        $deducted = (int) $this->inventoryLogs()->where('type', 'deduct')->sum('qty');
+        $restored = (int) $this->inventoryLogs()->where('type', 'restore')->sum('qty');
         
-        static::deleted(function ($variant) {
-            if ($variant->id) {
-                Cache::forget("variant_stock_{$variant->id}");
-            }
-        });
+        $this->production_quantity = $production;
+        $this->sold_quantity = $deducted - $restored;
+        $this->quantity = $production - $this->sold_quantity;  // Current stock
+        $this->save();
     }
 }
