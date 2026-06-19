@@ -18,6 +18,11 @@ use Yajra\DataTables\Facades\DataTables;
 
 class OrderMasterController extends Controller
 {
+    // Add this property to prevent double deduction
+    private $skipStockDeduction = false;
+    // Add this property to track pending stock deductions
+    private $pendingStockDeductions = [];
+
     // -----------------------------------------------------------------------
     // Index
     // -----------------------------------------------------------------------
@@ -30,9 +35,6 @@ class OrderMasterController extends Controller
     {
         $query = OrderMaster::with('customer');
 
-        // If the logged-in user is a retailer, show only their orders.
-        // If the logged-in user is a distributor, show orders for themselves
-        // and for any retailers assigned to them.
         try {
             $authUser = auth()->user();
             if ($authUser) {
@@ -43,11 +45,11 @@ class OrderMasterController extends Controller
                     $ids = array_merge([$authUser->id], $retailerIds);
                     $query->whereIn('user_id', $ids);
                 } elseif ($authUser->hasRole(['super-admin','superadmin'])) {
-                    // Super-admin: no additional restrictions — show all retailer/distributor orders
+                    // Super-admin: no additional restrictions
                 }
             }
         } catch (\Throwable $e) {
-            // ignore and show default
+            // ignore
         }
 
         $totalData = $query->count();
@@ -119,8 +121,6 @@ class OrderMasterController extends Controller
                 </div>
             </div>';
 
-            // If the logged-in user is a distributor and this order was created by one of
-            // their retailers and is awaiting distributor approval, show approve action.
             try {
                 $au = auth()->user();
                 if ($au && $au->hasRole('distributor') && ($order->approval_level ?? 0) == 0 && $order->distributor_id == $au->id && $order->user_id != $au->id) {
@@ -144,7 +144,6 @@ class OrderMasterController extends Controller
                         </div>
                     </div>';
                 }
-                // Super-admin approval: allow super-admin to finalize orders (set approval_level = 2)
                 if ($au && $au->hasRole(['super-admin','superadmin']) && (($order->approval_level ?? 0) >= 1) && (($order->approval_level ?? 0) < 2)) {
                     $approveSuperUrl = route('orders.approve.superadmin', $order->id);
                     $actions = '<div class="btn-group">
@@ -221,10 +220,8 @@ class OrderMasterController extends Controller
     {
         $data = $this->viewData();
 
-        // Prefill item_id if provided in query (from catalog "Add Order" button)
         $data['pre_item_id'] = $request->query('item_id');
 
-        // If called from cart, prepare pre_items from session cart entries
         $data['pre_items'] = null;
         if ($request->query('from_cart')) {
             $cart = session()->get('cart', []);
@@ -239,11 +236,9 @@ class OrderMasterController extends Controller
                     $itemModel = null;
                 }
 
-                // Normalize size fields: cart may store single 'size' and total 'qty'
                 $sizesVal = null;
                 $sizeQuantities = null;
                 if (!empty($entry['size'])) {
-                    // single size selected in cart
                     $sizesVal = [$entry['size']];
                     $sizeQuantities = [$entry['size'] => ($entry['qty'] ?? ($entry['quantity'] ?? 0))];
                 } elseif (!empty($entry['size_quantities']) && is_array($entry['size_quantities'])) {
@@ -266,7 +261,6 @@ class OrderMasterController extends Controller
             $data['pre_items'] = array_values($pre);
         }
 
-        // If a retailer/distributor is creating the order, default customer to themselves
         $preUser = null;
         try {
             $user = auth()->user();
@@ -295,27 +289,23 @@ class OrderMasterController extends Controller
             $authUser = auth()->user();
 
             if ($authUser && $authUser->hasRole('retailer')) {
-                 // Retailer orders need distributor + superadmin approval
                  $fields['distributor_id']        = $authUser->distributor_id;
                  $fields['distributor_approved']  = false;
                  $fields['approval_level']        = 0;
                 $fields['visible_to_superadmin'] = false;
             } elseif ($authUser && $authUser->hasRole('distributor')) {
-                // Distributor orders are auto-approved at distributor level
                 $fields['distributor_id']           = $authUser->id;
                 $fields['distributor_approved']     = true;
                 $fields['distributor_approved_at']  = now();
                 $fields['approval_level']           = 1;
                 $fields['visible_to_superadmin']    = true;
             } elseif ($authUser && $authUser->hasRole(['super-admin', 'superadmin'])) {
-                // Superadmin orders are fully auto-approved — skip all approval steps
                 $fields['distributor_approved']     = true;
                 $fields['distributor_approved_at']  = now();
                 $fields['approval_level']           = 2;
                 $fields['visible_to_superadmin']    = true;
             }
             elseif ($authUser && ($authUser->hasRole('super-admin') || $authUser->hasRole('superadmin'))) {
-                // If a superadmin creates an order, auto-approve at superadmin level (level 2)
                 $fields['approval_level'] = 2;
                 $fields['distributor_id'] = $authUser->id;
                 $fields['visible_to_superadmin'] = true;
@@ -323,8 +313,6 @@ class OrderMasterController extends Controller
             $order = OrderMaster::create($fields);
             $subtotal = $this->syncItems($order, $request->input('items', []));
 
-            // Determine overall order status from item statuses: if all items share the same
-            // status, use that as the order status. Otherwise keep submitted order status.
             $itemStatuses = $order->items()->pluck('status')->filter()->toArray();
             $unique = array_values(array_unique($itemStatuses));
             if (count($unique) === 1 && !empty($unique[0])) {
@@ -333,14 +321,11 @@ class OrderMasterController extends Controller
                 $orderStatus = $request->input('status', $order->status ?? 'pending');
             }
 
-            // Retailers are not allowed to set the overall order status.
             $authUser = auth()->user();
             if ($authUser && $authUser->hasRole('retailer')) {
                 $orderStatus = 'pending';
             }
 
-            // New rule: if not all article-wise statuses are 'delivered', the overall
-            // order status cannot be set to 'delivered'. Reject the request with validation.
             $allDelivered = !empty($itemStatuses) && count(array_filter($itemStatuses, fn($s) => $s !== 'delivered')) === 0;
             if ($orderStatus === 'delivered' && !$allDelivered) {
                 DB::rollBack();
@@ -353,8 +338,6 @@ class OrderMasterController extends Controller
             $order->update(array_merge($this->calculatedTotals($request, $subtotal), ['status' => $orderStatus]));
 
             DB::commit();
-
-            // If this order was created from cart, clear the session cart
 
             if ($request->input('from_cart')) {
                 session()->forget('cart');
@@ -377,8 +360,6 @@ class OrderMasterController extends Controller
     {
         $order->load('items', 'customer');
 
-        // Retailers may only view their own orders. Distributors may view
-        // their own orders and orders created by retailers assigned to them.
         $user = auth()->user();
         if ($user) {
             if ($user->hasRole('retailer') && $order->user_id !== $user->id) {
@@ -389,16 +370,10 @@ class OrderMasterController extends Controller
                 if ($order->user_id !== $user->id && !in_array($order->user_id, $retailerIds)) {
                     abort(403);
                 }
-                // Distributors cannot edit orders once super-admin has finalized them
-                // if ((int)($order->approval_level ?? 0) >= 2) {
-                //     return back()->with('error', 'Order has been finalized by super-admin and cannot be edited.');
-                // }
             }
-            // Super-admin may view all orders including those pending distributor approval.
         }
 
         $colorsById = Color::pluck('color_code', 'id');
-
         $colorNameById = Color::pluck('name', 'id');
 
         return view('admin.orders.show', compact('order', 'colorsById', 'colorNameById'));
@@ -416,7 +391,6 @@ class OrderMasterController extends Controller
             if ($user->hasRole('retailer') && $order->user_id !== $user->id) {
                 abort(403);
             }
-            // If the order is approved at or above distributor level, retailer must not be able to edit it
             if ($user->hasRole('retailer') && (($order->approval_level ?? 0) >= 1)) {
                 return back()->with('error', 'Order has been approved and cannot be edited.');
             }
@@ -425,14 +399,12 @@ class OrderMasterController extends Controller
                 if ($order->user_id !== $user->id && !in_array($order->user_id, $retailerIds)) {
                     abort(403);
                 }
-                // Distributors cannot update orders once super-admin has finalized them
                 if ((int)($order->approval_level ?? 0) >= 2) {
                     return back()->with('error', 'Order has been finalized by super-admin and cannot be edited.');
                 }
             }
         }
 
-        // Prevent editing once order is delivered for any user
         if (isset($order->status) && strtolower($order->status) === 'delivered') {
             return back()->with('error', 'Order has been delivered and cannot be edited.');
         }
@@ -449,7 +421,6 @@ class OrderMasterController extends Controller
             if ($user->hasRole('retailer') && $order->user_id !== $user->id) {
                 abort(403);
             }
-            // Prevent retailer from updating an order that has already been approved at distributor level
             if ($user->hasRole('retailer') && (($order->approval_level ?? 0) >= 1)) {
                 return back()->with('error', 'Order has been approved and cannot be edited.');
             }
@@ -468,7 +439,54 @@ class OrderMasterController extends Controller
 
         DB::beginTransaction();
         try {
+            // Get existing order items BEFORE deleting them
+            $existingItems = $order->items()->get()->keyBy('id');
+            
+            // Reset pending deductions
+            $this->pendingStockDeductions = [];
+            
+            // Process status changes and handle stock deductions/restorations
+            $itemsInput = $request->input('items', []);
+            
+            foreach ($itemsInput as $itemData) {
+                if (isset($itemData['order_item_id']) && isset($itemData['status'])) {
+                    $existingItem = $existingItems->get($itemData['order_item_id']);
+                    if ($existingItem) {
+                        $oldStatus = strtolower($existingItem->status);
+                        $newStatus = strtolower($itemData['status']);
+                        
+                        $wasStockDeducted = in_array($oldStatus, ['confirmed', 'shipped', 'delivered']);
+                        $willBeStockDeducted = in_array($newStatus, ['confirmed', 'shipped', 'delivered']);
+                        $isCancelling = ($newStatus === 'canceled' || $newStatus === 'cancelled');
+                        $isUnCancelling = ($oldStatus === 'canceled' || $oldStatus === 'cancelled') && 
+                                        ($newStatus !== 'canceled' && $newStatus !== 'cancelled');
+                        
+                        // Case 1: Moving from non-deducted to deducted → DEDUCT
+                        if (!$wasStockDeducted && $willBeStockDeducted && !$isUnCancelling) {
+                            $this->pendingStockDeductions[] = [
+                                'item' => $existingItem,
+                                'status' => $newStatus
+                            ];
+                        }
+                        
+                        // Case 2: Moving from deducted to cancelled → RESTORE (do immediately)
+                        if ($isCancelling && $wasStockDeducted) {
+                            $this->restoreStockForOrderItem($existingItem);
+                        }
+                        
+                        // Case 3: Moving from cancelled to deducted → DEDUCT
+                        if ($isUnCancelling && $willBeStockDeducted) {
+                            $this->pendingStockDeductions[] = [
+                                'item' => $existingItem,
+                                'status' => $newStatus
+                            ];
+                        }
+                    }
+                }
+            }
+
             $order->update($this->orderFields($request));
+            
             $authUser = auth()->user();
             if ($authUser && $authUser->hasRole('distributor') && empty($order->distributor_id)) {
                 $order->distributor_id = $authUser->id;
@@ -481,12 +499,44 @@ class OrderMasterController extends Controller
                 $order->save();
             }
 
+            // Delete old items
             $order->items()->delete();
+            
+            // Set flag to prevent syncItems from deducting stock
+            // We'll handle deductions manually after recreating items
+            $this->skipStockDeduction = true;
+            
+            // Recreate items with new data
             $subtotal = $this->syncItems($order, $request->input('items', []));
 
+            // Now process pending stock deductions for items that need it
+            if (!empty($this->pendingStockDeductions)) {
+                // Get the newly created items
+                $newItems = $order->items()->get();
+                
+                foreach ($this->pendingStockDeductions as $pending) {
+                    $existingItem = $pending['item'];
+                    $newStatus = $pending['status'];
+                    
+                    // Find the matching new item (by item_id and color/size)
+                    $newItem = $newItems->first(function($item) use ($existingItem) {
+                        return $item->item_id == $existingItem->item_id && 
+                               $item->color == $existingItem->color &&
+                               $item->size == $existingItem->size;
+                    });
+                    
+                    if ($newItem) {
+                        // Update the new item's status to what it should be
+                        $newItem->status = $newStatus;
+                        $newItem->save();
+                        
+                        // Deduct stock for this item
+                        $this->deductStockForOrderItem($newItem);
+                    }
+                }
+            }
 
-            // Determine overall order status from item statuses: if all items share the same
-            // status, use that as the order status. Otherwise keep submitted order status.
+            // Determine order status from items
             $itemStatuses = $order->items()->pluck('status')->filter()->toArray();
             $unique = array_values(array_unique($itemStatuses));
             if (count($unique) === 1 && !empty($unique[0])) {
@@ -495,14 +545,11 @@ class OrderMasterController extends Controller
                 $orderStatus = $request->input('status', $order->status ?? 'pending');
             }
 
-            // Retailers are not allowed to set the overall order status.
             $authUser = auth()->user();
             if ($authUser && $authUser->hasRole('retailer')) {
                 $orderStatus = $order->status ?? 'pending';
             }
 
-            // New rule: if not all article-wise statuses are 'delivered', the overall
-            // order status cannot be set to 'delivered'. Reject the request with validation.
             $allDelivered = !empty($itemStatuses) && count(array_filter($itemStatuses, fn($s) => $s !== 'delivered')) === 0;
             if ($orderStatus === 'delivered' && !$allDelivered) {
                 DB::rollBack();
@@ -516,7 +563,6 @@ class OrderMasterController extends Controller
             $order->update(array_merge($this->calculatedTotals($request, $subtotal), ['status' => $orderStatus]));
 
             DB::commit();
-
 
             return redirect()->route('orders.index')->with('success', 'Order updated successfully.');
         } catch (\Exception $e) {
@@ -540,7 +586,6 @@ class OrderMasterController extends Controller
             abort(403);
         }
 
-        // Only allow the distributor assigned to this order to approve it.
         if (empty($order->distributor_id) || $order->distributor_id != $user->id) {
             abort(403);
         }
@@ -593,16 +638,13 @@ class OrderMasterController extends Controller
 
         $order->load('items');
 
-        // Restore stock for ALL items that had stock deducted
         foreach ($order->items as $item) {
-            // Check if stock was deducted (confirmed, shipped, delivered)
             $wasStockDeducted = in_array($item->status, ['confirmed', 'shipped', 'delivered']);
             if ($wasStockDeducted) {
                 try {
                     $this->restoreStockForOrderItem($item);
                 } catch (\Exception $e) {
                     \Log::error("Failed to restore stock for order item #{$item->id} during order deletion: " . $e->getMessage());
-                    // Continue with deletion anyway
                 }
             }
         }
@@ -623,8 +665,6 @@ class OrderMasterController extends Controller
                 $q->whereIn('name', ['retailer', 'distributor']);
             })->orderBy('name');
 
-        // For retailer users, restrict customer list to themselves.
-        // For distributor users, include the distributor and their retailers.
         try {
             $u = auth()->user();
             if ($u) {
@@ -740,8 +780,6 @@ class OrderMasterController extends Controller
                 continue;
             }
 
-
-            // determine article number: prefer submitted value, otherwise pull from Item model
             $articleNumber = $it['article_number'] ?? null;
             if (empty($articleNumber) && $itemId) {
                 $itemModel = Item::find($itemId);
@@ -750,34 +788,33 @@ class OrderMasterController extends Controller
 
             $sizeQuantities = $this->normalizeSizeQuantities($it);
 
-                if (!empty($sizeQuantities)) {
-                    $sizeVal = implode(',', array_keys($sizeQuantities));
-                    $quantity = array_sum($sizeQuantities);
-                } elseif (!empty($it['sizes'])) {
-                    $selectedSizes = is_array($it['sizes']) ? $it['sizes'] : explode(',', $it['sizes']);
-                    $selectedSizes = array_values(array_filter(array_map('trim', $selectedSizes), fn ($size) => $size !== ''));
-                    $sizeVal = implode(',', $selectedSizes);
-                    $quantity = (float) ($it['quantity'] ?? 0);
-                } elseif (!empty($it['size_from']) || !empty($it['size_to'])) {
-                    $sizeVal = trim(($it['size_from'] ?? '') . '-' . ($it['size_to'] ?? ''), '-');
-                    $quantity = (float) ($it['quantity'] ?? 0);
-                } else {
-                    $sizeVal = null;
-                    $quantity = (float) ($it['quantity'] ?? 0);
-                }
+            if (!empty($sizeQuantities)) {
+                $sizeVal = implode(',', array_keys($sizeQuantities));
+                $quantity = array_sum($sizeQuantities);
+            } elseif (!empty($it['sizes'])) {
+                $selectedSizes = is_array($it['sizes']) ? $it['sizes'] : explode(',', $it['sizes']);
+                $selectedSizes = array_values(array_filter(array_map('trim', $selectedSizes), fn ($size) => $size !== ''));
+                $sizeVal = implode(',', $selectedSizes);
+                $quantity = (float) ($it['quantity'] ?? 0);
+            } elseif (!empty($it['size_from']) || !empty($it['size_to'])) {
+                $sizeVal = trim(($it['size_from'] ?? '') . '-' . ($it['size_to'] ?? ''), '-');
+                $quantity = (float) ($it['quantity'] ?? 0);
+            } else {
+                $sizeVal = null;
+                $quantity = (float) ($it['quantity'] ?? 0);
+            }
 
             $rate = (float) ($it['rate'] ?? 0);
             $taxRate = (float) ($it['tax_rate'] ?? 0);
             $total = round(($rate + ($rate * $taxRate / 100)) * $quantity, 2);
             $subtotal += $total;
 
-            // If the current user is a retailer, they are not allowed to set item status.
             $status = $it['status'] ?? 'pending';
             if ($authUser && $authUser->hasRole('retailer')) {
                 $status = 'pending';
             }
 
-            $order->items()->create([
+            $orderItem = $order->items()->create([
                 'article_number' => $articleNumber ?? null,
                 'item_id'     => $itemId  ?: null,
                 'item_name'   => $itemName,
@@ -794,6 +831,13 @@ class OrderMasterController extends Controller
                 'size_to'     => $it['size_to']     ?? null,
                 'sets'        => $it['sets']        ?? null,
             ]);
+
+            $shouldDeduct = in_array(strtolower($status), ['confirmed', 'shipped', 'delivered'], true);
+            $isCancelled = in_array(strtolower($status), ['canceled', 'cancelled']);
+            
+            if ($shouldDeduct && !$this->skipStockDeduction && !$isCancelled) {
+                $this->deductStockForOrderItem($orderItem);
+            }
         }
 
         return $subtotal;
@@ -917,11 +961,10 @@ class OrderMasterController extends Controller
     }
 
     /**
-     * Restore stock for an order item by creating a NEGATIVE DEDUCT inventory log
+     * Restore stock for an order item by creating a RESTORE inventory log
      * This will decrease total_sold and increase current_stock
      * Production quantity (total_production) remains unchanged
      */
-    
     private function restoreStockForOrderItem(\App\Models\OrderItem $orderItem): void
     {
         DB::transaction(function () use ($orderItem) {
@@ -960,10 +1003,9 @@ class OrderMasterController extends Controller
                     return;
                 }
                 
-                // USE 'restore' TYPE INSTEAD OF NEGATIVE DEDUCT
                 InventoryLog::create([
-                    'type' => 'restore',  // New type for cancellations
-                    'qty' => $singleQty,   // Positive quantity
+                    'type' => 'restore',
+                    'qty' => $singleQty,
                     'item_variant_id' => $variant->id,
                     'order_master_id' => $orderItem->order_master_id,
                     'note' => 'Stock restored - order item cancelled (production unchanged)',
@@ -998,10 +1040,9 @@ class OrderMasterController extends Controller
                     continue;
                 }
                 
-                // USE 'restore' TYPE INSTEAD OF NEGATIVE DEDUCT
                 InventoryLog::create([
-                    'type' => 'restore',  // New type for cancellations
-                    'qty' => $orderQty,   // Positive quantity
+                    'type' => 'restore',
+                    'qty' => $orderQty,
                     'item_variant_id' => $variant->id,
                     'order_master_id' => $orderItem->order_master_id,
                     'note' => 'Stock restored - order item cancelled (production unchanged)',
@@ -1186,6 +1227,9 @@ class OrderMasterController extends Controller
         $orderItem->status = $newStatus;
         $orderItem->save();
 
+        
+        $this->updateOrderStatusFromItems($order);
+
         // Log the status change
         \Log::info("Order item #{$orderItem->id} status changed from {$oldStatus} to {$newStatus}", [
             'order_id' => $order->id,
@@ -1194,5 +1238,16 @@ class OrderMasterController extends Controller
         ]);
 
         return response()->json(['success' => true, 'status' => $orderItem->status]);
+    }
+
+    private function updateOrderStatusFromItems(OrderMaster $order)
+    {
+        $itemStatuses = $order->items()->pluck('status')->filter()->toArray();
+        $unique = array_values(array_unique($itemStatuses));
+        
+        if (count($unique) === 1 && !empty($unique[0])) {
+            $order->status = $unique[0];
+            $order->save();
+        }
     }
 }

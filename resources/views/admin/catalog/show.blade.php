@@ -1,289 +1,1040 @@
 @extends('admin.layouts.app')
-@section('title', 'Item Details')
+@section('title', $item->name)
 
 @section('content')
+<style>
+.product-detail-container {
+    padding: 20px 0;
+}
+.product-gallery {
+    background: #f8f9fa;
+    border-radius: 12px;
+    padding: 20px;
+    text-align: center;
+    min-height: 300px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+.product-gallery img {
+    max-height: 350px;
+    width: 100%;
+    object-fit: contain;
+}
+.thumbnails {
+    display: flex;
+    gap: 10px;
+    margin-top: 15px;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+.thumbnails img {
+    width: 60px;
+    height: 60px;
+    object-fit: cover;
+    border-radius: 8px;
+    cursor: pointer;
+    border: 2px solid transparent;
+    transition: border-color 0.2s;
+}
+.thumbnails img:hover,
+.thumbnails img.active {
+    border-color: #7F53AC;
+}
+.product-info {
+    padding: 0 20px;
+}
+.product-title {
+    font-size: 24px;
+    font-weight: 700;
+    color: #333;
+    margin-bottom: 5px;
+}
+.product-article {
+    color: #888;
+    font-size: 14px;
+    margin-bottom: 10px;
+}
+.product-price {
+    font-size: 28px;
+    font-weight: 700;
+    color: #7F53AC;
+    margin-bottom: 15px;
+}
+.product-description {
+    color: #555;
+    font-size: 14px;
+    line-height: 1.6;
+    margin-bottom: 20px;
+}
+
+/* Upper Section - Product Details */
+.product-details-section {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 20px;
+}
+.product-details-section .detail-row {
+    display: flex;
+    padding: 6px 0;
+    border-bottom: 1px solid #e8e8e8;
+}
+.product-details-section .detail-row:last-child {
+    border-bottom: none;
+}
+.product-details-section .detail-label {
+    font-weight: 600;
+    color: #555;
+    width: 120px;
+    flex-shrink: 0;
+}
+.product-details-section .detail-value {
+    color: #333;
+}
+
+/* Lower Section - Color & Size Selection */
+.selection-section {
+    background: #fff;
+    border-radius: 8px;
+    padding: 20px;
+    border: 1px solid #e8e8e8;
+}
+.selection-section .section-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid #7F53AC;
+}
+.option-section {
+    margin-bottom: 20px;
+}
+.option-label {
+    font-size: 14px;
+    font-weight: 600;
+    color: #333;
+    display: block;
+    margin-bottom: 8px;
+}
+.color-option-btn {
+    display: inline-block;
+    padding: 6px 16px;
+    border-radius: 20px;
+    border: 2px solid #ddd;
+    background: #fff;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 13px;
+    font-weight: 500;
+    margin: 4px;
+}
+.color-option-btn:hover {
+    border-color: #7F53AC;
+    background: #f8f5ff;
+}
+.color-option-btn.active {
+    border-color: #7F53AC;
+    background: #7F53AC;
+    color: #fff;
+}
+.color-option-btn .color-dot {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    border: 1px solid #ddd;
+    margin-right: 6px;
+    vertical-align: middle;
+}
+.size-option-btn {
+    display: inline-block;
+    padding: 6px 16px;
+    border-radius: 6px;
+    border: 2px solid #ddd;
+    background: #fff;
+    cursor: pointer;
+    transition: none;
+    font-size: 13px;
+    font-weight: 500;
+    margin: 4px;
+}
+.size-option-btn.active {
+    border-color: #7F53AC;
+    background: #7F53AC;
+    color: #fff;
+}
+.size-option-btn.out-of-stock {
+    opacity: 0.4;
+    cursor: not-allowed;
+    text-decoration: line-through;
+}
+
+.loading-text {
+    color: #999;
+    font-size: 14px;
+    padding: 10px 0;
+}
+.no-sizes-text {
+    color: #999;
+    font-size: 14px;
+    padding: 10px 0;
+}
+.selected-sizes-section {
+    margin-top: 15px;
+    padding: 15px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    display: none;
+}
+.selected-sizes-section.show {
+    display: block;
+}
+.color-group {
+    margin-bottom: 10px;
+    padding: 10px;
+    background: #fff;
+    border-radius: 6px;
+    border: 1px solid #e8e8e8;
+}
+.color-group-header {
+    font-weight: 600;
+    font-size: 14px;
+    margin-bottom: 6px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid #f0f0f0;
+}
+.color-group-sizes {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+}
+.selected-size-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 3px 10px;
+    background: #7F53AC;
+    color: #fff;
+    border-radius: 12px;
+    font-size: 12px;
+}
+.selected-size-item .remove-size {
+    cursor: pointer;
+    font-weight: bold;
+    opacity: 0.7;
+    font-size: 14px;
+}
+.selected-size-item .remove-size:hover {
+    opacity: 1;
+}
+.action-buttons {
+    display: flex;
+    gap: 12px;
+    margin-top: 20px;
+    flex-wrap: wrap;
+}
+.btn-add-cart {
+    padding: 10px 28px;
+    border: none;
+    border-radius: 6px;
+    background: #7F53AC;
+    color: #fff;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+.btn-add-cart:hover:not(:disabled) {
+    background: #6a44a0;
+}
+.btn-add-cart:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+}
+.btn-buy-now {
+    padding: 10px 28px;
+    border: none;
+    border-radius: 6px;
+    background: #28a745;
+    color: #fff;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+.btn-buy-now:hover:not(:disabled) {
+    background: #218838;
+}
+.btn-buy-now:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+}
+.feedback-message {
+    padding: 10px 15px;
+    border-radius: 6px;
+    margin-top: 15px;
+    display: none;
+}
+.feedback-message.success {
+    display: block;
+    background: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+.feedback-message.error {
+    display: block;
+    background: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+}
+.current-color-indicator {
+    display: inline-block;
+    padding: 4px 12px;
+    background: #7F53AC;
+    color: #fff;
+    border-radius: 12px;
+    font-size: 12px;
+    margin-left: 8px;
+}
+.color-option-btn.viewing {
+    border-color: #7F53AC;
+    background: #f8f5ff;
+}
+.color-option-btn.viewing.active {
+    background: #7F53AC;
+    color: #fff;
+}
+</style>
+
 <div class="content-header">
-  <div class="container-fluid">
-	<div class="row mb-2">
-	  <div class="col-sm-6">
-		<h1 class="m-0"></i>Item Details</h1>
-	  </div>
-	  <div class="col-sm-6">
-		<ol class="breadcrumb float-sm-right">
-		  <li class="breadcrumb-item"><a href="{{ route('dashboard') }}">Home</a></li>
-		  <li class="breadcrumb-item"><a href="{{ route('items.index') }}">Items</a></li>
-		  <li class="breadcrumb-item active">show</li>
-		</ol>
-	  </div>
-	</div>
-  </div>
-</div>
-
-<div class="pull-card">
-  <div class="container-fluid">
-    <div class="main-card">
-      <div class="main-card-head d-flex justify-content-between align-items-center">
-        <!--<div class="main-card-title"><i class="fas fa-eye"></i> {{ $item->name }}</div>-->
-        <div>
-          <a href="{{ route('catalog') }}" class="btn btn-secondary">Back</a>
-        </div>
-      </div>
-      <div class="main-card-body">
-        <div class="row">
-          <div class="col-md-4">
-            @php
-              // Support both single and multiple images (array or JSON column)
-              $images = [];
-              if (!empty($item->images) && is_array($item->images)) {
-                $images = $item->images;
-              } elseif (!empty($item->images) && is_string($item->images)) {
-                $decoded = json_decode($item->images, true);
-                if (is_array($decoded)) $images = $decoded;
-              } elseif (!empty($item->image)) {
-                $images = [$item->image];
-              }
-              // Filter out non-existing images
-              $images = array_values(array_filter($images, function($img) {
-                return $img && file_exists(public_path('storage/' . $img));
-              }));
-            @endphp
-            @if(!empty($images))
-              <div class="mb-3 text-center">
-                <img id="mainProductImage" src="{{ asset('storage/' . $images[0]) }}" alt="Main Image" class="img-fluid rounded border" style="max-width: 100%; max-height: 250px;">
-              </div>
-              <div class="d-flex flex-wrap gap-2 justify-content-center">
-                @foreach($images as $idx => $img)
-                  <img src="{{ asset('storage/' . $img) }}" alt="Thumbnail {{ $idx+1 }}" class="img-thumbnail m-1 product-thumb" style="width: 60px; height: 60px; object-fit: cover; cursor: pointer; border:2px solid #eee;" onclick="setMainImage('{{ asset('storage/' . $img) }}', this)">
-                @endforeach
-              </div>
-             
-            @else
-              <div class="border rounded p-5 text-center text-muted">No image</div>
-            @endif
-          </div>
-          <div class="col-md-8">
-            <h4>{{ $item->name }}</h4>
-            <p class="text-muted">Article Number: {{ $item->article_number ?? '-' }}</p>
-            <p class="text-muted">Item Code: {{ $item->item_code ?? '-' }}</p>
-            <p>{{ $item->description }}</p>
-
-            {{-- Inline Add to Cart form (for retailers/distributors) --}}
-            @if(auth()->check() && auth()->user()->hasRole(['retailer', 'distributor']))
-            <div class="cards">
-              <div class="card-body" style="padding:0px">
-                <form id="inlineAddToCartForm">
-                  <input type="hidden" name="item_id" id="item_id" value="{{ $item->id }}">
-
-                  @if(!empty($item->colors) && count($item->colors))
-                  <div class="form-group">
-                    <label>Color</label>
-                    <div id="colorOptions" class="d-flex flex-wrap gap-2 align-items-start">
-                      @foreach($item->colors as $c)
-                        @php
-                          $bg = $c->hex ?? $c->code ?? null;
-                        @endphp
-                        <button type="button" class="color-swatch mr-2" data-id="{{ $c->id }}" title="{{ $c->name }}" aria-pressed="false">
-                          <div class="color-circle">
-                          @if($bg)
-                            <span class="color-fill" style="background:{{ $bg }}"></span>
-                          @else
-                            <span class="color-initial"></span>
-                          @endif
-                          </div>
-                          <div class="color-name">{{ $c->name }}</div>
-                        </button>
-                      @endforeach
-                    </div>
-                    <input type="hidden" id="selected_color" name="color_id" value="">
-                  </div>
-                  @endif
-
-                  @if(!empty($item->sizes) && count($item->sizes))
-                  <div class="form-group">
-                    <label>Size</label>
-                    <div id="sizeOptions" class="d-flex flex-wrap gap-2 align-items-center">
-                      @foreach($item->sizes as $s)
-                        <button type="button" class="btn size-option mr-2 mb-2" data-size="{{ $s }}" aria-pressed="false">
-                          <div class="size-label">{{ $s }}</div>
-                        </button>
-                      @endforeach
-                    </div>
-                    <input type="hidden" id="selected_size" name="size" value="">
-                  </div>
-                  @endif
-
-                  <div class="form-group" id="qtyGroup" style="display:none">
-                    <label for="qty">Quantity</label>
-                    <div class="input-group" style="max-width:140px">
-                      <input id="qty" class="form-control text-center" type="number" min="1" value="1">
-                    </div>
-                  </div>
-
-                  <div id="add_feedback" class="" style="display:none"></div>
-
-                
-                </form>
-              </div>
+    <div class="container-fluid">
+        <div class="row mb-2">
+            <div class="col-sm-6">
+                <h1 class="m-0">Product Details</h1>
             </div>
-            @endif
-
-            <dl class="row">
-              <dt class="col-sm-4">Category</dt>
-              <dd class="col-sm-8">{{ optional($item->category)->name ?? '-' }}</dd>
-
-              <dt class="col-sm-4">Sub Category</dt>
-              <dd class="col-sm-8">{{ optional($item->subCategory)->name ?? '-' }}</dd>
-
-              <dt class="col-sm-4">Group</dt>
-              <dd class="col-sm-8">{{ optional($item->group)->name ?? '-' }}</dd>
-
-              <dt class="col-sm-4">Sub Group</dt>
-              <dd class="col-sm-8">{{ optional($item->subGroup)->name ?? '-' }}</dd>
-
-              <!--<dt class="col-sm-4">Unit</dt>
-              <dd class="col-sm-8">{{ $item->unit ?? '-' }}</dd>-->
-
-              <dt class="col-sm-4">Price</dt>
-              <dd class="col-sm-8">{{ number_format($item->price,2) }}</dd>
-
-              <dt class="col-sm-4">Tax</dt>
-              <dd class="col-sm-8">{{ $item->tax_percent }}%</dd>
-
-              <dt class="col-sm-4">Status</dt>
-              <dd class="col-sm-8">{{ $item->status ? 'Active' : 'Inactive' }}</dd>
-            </dl>
-              <div class="d-flex gap-2">
-                    <button type="button" id="addToCartBtn" class="btn-create mr-2">Add to Cart</button>
-                    <button type="button" id="buyNowBtn" class="btn-secondary">Buy Now</button>
-                  </div>
-          </div>
+            <div class="col-sm-6">
+                <ol class="breadcrumb float-sm-right">
+                    <li class="breadcrumb-item"><a href="{{ route('dashboard') }}">Home</a></li>
+                    <li class="breadcrumb-item"><a href="{{ route('catalog') }}">Catalog</a></li>
+                    <li class="breadcrumb-item active">{{ $item->name }}</li>
+                </ol>
+            </div>
         </div>
-      </div>
     </div>
-  </div>
 </div>
+
+<section class="content">
+<div class="container-fluid product-detail-container">
+    <div class="row">
+        {{-- LEFT: Image Gallery --}}
+        <div class="col-md-6">
+            <div class="product-gallery">
+                @php
+                    $images = [];
+                    if (!empty($item->images) && is_array($item->images)) {
+                        $images = $item->images;
+                    } elseif (!empty($item->image)) {
+                        $images = [$item->image];
+                    }
+                @endphp
+                
+                @if(!empty($images))
+                    <img id="mainImage" src="{{ asset('storage/' . $images[0]) }}" alt="{{ $item->name }}">
+                    @if(count($images) > 1)
+                        <div class="thumbnails">
+                            @foreach($images as $idx => $img)
+                                <img src="{{ asset('storage/' . $img) }}" 
+                                     alt="Thumb {{ $idx + 1 }}"
+                                     class="{{ $idx === 0 ? 'active' : '' }}"
+                                     onclick="changeMainImage(this, '{{ asset('storage/' . $img) }}')">
+                            @endforeach
+                        </div>
+                    @endif
+                @else
+                    <div style="padding: 60px 0; color: #999;">
+                        <i class="fas fa-image fa-3x d-block mb-2"></i>
+                        No image available
+                    </div>
+                @endif
+            </div>
+        </div>
+
+        {{-- RIGHT: Product Info --}}
+        <div class="col-md-6">
+            <div class="product-info">
+                {{-- Product Title & Price --}}
+                <div class="product-title">{{ $item->name }}</div>
+                <div class="product-article">Article: {{ $item->article_number ?? '-' }}</div>
+                <div class="product-price">₹{{ number_format($item->price, 2) }}</div>
+                
+                @if($item->description)
+                    <div class="product-description">{{ $item->description }}</div>
+                @endif
+
+                {{-- UPPER SECTION: Product Details --}}
+                <div class="product-details-section">
+                    <div class="detail-row">
+                        <span class="detail-label">Category</span>
+                        <span class="detail-value">{{ optional($item->category)->name ?? '-' }}</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Sub Category</span>
+                        <span class="detail-value">{{ optional($item->subCategory)->name ?? '-' }}</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Group</span>
+                        <span class="detail-value">{{ optional($item->group)->name ?? '-' }}</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Sub Group</span>
+                        <span class="detail-value">{{ optional($item->subGroup)->name ?? '-' }}</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Tax</span>
+                        <span class="detail-value">{{ $item->tax_percent ?? 0 }}%</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Status</span>
+                        <span class="detail-value">{{ $item->status ? 'Active' : 'Inactive' }}</span>
+                    </div>
+                </div>
+
+                {{-- LOWER SECTION: Color & Size Selection --}}
+                @if(auth()->check() && auth()->user()->hasRole(['retailer', 'distributor']))
+                    <div class="selection-section">
+                        <div class="section-title">Add to Cart</div>
+                        
+                        <div id="addToCartForm">
+                            @csrf
+                            <input type="hidden" name="item_id" value="{{ $item->id }}" id="itemId">
+
+                            {{-- COLORS --}}
+                            @php
+                                $uniqueColors = $item->variants->pluck('color')->filter()->unique('id')->values();
+                            @endphp
+                            @if($uniqueColors->isNotEmpty())
+                                <div class="option-section">
+                                    <span class="option-label">Select Colors <span class="text-muted">(Multiple allowed)</span></span>
+                                    <div class="d-flex flex-wrap" id="colorOptions">
+                                        @foreach($uniqueColors as $color)
+                                            <button type="button" 
+                                                    class="color-option-btn" 
+                                                    data-color-id="{{ $color->id }}"
+                                                    data-color-code="{{ $color->color_code ?? '#ccc' }}"
+                                                    data-color-name="{{ $color->name ?? $color->color_code }}">
+                                                <span class="color-dot" style="background:{{ $color->color_code ?? '#ccc' }};"></span>
+                                                {{ $color->color_code ?? $color->name }}
+                                            </button>
+                                        @endforeach
+                                    </div>
+                                </div>
+                            @endif
+
+                            {{-- SIZES --}}
+                            <div class="option-section" id="sizeSection" style="display:none;">
+                                <span class="option-label">
+                                    Select Sizes 
+                                    <span class="text-muted">(Click a color first)</span>
+                                    <span id="currentColorIndicator" class="current-color-indicator" style="display:none;"></span>
+                                </span>
+                                <div id="sizeOptionsContainer"></div>
+                            </div>
+
+                            {{-- Selected Items --}}
+                            <div class="selected-sizes-section" id="selectedSizesSection">
+                                <div class="option-label">Selected Items:</div>
+                                <div id="selectedSizesList"></div>
+                            </div>
+
+                            {{-- Feedback --}}
+                            <div id="feedback" class="feedback-message"></div>
+
+                            {{-- Buttons --}}
+                            <div class="action-buttons">
+                                <button type="button" id="addToCartBtn" class="btn-add-cart" disabled>
+                                    <i class="fas fa-cart-plus"></i> Add to Cart
+                                </button>
+                                <button type="button" id="buyNowBtn" class="btn-buy-now" disabled>
+                                    <i class="fas fa-bolt"></i> Buy Now
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                @endif
+            </div>
+        </div>
+    </div>
+</div>
+</section>
 
 @endsection
 
 @section('pageScript')
-
 <script>
-document.addEventListener('DOMContentLoaded', function(){
-  var btn = document.getElementById('addToCartBtn');
-  if (!btn) return;
+$(document).ready(function() {
+    let selectedItems = {};
+    let currentColorId = null;
+    const itemId = {{ $item->id }};
 
-  // handle color/size selection
-  document.addEventListener('click', function(e){
-    var sw = e.target.closest('.color-swatch');
-    if(sw){
-      var id = sw.getAttribute('data-id');
-      document.querySelectorAll('.color-swatch').forEach(function(s){ s.classList.remove('selected'); s.setAttribute('aria-pressed','false'); });
-      sw.classList.add('selected'); sw.setAttribute('aria-pressed','true');
-      var hid = document.getElementById('selected_color'); if(hid) hid.value = id || '';
-      return;
-    }
-    var sz = e.target.closest('.size-option');
-    if(sz){
-      var val = sz.getAttribute('data-size');
-      document.querySelectorAll('.size-option').forEach(function(s){ s.classList.remove('active'); s.setAttribute('aria-pressed','false'); });
-      sz.classList.add('active'); sz.setAttribute('aria-pressed','true');
-      var hid2 = document.getElementById('selected_size'); if(hid2) hid2.value = val || '';
-      return;
-    }
-  });
+    
+    window.changeMainImage = function(thumb, src) {
+        document.getElementById('mainImage').src = src;
+        document.querySelectorAll('.thumbnails img').forEach(img => img.classList.remove('active'));
+        thumb.classList.add('active');
+    };
 
-  btn.addEventListener('click', function(){
-    var itemId = (document.getElementById('item_id') ? document.getElementById('item_id').value : null);
-    var colorId = (document.getElementById('selected_color') ? document.getElementById('selected_color').value : null) || null;
-    var size = (document.getElementById('selected_size') ? document.getElementById('selected_size').value : null) || null;
-    var qty = 1;
-    try { qty = parseInt((document.getElementById('qty') && document.getElementById('qty').value) || 1, 10); if (!isFinite(qty) || qty < 1) qty = 1; } catch(e) { qty = 1; }
+    // =============================================
+    // COLOR SELECTION
+    // =============================================
+    $('.color-option-btn').on('click', function() {
+        const $btn = $(this);
+        const colorId = $btn.data('color-id');
+        const colorName = $btn.data('color-name');
+        const colorCode = $btn.data('color-code');
 
-    var feedback = document.getElementById('add_feedback');
-    if (feedback) { feedback.style.display = 'none'; feedback.textContent = ''; feedback.classList.remove('text-success','text-danger'); }
-
-    var requireColor = document.getElementById('selected_color') !== null && document.getElementById('selected_color').value === '' && document.getElementById('colorOptions');
-    var requireSize = document.getElementById('selected_size') !== null && document.getElementById('selected_size').value === '' && document.getElementById('sizeOptions');
-    if (requireColor) { if (feedback) { feedback.style.display='block'; feedback.classList.add('text-danger'); feedback.textContent='Please select a color.'; } return; }
-    if (requireSize) { if (feedback) { feedback.style.display='block'; feedback.classList.add('text-danger'); feedback.textContent='Please select a size.'; } return; }
-
-    btn.disabled = true;
-    fetch('{{ route('cart.store') }}', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-        'X-CSRF-TOKEN': '{{ csrf_token() }}'
-      },
-      body: JSON.stringify({ item_id: itemId, qty: qty, color_id: colorId, size: size })
-    }).then(function(r){
-      // if Laravel validation fails it may return 422 with JSON
-      if (!r.ok) {
-        return r.text().then(function(txt){ try { var parsed = JSON.parse(txt||'{}'); return parsed; } catch(e){ return { success:false, message: 'Server returned status '+r.status }; } });
-      }
-      return r.json().catch(function(){ return { success:false, message: 'Invalid JSON from server' }; });
-    }).then(function(data){
-      btn.disabled = false;
-      if (data && data.success) {
-        var el = document.querySelector('#cart-count'); if (el) el.textContent = data.count || '';
-        if (feedback) { feedback.style.display = 'block'; feedback.classList.remove('text-danger'); feedback.classList.add('text-success'); feedback.textContent = data.message || 'Added to cart'; }
-      } else {
-        if (feedback) { feedback.style.display = 'block'; feedback.classList.remove('text-success'); feedback.classList.add('text-danger'); feedback.textContent = (data && data.message) ? data.message : 'Failed to add to cart'; }
-      }
-    }).catch(function(){ btn.disabled = false; if (feedback) { feedback.style.display = 'block'; feedback.classList.remove('text-success'); feedback.classList.add('text-danger'); feedback.textContent = 'Failed to communicate with server'; } });
-  });
-
-  // Buy Now: add to cart then redirect to order creation
-  var buyBtn = document.getElementById('buyNowBtn');
-  if (buyBtn) {
-    buyBtn.addEventListener('click', function(){
-      var itemId = (document.getElementById('item_id') ? document.getElementById('item_id').value : null);
-      var colorId = (document.getElementById('selected_color') ? document.getElementById('selected_color').value : null) || null;
-      var size = (document.getElementById('selected_size') ? document.getElementById('selected_size').value : null) || null;
-      var qty = 1;
-      try { qty = parseInt((document.getElementById('qty') && document.getElementById('qty').value) || 1, 10); if (!isFinite(qty) || qty < 1) qty = 1; } catch(e) { qty = 1; }
-
-      var feedback = document.getElementById('add_feedback');
-      if (feedback) { feedback.style.display='none'; feedback.textContent=''; feedback.classList.remove('text-success','text-danger'); }
-
-      // Require color/size selection just like Add to Cart
-      var requireColor = document.getElementById('selected_color') !== null && document.getElementById('selected_color').value === '' && document.getElementById('colorOptions');
-      var requireSize = document.getElementById('selected_size') !== null && document.getElementById('selected_size').value === '' && document.getElementById('sizeOptions');
-      if (requireColor) { if (feedback) { feedback.style.display='block'; feedback.classList.add('text-danger'); feedback.textContent='Please select a color.'; } return; }
-      if (requireSize) { if (feedback) { feedback.style.display='block'; feedback.classList.add('text-danger'); feedback.textContent='Please select a size.'; } return; }
-
-      buyBtn.disabled = true;
-      fetch('{{ route('cart.store') }}', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-          'X-CSRF-TOKEN': '{{ csrf_token() }}'
-        },
-        body: JSON.stringify({ item_id: itemId, qty: qty, color_id: colorId, size: size })
-      }).then(function(r){
-        if (!r.ok) { return r.text().then(function(txt){ try { return JSON.parse(txt||'{}'); } catch(e){ return { success:false, message: 'Server status '+r.status }; } }); }
-        return r.json().catch(function(){ return { success:false, message: 'Invalid JSON from server' }; });
-      }).then(function(data){
-        buyBtn.disabled = false;
-        if (data && data.success) {
-          var el = document.querySelector('#cart-count'); if (el) el.textContent = data.count || '';
-          // redirect to order creation page (from cart)
-          window.location.href = '{{ route('orders.create', ['from_cart' => 1]) }}';
+        // Toggle "currently viewing" state, NOT cart-selection state
+        if (currentColorId == colorId) {
+            // Clicking the same color again collapses the size panel
+            currentColorId = null;
+            $('#sizeSection').hide();
+            $('#sizeOptionsContainer').empty();
+            $('#currentColorIndicator').hide();
+            $('.color-option-btn').removeClass('viewing');
         } else {
-          if (feedback) { feedback.style.display='block'; feedback.classList.add('text-danger'); feedback.textContent = (data && data.message) ? data.message : 'Failed to add to cart'; }
+            currentColorId = colorId;
+
+            if (!selectedItems[colorId]) {
+                selectedItems[colorId] = {
+                    colorName: colorName,
+                    colorCode: colorCode,
+                    sizes: {},
+                    selectedSizes: []
+                };
+            }
+
+            $('.color-option-btn').removeClass('viewing');
+            $btn.addClass('viewing');
+
+            $('#sizeSection').show();
+            showSizesForColor(colorId);
         }
-      }).catch(function(err){ buyBtn.disabled = false; if (feedback) { feedback.style.display='block'; feedback.classList.add('text-danger'); feedback.textContent = 'Failed to communicate with server'; } });
+
+        updateColorButtonStates();
     });
-  }
-});
-   function setMainImage(src, thumb) {
-                  document.getElementById('mainProductImage').src = src;
-                  // Optional: highlight selected thumbnail
-                  document.querySelectorAll('.product-thumb').forEach(function(img) {
-                    img.style.border = '2px solid #eee';
-                  });
-                  thumb.style.border = '2px solid #dcdfe1';
+
+    // =============================================
+    // SHOW SIZES FOR A SPECIFIC COLOR
+    // =============================================
+    function showSizesForColor(colorId) {
+        const color = selectedItems[colorId];
+        if (!color) return;
+        
+        $('#currentColorIndicator').show().text(color.colorName);
+        
+        if (Object.keys(color.sizes).length > 0) {
+            renderSizeOptions(colorId);
+            return;
+        }
+        
+        const $container = $('#sizeOptionsContainer');
+        $container.html('<span class="loading-text"><i class="fas fa-spinner fa-spin"></i> Loading sizes...</span>');
+        $('#sizeSection').show();
+        
+        $.ajax({
+            url: '{{ url("/api/item-variants/sizes-by-color") }}',
+            method: 'GET',
+            data: {
+                item_id: itemId,
+                color_id: colorId
+            },
+            dataType: 'json',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'Accept': 'application/json'
+            },
+            success: function(response) {
+                const sizes = response.sizes || [];
+                if (sizes.length === 0) {
+                    $container.html('<span class="no-sizes-text">No sizes available for this color</span>');
+                    return;
                 }
+                
+                sizes.forEach(function(s) {
+                    const stock = parseInt(s.available_qty) || 0;
+                    if (stock > 0) {
+                        // Store size as string
+                        color.sizes[String(s.label)] = stock;
+                    }
+                });
+                
+                renderSizeOptions(colorId);
+            },
+            error: function() {
+                $container.html('<span class="no-sizes-text" style="color:red;">Failed to load sizes</span>');
+            }
+        });
+    }
+
+    // =============================================
+    // RENDER SIZE OPTIONS
+    // =============================================
+    function renderSizeOptions(colorId) {
+        const color = selectedItems[colorId];
+        if (!color) return;
+        
+        const $container = $('#sizeOptionsContainer');
+        const sizeNames = Object.keys(color.sizes).sort();
+        
+        if (sizeNames.length === 0) {
+            $container.html('<span class="no-sizes-text">No sizes available for this color</span>');
+            return;
+        }
+        
+        let html = `<div style="margin-bottom:8px;padding:8px 0;">
+            <div style="font-weight:600;font-size:13px;margin-bottom:8px;">
+                <span class="color-dot" style="display:inline-block;width:12px;height:12px;border-radius:50%;background:${color.colorCode || '#ccc'};border:1px solid #ddd;margin-right:6px;vertical-align:middle;"></span>
+                ${color.colorName}
+            </div>
+            <div class="d-flex flex-wrap">`;
+        
+        sizeNames.forEach(function(size) {
+            const stock = color.sizes[size];
+            const isSelected = color.selectedSizes && color.selectedSizes.indexOf(size) !== -1;
+            
+            html += `<button type="button" 
+                            class="size-option-btn ${isSelected ? 'active' : ''} ${stock > 0 ? '' : 'out-of-stock'}" 
+                            ${stock > 0 ? '' : 'disabled'}
+                            data-color-id="${colorId}"
+                            data-size="${String(size)}"
+                            data-stock="${stock}">
+                        ${size}
+                    </button>`;
+
+        });
+        
+        html += `</div></div>`;
+        $container.html(html);
+    }
+
+    // =============================================
+    // SIZE SELECTION
+    // =============================================
+
+    $(document).on('click', '.size-option-btn:not(.out-of-stock):not(:disabled)', function() {
+        const $btn = $(this);
+
+        const colorId = $btn.data('color-id');
+        const size = String($btn.data('size')); // Convert to string
+        
+        if (!selectedItems[colorId]) return;
+        
+        if ($btn.hasClass('active')) {
+            $btn.removeClass('active');
+            const index = selectedItems[colorId].selectedSizes.indexOf(size);
+            if (index !== -1) {
+                selectedItems[colorId].selectedSizes.splice(index, 1);
+            }
+        } else {
+            $btn.addClass('active');
+            if (!selectedItems[colorId].selectedSizes) {
+                selectedItems[colorId].selectedSizes = [];
+            }
+            if (selectedItems[colorId].selectedSizes.indexOf(size) === -1) {
+                selectedItems[colorId].selectedSizes.push(size);
+            }
+        }
+        
+        updateSelectedSizesDisplay();
+        updateColorButtonStates();
+        updateButtonState();
+    });
+
+    // =============================================
+    // UPDATE SELECTED SIZES DISPLAY
+    // =============================================
+    function updateSelectedSizesDisplay() {
+        const $section = $('#selectedSizesSection');
+        const $list = $('#selectedSizesList');
+        const colorIds = Object.keys(selectedItems);
+        
+        let hasSelection = false;
+        colorIds.forEach(function(colorId) {
+            if (selectedItems[colorId].selectedSizes && selectedItems[colorId].selectedSizes.length > 0) {
+                hasSelection = true;
+            }
+        });
+        
+        if (!hasSelection) {
+            $section.removeClass('show');
+            $list.empty();
+            return;
+        }
+        
+        $section.addClass('show');
+        $list.empty();
+        
+        colorIds.forEach(function(colorId) {
+            const color = selectedItems[colorId];
+            const selectedSizes = color.selectedSizes || [];
+            
+            if (selectedSizes.length === 0) return;
+            
+            const validSizes = selectedSizes.filter(function(size) {
+                return color.sizes[size] !== undefined;
+            });
+            
+            if (validSizes.length === 0) return;
+            
+            const $group = $(`
+                <div class="color-group">
+                    <div class="color-group-header">
+                        <span class="color-dot" style="display:inline-block;width:12px;height:12px;border-radius:50%;background:${color.colorCode || '#ccc'};border:1px solid #ddd;margin-right:6px;vertical-align:middle;"></span>
+                        ${color.colorName}
+                        <span style="font-size:11px;color:#888;font-weight:400;">(${validSizes.length})</span>
+                    </div>
+                    <div class="color-group-sizes">
+                        ${validSizes.map(function(size) {
+                            return `<span class="selected-size-item">
+                                ${size}
+                                <span class="remove-size" data-color-id="${colorId}" data-size="${String(size)}">&times;</span>
+                            </span>`;
+                        }).join('')}
+                    </div>
+                </div>
+            `);
+            $list.append($group);
+        });
+    }
+
+    // =============================================
+    // REMOVE SIZE
+    // =============================================
+    $(document).on('click', '.remove-size', function() {
+        const colorId = $(this).data('color-id');
+        const size = String($(this).data('size'));
+        
+        if (selectedItems[colorId]) {
+            const index = selectedItems[colorId].selectedSizes.indexOf(size);
+            if (index !== -1) {
+                selectedItems[colorId].selectedSizes.splice(index, 1);
+            }
+            $(`.size-option-btn[data-color-id="${colorId}"][data-size="${size}"]`).removeClass('active');
+        }
+        
+        updateSelectedSizesDisplay();
+        updateColorButtonStates();
+        updateButtonState();
+    });
+
+    // =============================================
+    // UPDATE BUTTON STATE
+    // =============================================
+    function updateButtonState() {
+        let hasSelection = false;
+        const colorIds = Object.keys(selectedItems);
+        colorIds.forEach(function(colorId) {
+            const selectedSizes = selectedItems[colorId].selectedSizes || [];
+            if (selectedSizes.length > 0) {
+                hasSelection = true;
+            }
+        });
+        $('#addToCartBtn, #buyNowBtn').prop('disabled', !hasSelection);
+    }
+
+    // =============================================
+    // GET ALL SELECTED ITEMS
+    // =============================================
+    function getSelectedItems() {
+        const items = [];
+        const colorIds = Object.keys(selectedItems);
+        
+        colorIds.forEach(function(colorId) {
+            const color = selectedItems[colorId];
+            const selectedSizes = color.selectedSizes || [];
+            selectedSizes.forEach(function(size) {
+                if (color.sizes[size] !== undefined) {
+                    items.push({
+                        item_id: parseInt(itemId),
+                        color_id: parseInt(colorId),
+                        size: String(size), // Convert to string
+                        qty: 1
+                    });
+                }
+            });
+        });
+        
+        return items;
+    }
+
+    // =============================================
+    // ADD TO CART
+    // =============================================
+    $('#addToCartBtn').on('click', function() {
+    const $btn = $(this);
+    const items = getSelectedItems();
+
+    if (items.length === 0) {
+        showFeedback('Please select at least one item.', 'error');
+        return;
+    }
+
+    $btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Checking stock...');
+
+    validateStockBeforeSubmit(function(allAvailable) {
+        if (!allAvailable) {
+            showFeedback('Some selected sizes just went out of stock and were removed. Please review and try again.', 'error');
+            $btn.html('<i class="fas fa-cart-plus"></i> Add to Cart');
+            updateButtonState();
+            return;
+        }
+
+        const items = getSelectedItems();
+        if (items.length === 0) {
+            showFeedback('Please select at least one item.', 'error');
+            $btn.html('<i class="fas fa-cart-plus"></i> Add to Cart');
+            return;
+        }
+
+        $btn.html('<i class="fas fa-spinner fa-spin"></i> Adding...');
+
+        let successCount = 0;
+        let errorCount = 0;
+        let errors = [];
+
+        function processNext(index) {
+            if (index >= items.length) {
+                if (successCount > 0 && errorCount === 0) {
+                    showFeedback('All items added to cart!', 'success');
+                    setTimeout(function() { location.reload(); }, 1000);
+                } else if (successCount > 0 && errorCount > 0) {
+                    showFeedback('Added ' + successCount + ' items. ' + errorCount + ' failed.', 'error');
+                    $btn.prop('disabled', false).html('<i class="fas fa-cart-plus"></i> Add to Cart');
+                } else {
+                    showFeedback(errors.join('\n'), 'error');
+                    $btn.prop('disabled', false).html('<i class="fas fa-cart-plus"></i> Add to Cart');
+                }
+
+                selectedItems = {};
+                currentColorId = null;
+                $('.color-option-btn').removeClass('active viewing');
+                $('.size-option-btn').removeClass('active');
+                updateSelectedSizesDisplay();
+                updateButtonState();
+                $('#sizeOptionsContainer').empty();
+                $('#sizeSection').hide();
+                $('#currentColorIndicator').hide();
+                return;
+            }
+
+            const item = items[index];
+
+            $.ajax({
+                url: '{{ route("cart.store") }}',
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                    'Accept': 'application/json'
+                },
+                data: JSON.stringify({
+                    item_id: parseInt(item.item_id),
+                    color_id: parseInt(item.color_id),
+                    size: String(item.size),
+                    qty: parseInt(item.qty) || 1
+                }),
+                contentType: 'application/json',
+                success: function(response) {
+                    if (response.success) {
+                        successCount++;
+                    } else {
+                        errorCount++;
+                        errors.push(item.size + ': ' + (response.message || 'Failed'));
+                    }
+                    processNext(index + 1);
+                },
+                error: function(xhr) {
+                        errorCount++;
+                        let msg = 'Failed to add ' + item.size;
+                        try {
+                            const response = JSON.parse(xhr.responseText);
+                            if (response.message) {
+                                msg = item.size + ': ' + response.message;
+                            }
+                        } catch(e) {}
+                        errors.push(msg);
+                        processNext(index + 1);
+                    }
+                });
+            }
+
+            processNext(0);
+        });
+    });
+
+    // =============================================
+    // BUY NOW
+    // =============================================
+    $('#buyNowBtn').on('click', function() {
+        const items = getSelectedItems();
+        
+        if (items.length === 0) {
+            showFeedback('Please select at least one item.', 'error');
+            return;
+        }
+
+        let successCount = 0;
+        let errorCount = 0;
+
+        $(this).prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Processing...');
+
+        function processNext(index) {
+            if (index >= items.length) {
+                if (successCount > 0 && errorCount === 0) {
+                    window.location.href = '{{ route("orders.create", ["from_cart" => 1]) }}';
+                } else if (successCount > 0 && errorCount > 0) {
+                    showFeedback('Added ' + successCount + ' items. ' + errorCount + ' failed.', 'error');
+                    $('#buyNowBtn').prop('disabled', false).html('<i class="fas fa-bolt"></i> Buy Now');
+                } else {
+                    showFeedback('Failed to add items.', 'error');
+                    $('#buyNowBtn').prop('disabled', false).html('<i class="fas fa-bolt"></i> Buy Now');
+                }
+                return;
+            }
+
+            const item = items[index];
+            
+            $.ajax({
+                url: '{{ route("cart.store") }}',
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                    'Accept': 'application/json'
+                },
+                data: JSON.stringify({
+                    item_id: parseInt(item.item_id),
+                    color_id: parseInt(item.color_id),
+                    size: String(item.size), // Convert to string
+                    qty: parseInt(item.qty) || 1
+                }),
+                contentType: 'application/json',
+                success: function(response) {
+                    if (response.success) {
+                        successCount++;
+                    } else {
+                        errorCount++;
+                    }
+                    processNext(index + 1);
+                },
+                error: function() {
+                    errorCount++;
+                    processNext(index + 1);
+                }
+            });
+        }
+
+        processNext(0);
+    });
+
+    function updateColorButtonStates() {
+        $('.color-option-btn').each(function() {
+            const $btn = $(this);
+            const colorId = $btn.data('color-id');
+            const hasSelectedSizes = selectedItems[colorId] &&
+                selectedItems[colorId].selectedSizes &&
+                selectedItems[colorId].selectedSizes.length > 0;
+
+            $btn.toggleClass('active', !!hasSelectedSizes);
+        });
+    }
+
+    // =============================================
+    // HELPER FUNCTIONS
+    // =============================================
+    function showFeedback(message, type) {
+        const $feedback = $('#feedback');
+        if (!message) {
+            $feedback.hide().removeClass('success error');
+            return;
+        }
+        $feedback.removeClass('success error').addClass(type).text(message).show();
+        if (type === 'success') {
+            setTimeout(function() { $feedback.fadeOut(); }, 3000);
+        }
+    }
+
+    function disableSize(colorId, size) {
+        const color = selectedItems[colorId];
+        if (!color) return;
+
+        color.sizes[size] = 0;
+
+        const idx = (color.selectedSizes || []).indexOf(size);
+        if (idx !== -1) {
+            color.selectedSizes.splice(idx, 1);
+        }
+
+        $(`.size-option-btn[data-color-id="${colorId}"][data-size="${size}"]`)
+            .removeClass('active')
+            .addClass('out-of-stock')
+            .prop('disabled', true)
+            .attr('data-stock', 0);
+
+        updateSelectedSizesDisplay();
+        updateColorButtonStates();
+        updateButtonState();
+    }
+
+    function validateStockBeforeSubmit(callback) {
+        const colorIds = Object.keys(selectedItems).filter(function(colorId) {
+            return selectedItems[colorId].selectedSizes && selectedItems[colorId].selectedSizes.length > 0;
+        });
+
+        if (colorIds.length === 0) {
+            callback(true);
+            return;
+        }
+
+        let pending = colorIds.length;
+        let removedAny = false;
+
+        colorIds.forEach(function(colorId) {
+            $.ajax({
+                url: '{{ url("/api/item-variants/sizes-by-color") }}',
+                method: 'GET',
+                data: { item_id: itemId, color_id: colorId },
+                dataType: 'json',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'application/json'
+                },
+                success: function(response) {
+                    const sizes = response.sizes || [];
+                    const liveStock = {};
+                    sizes.forEach(function(s) {
+                        liveStock[String(s.label)] = parseInt(s.available_qty) || 0;
+                    });
+
+                    const color = selectedItems[colorId];
+                    (color.selectedSizes || []).slice().forEach(function(size) {
+                        const currentStock = liveStock[size] !== undefined ? liveStock[size] : 0;
+                        color.sizes[size] = currentStock;
+                        if (currentStock <= 0) {
+                            disableSize(colorId, size);
+                            removedAny = true;
+                        }
+                    });
+                },
+                complete: function() {
+                    pending--;
+                    if (pending === 0) {
+                        callback(!removedAny);
+                    }
+                }
+            });
+        });
+    }
+});
 </script>
 @endsection

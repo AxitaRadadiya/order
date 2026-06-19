@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use App\Traits\LogsActivity;
+use Illuminate\Support\Facades\Cache;
 
 class ItemVariant extends Model
 {
@@ -47,7 +48,7 @@ class ItemVariant extends Model
         return (int) $logs->where('type', 'restock')->sum('qty');
     }
 
-   public function getTotalSoldAttribute()
+    public function getTotalSoldAttribute()
     {
         $logs = $this->relationLoaded('inventoryLogs')
             ? $this->inventoryLogs
@@ -61,8 +62,35 @@ class ItemVariant extends Model
 
     public function getCurrentStockAttribute()
     {
-        return $this->total_production - $this->total_sold;
+        if (!$this->id) {
+            return $this->total_production - $this->total_sold;
+        }
+
+        $cacheKey = "variant_stock_{$this->id}";
+        
+        return Cache::remember($cacheKey, 60, function () {
+            $logs = $this->inventoryLogs()->get();
+            
+            $production = (int) $logs->where('type', 'restock')->sum('qty');
+            $deducted = (int) $logs->where('type', 'deduct')->sum('qty');
+            $restored = (int) $logs->where('type', 'restore')->sum('qty');
+            
+            return $production - $deducted + $restored;
+        });
+    }
+
+    protected static function booted()
+    {
+        static::saved(function ($variant) {
+            if ($variant->id) {
+                Cache::forget("variant_stock_{$variant->id}");
+            }
+        });
+        
+        static::deleted(function ($variant) {
+            if ($variant->id) {
+                Cache::forget("variant_stock_{$variant->id}");
+            }
+        });
     }
 }
-
-

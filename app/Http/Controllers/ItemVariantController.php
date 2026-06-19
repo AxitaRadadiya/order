@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 use App\Models\ItemVariant;
+use App\Models\InventoryLog;
 
 class ItemVariantController extends Controller
 {
@@ -21,14 +22,15 @@ class ItemVariantController extends Controller
         $variants = \App\Models\ItemVariant::with('size')
             ->where('item_id', $validated['item_id'])
             ->where('color_id', $validated['color_id'])
-            ->where('quantity', '>', 0)
             ->get();
 
         $sizes = $variants
             ->groupBy('size_id')
             ->map(function ($group) {
                 $size = $group->first()->size;
-                $available = $group->sum('quantity');
+                $available = $group->sum(function ($variant) {
+                    return $variant->current_stock;
+                });
 
                 return [
                     'size_id' => (int) $group->first()->size_id,
@@ -58,15 +60,9 @@ class ItemVariantController extends Controller
 
         $variant = ItemVariant::query()->findOrFail($validated['item_variant_id']);
         $addQty = (int) $validated['qty'];
-        $newQty = 0;
 
-        DB::transaction(function () use ($variant, $addQty, $validated, &$newQty) {
-            $variant->quantity = (int) $variant->quantity + $addQty;
-            $variant->save();
-
-            $newQty = (int) $variant->quantity;
-
-            \App\Models\InventoryLog::create([
+        DB::transaction(function () use ($variant, $addQty, $validated) {
+            InventoryLog::create([
                 'item_variant_id' => $variant->id,
                 'order_master_id' => null,
                 'type' => 'restock',
@@ -78,10 +74,7 @@ class ItemVariantController extends Controller
 
         return response()->json([
             'success' => true,
-            'new_qty' => $newQty,
+            'new_qty' => $variant->fresh()->current_stock,
         ]);
     }
 }
-
-
-

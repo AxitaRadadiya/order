@@ -420,13 +420,20 @@ class ItemController extends Controller
     }
 
     public function catalog()
-     {
-         $items = Item::with(['category', 'group', 'colors'])
-                      ->where('status', 1)
-                      ->where('show_item_on_web', 1)
-                      ->latest()
-                      ->paginate(12);
-         return view('admin.catalog.index', compact('items')); 
+    {
+        $items = Item::with([
+            'category', 
+            'group', 
+            'colors',
+            'variants.color',
+            'variants.size'
+        ])
+        ->where('status', 1)
+        ->where('show_item_on_web', 1)
+        ->latest()
+        ->paginate(12);
+        
+        return view('admin.catalog.index', compact('items')); 
     }
     public function showCatalog(Item $item)
     {
