@@ -75,6 +75,10 @@ class OrderMasterController extends Controller
             ->orderBy('id', 'desc')
             ->get();
 
+        $auth = auth()->user();
+        $canView = $auth?->hasPermission('order-view') ?? false;
+        $canEdit = $auth?->hasPermission('order-edit') ?? false;
+        $canDelete = $auth?->hasPermission('order-delete') ?? false;
         $data = [];
 
         foreach ($orders as $idx => $order) {
@@ -108,16 +112,26 @@ class OrderMasterController extends Controller
                 <button type="button" class="btn btn-sm" data-toggle="dropdown">
                     <i class="fas fa-ellipsis-v"></i>
                 </button>
-                <div class="dropdown-menu">
-                    <a class="dropdown-item" href="' . $viewUrl . '">View</a>
-                    <a class="dropdown-item" href="' . $editUrl . '">Edit</a>
+                <div class="dropdown-menu">';
+
+            if ($canView) {
+                $actions .= '<a class="dropdown-item" href="' . $viewUrl . '">View</a>';
+            }
+            if ($canEdit) {
+                $actions .= '<a class="dropdown-item" href="' . $editUrl . '">Edit</a>';
+            }
+            if ($canDelete) {
+                $actions .= '
                     <form method="POST" action="' . $deleteUrl . '">
                         <input type="hidden" name="_token" value="' . csrf_token() . '">
                         <input type="hidden" name="_method" value="DELETE">
-                        <button type="submit" class="dropdown-item text-danger deleteButton">Delete</button>
-                    </form>
-                </div>
-            </div>';
+                        <button type="submit" class="dropdown-item text-danger deleteButton">
+                            Delete
+                        </button>
+                    </form>';
+            }
+
+            $actions .= '</div></div>';
 
             // If the logged-in user is a distributor and this order was created by one of
             // their retailers and is awaiting distributor approval, show approve action.
@@ -219,6 +233,10 @@ class OrderMasterController extends Controller
     // -----------------------------------------------------------------------
     public function create(Request $request)
     {
+        $auth = auth()->user();
+        if (! $auth || ! $auth->hasPermission('order-create')) {
+            abort(403);
+        }
         $data = $this->viewData();
 
         // Prefill item_id if provided in query (from catalog "Add Order" button)
@@ -284,6 +302,10 @@ class OrderMasterController extends Controller
 
     public function store(Request $request)
     {
+        $auth = auth()->user();
+        if (! $auth || ! $auth->hasPermission('order-create')) {
+            abort(403);
+        }
         $request->validate([
             'user_id' => 'required|exists:users,id',
             'date'    => 'required|date',
@@ -375,6 +397,10 @@ class OrderMasterController extends Controller
     // -----------------------------------------------------------------------
     public function show(OrderMaster $order)
     {
+        $auth = auth()->user();
+        if (! $auth || ! $auth->hasPermission('order-view')) {
+            abort(403);
+        }
         $order->load('items', 'customer');
 
         // Retailers may only view their own orders. Distributors may view
@@ -409,6 +435,10 @@ class OrderMasterController extends Controller
     // -----------------------------------------------------------------------
     public function edit(OrderMaster $order)
     {
+        $auth = auth()->user();
+        if (! $auth || ! $auth->hasPermission('order-edit')) {
+            abort(403);
+        }
         $order->load('items');
 
         $user = auth()->user();
@@ -444,6 +474,10 @@ class OrderMasterController extends Controller
 
     public function update(Request $request, OrderMaster $order)
     {
+        $auth = auth()->user();
+        if (! $auth || ! $auth->hasPermission('order-edit')) {
+            abort(403);
+        }
         $user = auth()->user();
         if ($user) {
             if ($user->hasRole('retailer') && $order->user_id !== $user->id) {
@@ -586,6 +620,10 @@ class OrderMasterController extends Controller
     // -----------------------------------------------------------------------
     public function destroy(OrderMaster $order)
     {
+        $auth = auth()->user();
+        if (! $auth || ! $auth->hasPermission('order-delete')) {
+            abort(403);
+        }
         $user = auth()->user();
         if ($user && $user->hasRole(['retailer', 'distributor']) && $order->user_id !== $user->id) {
             return redirect()->back()->with('error', 'You are not allowed to delete this order.');

@@ -82,7 +82,7 @@ class SubGroupController extends Controller
         foreach ($rows as $row) {
             $actions = '<div class="btn-group">';
             if (auth()->user()) {
-                $actions .= '<a href="#" data-id="'.$row->id.'" data-name="'.e($row->name).'" class="btn btn-sm btn-info edit-sub-group-date-modal"><i class="fa fa-edit"></i></a>';
+                $actions .= '<a href="#" data-id="'.$row->id.'" data-name="'.e($row->name).'" data-group-id="'.$row->group_id.'" class="btn btn-sm btn-info edit-sub-group-date-modal"><i class="fa fa-edit"></i></a>';
             }
             if (auth()->user()) {
                 $actions .= '<form action="'.route('sub-group.destroy', $row->id).'" method="POST" class="deleteForm d-inline">'.csrf_field().'<input type="hidden" name="_method" value="DELETE"><button type="submit" class="deleteButton btn btn-sm btn-danger border-0"><i class="fa fa-trash"></i></button></form>';

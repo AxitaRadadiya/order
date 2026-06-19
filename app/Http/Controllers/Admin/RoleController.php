@@ -118,9 +118,10 @@ class RoleController extends Controller
 
             // Action buttons
             $actions = '';
+            if (auth()->user() && $role->name !== 'super-admin') {
             if (auth()->user()) {
                 $actions .= '<a href="' . route('roles.edit', $role->id) . '" class="btn btn-sm btn-info mr-1"><i class="fa fa-edit"></i></a>';
-            }
+            }}
 
             $data[] = [
                 'id'          => $start + $i + 1,

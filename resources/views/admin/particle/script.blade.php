@@ -1173,6 +1173,7 @@ $(document).ready(function () {
     $(document).on('click', '.edit-sub-category-date-modal', function () {
         var subCategoryId   = $(this).data('id');
         var subCategoryName = $(this).data('name');
+        var categoryId      = $(this).data('category-id');
  
         // Reset errors
         $('.sub-category-name-error').text('');
@@ -1180,6 +1181,7 @@ $(document).ready(function () {
  
         $('#subCategoryForm input[name="category_id"]').val(subCategoryId);
         $('#sub_category_name').val(subCategoryName);
+        $('#category_id').val(categoryId);
  
         var updateUrl = '{{ route("sub-category.update", ":id") }}'.replace(':id', subCategoryId);
         $('#subCategoryForm').attr('action', updateUrl);
@@ -1274,6 +1276,7 @@ $(document).ready(function () {
     $(document).on('click', '.edit-sub-group-date-modal', function () {
         var subGroupId   = $(this).data('id');
         var subGroupName = $(this).data('name');
+        var groupId      = $(this).data('group-id');
  
         // Reset errors
         $('.sub-group-name-error').text('');
@@ -1281,6 +1284,7 @@ $(document).ready(function () {
  
         $('#sub_group_id').val(subGroupId);
         $('#sub_group_name').val(subGroupName);
+        $('#group_id').val(groupId);
  
         var updateUrl = '{{ route("sub-group.update", ":id") }}'.replace(':id', subGroupId);
         $('#subGroupForm').attr('action', updateUrl);

@@ -38,14 +38,6 @@ class PermissionsSeeder extends Seeder
                     ['name' => 'order-delete'],
                 ],
             ],
-            'Setting' => [
-                'Setting' => [
-                    ['name' => 'setting-view'],
-                    ['name' => 'setting-create'],
-                    ['name' => 'setting-edit'],
-                    ['name' => 'setting-delete'],
-                ],
-            ],
             'Report' => [
                 'Report' => [
                     ['name' => 'report-view'],

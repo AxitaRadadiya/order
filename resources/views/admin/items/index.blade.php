@@ -32,9 +32,11 @@
       <div class="card-header">
         <h3 class="card-title">Item List</h3>
         <div class="card-tools d-flex align-items-center">
+          @if(auth()->check() && auth()->user()->hasPermission('item-create'))
           <a href="{{ route('items.create') }}" class="btn-create">
             <i class="fas fa-plus mr-1"></i>Add Item
           </a>
+          @endif
         </div>
       </div>
       <div class="card-body">
