@@ -18,7 +18,9 @@
                 <div class="col-md-6 text-md-right">
                     <a href="{{ route('customers.index') }}" class="btn btn-outline-custom mr-2"><i class="fas fa-arrow-left mr-1"></i> Back</a>
                     <button type="button" onclick="window.print()" class="btn btn-outline-custom mr-2"><i class="fas fa-print mr-1"></i> Print</button>
+                    @if(auth()->check() && auth()->user()->hasPermission('customer-edit'))
                     <a href="{{ route('customers.edit', $customer) }}" class="btn btn-create"><i class="fas fa-edit mr-1"></i> Edit Customer</a>
+                    @endif
                 </div>
             </div>
         </div>

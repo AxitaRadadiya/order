@@ -527,11 +527,11 @@
                   <div class="d-flex justify-content-between py-1">
                     <strong>Mark Down (%)</strong>
                     @if(auth()->user() && auth()->user()->hasRole(['super-admin', 'superadmin']))
-                    <input type="number" step="0.01" name="markdown" id="markdown"
+                    <input type="number" step="0.01" min="0" max="100" name="markdown" id="markdown"
                       class="form-control form-control-sm w-50 text-right"
                       value="{{ old('markdown', $order->markdown ?? 0) }}">
                     @else
-                    <input type="number" step="0.01" name="markdown" id="markdown"
+                    <input type="number" step="0.01" min="0" max="100" name="markdown" id="markdown"
                       class="form-control form-control-sm w-50 text-right" readonly
                       value="{{ old('markdown', $order->markdown ?? 0) }}">
                     @endif

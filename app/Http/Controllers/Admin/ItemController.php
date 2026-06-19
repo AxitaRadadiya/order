@@ -33,6 +33,10 @@ class ItemController extends Controller
 
     public function create(): View
     {
+        $auth = auth()->user();
+        if (! $auth || ! $auth->hasPermission('item-create')) {
+            abort(403);
+        }
         return view('admin.items.create', [
             'categories'     => Category::orderBy('name')->get(),
             'groups'         => Group::orderBy('name')->get(),
@@ -47,6 +51,10 @@ class ItemController extends Controller
 
     public function store(Request $request): RedirectResponse
     {
+        $auth = auth()->user();
+        if (! $auth || ! $auth->hasPermission('item-create')) {
+            abort(403);
+        }
         $validated = $request->validate([
             'name'             => 'required|string|max:255',
             'article_number'   => 'nullable|string|max:100|unique:items,article_number',
@@ -173,6 +181,10 @@ class ItemController extends Controller
 
     public function show(Item $item, Request $request): View
     {
+        $auth = auth()->user();
+        if (! $auth || ! $auth->hasPermission('item-view')) {
+            abort(403);
+        }
         $item->load([
             'variants.inventoryLogs',
             'category',
@@ -230,6 +242,10 @@ class ItemController extends Controller
 
     public function edit(Item $item): View
     {
+        $auth = auth()->user();
+        if (! $auth || ! $auth->hasPermission('item-edit')) {
+            abort(403);
+        }
         $item->load('variants');
 
         return view('admin.items.edit', [
@@ -246,6 +262,11 @@ class ItemController extends Controller
 
     public function update(Request $request, Item $item): RedirectResponse
     {
+        $auth = auth()->user();
+        if (! $auth || ! $auth->hasPermission('item-edit')) {
+            abort(403);
+        }
+
     $validated = $request->validate([
         'name'             => 'required|string|max:255',
         'article_number'   => 'nullable|string|max:100|unique:items,article_number,' . $item->id,
@@ -409,6 +430,10 @@ class ItemController extends Controller
 
     public function destroy(Item $item): RedirectResponse
     {
+        $auth = auth()->user();
+        if (! $auth || ! $auth->hasPermission('item-delete')) {
+            abort(403);
+        }
         $oldImages = is_array($item->images) ? $item->images : ($item->image ? [$item->image] : []);
         foreach ($oldImages as $old) {
             Storage::disk('public')->delete($old);
@@ -459,6 +484,10 @@ class ItemController extends Controller
             ->orderBy('id', 'desc')
             ->get();
 
+        $auth = auth()->user();
+        $canView = $auth?->hasPermission('item-view') ?? false;
+        $canEdit = $auth?->hasPermission('item-edit') ?? false;
+        $canDelete = $auth?->hasPermission('item-delete') ?? false;
         $data = [];
 
         foreach ($items as $idx => $item) {
@@ -484,15 +513,21 @@ class ItemController extends Controller
                 </button>
                 <div class="dropdown-menu action-dropdown" role="menu">';
 
-            $actions .= '<a class="dropdown-item" href="' . $viewUrl . '">View</a>';
-            $actions .= '<a class="dropdown-item" href="' . $editUrl . '">Edit</a>';
-            $actions .= '
-                <form method="POST" action="' . $deleteUrl . '" style="display:inline;">
-                    <input type="hidden" name="_token" value="' . csrf_token() . '">
-                    <input type="hidden" name="_method" value="DELETE">
-                    <button type="submit" class="dropdown-item deleteButton">Delete</button>
-                </form>
-            ';
+            if ($canView) {
+                $actions .= '<a class="dropdown-item" href="' . $viewUrl . '">View</a>';
+            }
+            if ($canEdit) {
+                $actions .= '<a class="dropdown-item" href="' . $editUrl . '">Edit</a>';
+            }
+            if ($canDelete) {
+                $actions .= '
+                    <form method="POST" action="' . $deleteUrl . '" style="display:inline;">
+                        <input type="hidden" name="_token" value="' . csrf_token() . '">
+                        <input type="hidden" name="_method" value="DELETE">
+                        <button type="submit" class="dropdown-item deleteButton">Delete</button>
+                    </form>
+                ';
+            }
             $actions .= '</div></div>';
 
             $data[] = [

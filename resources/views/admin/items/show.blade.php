@@ -59,9 +59,11 @@
                     <a href="{{ route('items.index') }}" class="btn btn-outline-custom mr-2">
                         <i class="fas fa-arrow-left mr-1"></i> Back
                     </a>
-                    <a href="{{ route('items.edit', $item->id) }}" class="btn btn-create">
-                        <i class="fas fa-edit mr-1"></i> Edit Item
-                    </a>
+                    @if(auth()->check() && auth()->user()->hasPermission('item-edit'))
+                        <a href="{{ route('items.edit', $item->id) }}" class="btn btn-create">
+                            <i class="fas fa-edit mr-1"></i> Edit Item
+                        </a>
+                    @endif
                 </div>
             </div>
         </div>

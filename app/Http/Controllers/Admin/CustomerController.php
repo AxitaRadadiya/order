@@ -27,6 +27,10 @@ class CustomerController extends Controller
 
     public function create()
     {
+        $auth = auth()->user();
+        if (! $auth || ! $auth->hasPermission('customer-create')) {
+            abort(403);
+        }
         $countries = Country::orderBy('name')->get();
         $states = State::orderBy('name')->get();
         $cities = City::orderBy('name')->get();
@@ -52,6 +56,10 @@ class CustomerController extends Controller
 
     public function store(Request $request)
     {
+        $auth = auth()->user();
+        if (! $auth || ! $auth->hasPermission('customer-create')) {
+            abort(403);
+        }
         $request->validate([
             'first_name' => 'required|string|max:255',
             'last_name'  => 'required|string|max:255',
@@ -210,6 +218,10 @@ class CustomerController extends Controller
 
     public function show(Customer $customer)
     {
+        $auth = auth()->user();
+        if (! $auth || ! $auth->hasPermission('customer-view')) {
+            abort(403);
+        }
         $customer->load(['role', 'address', 'bankDetail']);
 
         // Show users created by this customer (only meaningful for distributor profiles)
@@ -236,6 +248,10 @@ class CustomerController extends Controller
 
     public function edit(Customer $customer)
     {
+        $auth = auth()->user();
+        if (! $auth || ! $auth->hasPermission('customer-edit')) {
+            abort(403);
+        }
         $customer->load(['address', 'bankDetail']);
         $countries = Country::orderBy('name')->get();
         $states = State::orderBy('name')->get();
@@ -274,6 +290,10 @@ class CustomerController extends Controller
 
     public function update(Request $request, Customer $customer)
     {
+        $auth = auth()->user();
+        if (! $auth || ! $auth->hasPermission('customer-edit')) {
+            abort(403);
+        }
         try {
             $u = auth()->user();
             if ($u && $u->hasRole('distributor')) {
@@ -473,6 +493,10 @@ class CustomerController extends Controller
 
     public function destroy(Customer $customer)
     {
+        $auth = auth()->user();
+        if (! $auth || ! $auth->hasPermission('customer-delete')) {
+            abort(403);
+        }
         $customer->delete();
         return redirect()->route('customers.index')
             ->with('success', 'Customer deleted successfully.');
@@ -557,6 +581,11 @@ class CustomerController extends Controller
         $customers = $query->orderBy($orderColumn, $orderDir)
             ->skip($start)->take($length)->get();
 
+        $auth = auth()->user();
+        $canView   = $auth?->hasPermission('customer-view') ?? false;
+        $canEdit   = $auth?->hasPermission('customer-edit') ?? false;
+        $canDelete = $auth?->hasPermission('customer-delete') ?? false;
+
         $data = [];
         foreach ($customers as $customer) {
             $statusBadge = '';
@@ -576,8 +605,12 @@ class CustomerController extends Controller
                 </button>
                 <div class="dropdown-menu action-dropdown" role="menu">';
 
-            $actions .= '<a class="dropdown-item" href="' . $viewUrl . '">View</a>';
-            $actions .= '<a class="dropdown-item" href="' . $editUrl . '">Edit</a>';
+            if ($canView){
+                $actions .= '<a class="dropdown-item" href="' . $viewUrl . '">View</a>';
+            }
+            if ($canEdit){
+                $actions .= '<a class="dropdown-item" href="' . $editUrl . '">Edit</a>';
+            }
 
             try {
                 $u = auth()->user();
@@ -596,14 +629,15 @@ class CustomerController extends Controller
             } catch (\Throwable $e) {
                 // ignore
             }
-
-            $actions .= '
-                <form method="POST" action="' . $deleteUrl . '" style="display:inline;">
-                    <input type="hidden" name="_token" value="' . csrf_token() . '">
-                    <input type="hidden" name="_method" value="DELETE">
-                    <button type="submit" class="dropdown-item deleteButton">Delete</button>
-                </form>
-            ';
+            if ($canDelete){
+                $actions .= '
+                    <form method="POST" action="' . $deleteUrl . '" style="display:inline;">
+                        <input type="hidden" name="_token" value="' . csrf_token() . '">
+                        <input type="hidden" name="_method" value="DELETE">
+                        <button type="submit" class="dropdown-item deleteButton">Delete</button>
+                    </form>
+                ';
+            }
             $actions .= '</div></div>';
 
             $data[] = [

@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class User extends Authenticatable
 {
@@ -48,6 +49,62 @@ class User extends Authenticatable
         }
 
         return strcasecmp($role->name, $roles) === 0;
+    }
+
+    public function hasPermission(string|array $permissions): bool
+    {
+        if ($this->hasRole('super-admin')) {
+            return true;
+        }
+
+        $role = $this->relationLoaded('role')
+            ? $this->role
+            : $this->role()->with('permissions')->first();
+
+        if (! $role) {
+            return false;
+        }
+
+        $grantedPermissions = $role->relationLoaded('permissions')
+            ? $role->permissions
+            : $role->permissions()->get();
+
+        $grantedNames = $grantedPermissions
+            ->pluck('name')
+            ->map(fn ($name) => $this->normalizePermissionName($name))
+            ->filter()
+            ->values()
+            ->all();
+
+        foreach ((array) $permissions as $permission) {
+            if (in_array($this->normalizePermissionName($permission), $grantedNames, true)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    public function hasAnyPermission(array $permissions): bool
+    {
+        return $this->hasPermission($permissions);
+    }
+
+    protected function normalizePermissionName(?string $permission): string
+    {
+        $permission = Str::of((string) $permission)->lower()->trim()->value();
+
+        if ($permission === '') {
+            return '';
+        }
+
+        $parts = explode('-', $permission, 2);
+
+        if (count($parts) === 1) {
+            return Str::singular($parts[0]);
+        }
+
+        return Str::singular($parts[0]) . '-' . $parts[1];
     }
 
     public function assignRole(string|int $role): void

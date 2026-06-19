@@ -81,7 +81,7 @@
             <input type="text" name="name"
                    class="form-control @error('name') is-invalid @enderror"
                    value="{{ old('name', $role->name) }}"
-                   placeholder="e.g. Manager" required>
+                   placeholder="e.g. Manager" required {{ in_array(strtolower($role->name), ['distributor', 'retailer']) ? 'readonly' : '' }}>
             @error('name')<span class="invalid-feedback">{{ $message }}</span>@enderror
           </div>
         </div>

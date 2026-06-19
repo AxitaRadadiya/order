@@ -24,9 +24,11 @@
       <div class="card-header">
         <h3 class="card-title">Customer List</h3>
         <div class="card-tools d-flex align-items-center">
+          @if(auth()->check() && auth()->user()->hasPermission('customer-create'))
           <a href="{{ route('customers.create') }}" class="btn-create">
             <i class="fas fa-plus mr-1"></i>Add Customer
           </a>
+          @endif
         </div>
       </div>
       <div class="card-body pt-2 pb-3 border-bottom">

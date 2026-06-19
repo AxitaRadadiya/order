@@ -40,9 +40,11 @@
                     <a href="{{ route('orders.index') }}" class="btn btn-outline-custom mr-2">
                         <i class="fas fa-arrow-left mr-1"></i> Back
                     </a>
+                    @if(auth()->check() && auth()->user()->hasPermission('order-edit'))
                     <a href="{{ route('orders.edit', $order) }}" class="btn btn-create">
                         <i class="fas fa-edit mr-1"></i> Edit Order
                     </a>
+                    @endif
                 </div>
             </div>
         </div>
