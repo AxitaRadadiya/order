@@ -1,4 +1,7 @@
 @extends('admin.layouts.app')
+@php
+  $hasLockedItem = $hasLockedItem ?? false;
+@endphp
 @section('title', 'Edit Order')
 
 @section('style')
