@@ -592,7 +592,6 @@
                 </div>
 
                 <div id="sr_chips" class="mb-2"></div>
-                <div id="sr_summary" class="alert alert-info py-2 mb-2" style="display:none"></div>
 
                 <div class="row text-center mb-3">
                   <div class="col-4">
@@ -1498,18 +1497,6 @@
       $('#sr_chips').html(sizes.map(function(s) {
         return '<span class="badge badge-primary mr-1 mb-1">' + s + '</span>';
       }).join(''));
-
-      if (sizes.length) {
-        $('#sr_summary').show().text(
-          'Sizes ' + from + ' → ' + to +
-          ' = [' + sizes.join(', ') + '] → ' +
-          pcsSet + ' pcs/set × ' + sets + ' sets = ' +
-          totalPcs + ' total pcs × ₹' + rate.toFixed(0) +
-          ' = ₹' + amount.toLocaleString('en-IN')
-        );
-      } else {
-        $('#sr_summary').hide();
-      }
 
       $('#sr_pcs_set').text(pcsSet || '—');
       $('#sr_total_pcs').text(totalPcs || '—');

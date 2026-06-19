@@ -430,7 +430,6 @@
                 </div>
 
                 <div id="sr_chips" class="mb-2"></div>
-                <div id="sr_summary" class="alert alert-info py-2 mb-2" style="display:none"></div>
 
                 <div class="row text-center mb-3">
                   <div class="col-4">
