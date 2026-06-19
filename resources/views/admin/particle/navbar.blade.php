@@ -21,7 +21,7 @@
          style="width:auto;display:flex;align-items:center;gap:8px;border-radius:7px;color:#62748E;">
         <i class="fas fa-shopping-cart" style="font-size:.95rem;"></i>
         <span id="cart-count" class="badge badge-pill badge-danger" style="font-size:.72rem;padding:.25rem .45rem;">
-          {{ collect(session('cart', []))->sum('qty') }}
+          {{ is_array(session('cart', [])) ? count(session('cart', [])) : 0 }}
         </span>
       </a>
     </li>
