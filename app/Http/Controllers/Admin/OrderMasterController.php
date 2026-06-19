@@ -642,7 +642,7 @@ class OrderMasterController extends Controller
         }
 
         $customers = $customersQuery->get();
-        $items     = Item::with('colors')->orderBy('name')->get();
+        $items     = Item::with(['variants.color'])->orderBy('name')->get();
 
         $customersJson = $customers->mapWithKeys(function (User $u) {
             $addr     = $u->address ?? null;
@@ -697,6 +697,14 @@ class OrderMasterController extends Controller
                     : array_map('trim', explode(',', $item->sizes));
             }
 
+            $variantColors = $item->variants
+                ->map(fn ($variant) => $variant->color)
+                ->filter()
+                ->unique('id')
+                ->values();
+
+            $itemColors = $variantColors->isNotEmpty() ? $variantColors : $item->colors;
+
             return [
                 'id'             => $item->id,
                 'article_number' => $item->article_number ?? $item->sku ?? '',
@@ -705,9 +713,10 @@ class OrderMasterController extends Controller
                 'rate'           => $item->price ?? 0,
                 'tax'            => $item->tax_percent ?? 0,
                 'desc'           => $item->description ?? '',
-                'colors'         => $item->colors->map(fn ($color) => [
-                    'id' => $color->id,
-                    'name' => $color->name,
+                'colors'         => $itemColors->map(fn ($color) => [
+                    'id'         => $color->id,
+                    'name'       => $color->name,
+                    'color_code' => $color->color_code,
                 ])->values(),
                 'sizes'          => $sizes,
             ];
