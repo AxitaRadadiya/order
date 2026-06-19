@@ -19,3 +19,12 @@ body.admin-layout { background: var(--color-bg); color: var(--color-foreground);
 .alert { padding: 12px 16px; border-radius:4px; margin-bottom:12px; }
 .alert-success { background:#ecfdf5; color:#065f46; }
 .alert-danger { background:#fff1f2; color:#9b1c2a; }
+.table-responsive{overflow-x:auto;-webkit-overflow-scrolling:touch;}
+table{max-width:100%;}
+.card{min-width:0;}
+.admin-main{min-width:0;}
+.admin-content{min-width:0;}
+img,video{max-width:100%;height:auto;}
+.modal-dialog{max-width:95vw;}
+.text-wrap, .break-words, .word-break{overflow-wrap:anywhere;word-break:break-word;}
+

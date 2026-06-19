@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 use App\Models\ItemVariant;
+use App\Models\InventoryLog;
 
 class ItemVariantController extends Controller
 {
@@ -17,17 +18,16 @@ class ItemVariantController extends Controller
             'color_id' => ['required', 'integer', 'exists:colors,id'],
         ]);
 
-        // Eager load the size relationship.
         $variants = \App\Models\ItemVariant::with('size')
             ->where('item_id', $validated['item_id'])
             ->where('color_id', $validated['color_id'])
-            ->where('quantity', '>', 0)
             ->get();
 
         $sizes = $variants
             ->groupBy('size_id')
             ->map(function ($group) {
                 $size = $group->first()->size;
+                // Use quantity (current stock) directly
                 $available = $group->sum('quantity');
 
                 return [
@@ -58,14 +58,14 @@ class ItemVariantController extends Controller
 
         $variant = ItemVariant::query()->findOrFail($validated['item_variant_id']);
         $addQty = (int) $validated['qty'];
-        $newQty = 0;
 
-        DB::transaction(function () use ($variant, $addQty, $validated, &$newQty) {
-            $variant->quantity = (int) $variant->quantity + $addQty;
+        DB::transaction(function () use ($variant, $addQty, $validated) {
+            // Update variant table columns
+            $variant->production_quantity = $variant->production_quantity + $addQty;
+            $variant->quantity = $variant->quantity + $addQty;  // Current stock
             $variant->save();
 
-            $newQty = (int) $variant->quantity;
-
+            // Create inventory log
             \App\Models\InventoryLog::create([
                 'item_variant_id' => $variant->id,
                 'order_master_id' => null,
@@ -78,10 +78,7 @@ class ItemVariantController extends Controller
 
         return response()->json([
             'success' => true,
-            'new_qty' => $newQty,
+            'new_qty' => $variant->fresh()->quantity,
         ]);
     }
 }
-
-
-

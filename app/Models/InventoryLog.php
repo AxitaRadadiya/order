@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Facades\Cache;
 
 class InventoryLog extends Model
 {
@@ -34,5 +35,25 @@ class InventoryLog extends Model
     {
         return $this->belongsTo(User::class, 'created_by');
     }
-}
 
+    protected static function booted()
+    {
+        static::saved(function ($log) {
+            if ($log->item_variant_id) {
+                Cache::forget("variant_stock_{$log->item_variant_id}");
+            }
+        });
+        
+        static::deleted(function ($log) {
+            if ($log->item_variant_id) {
+                Cache::forget("variant_stock_{$log->item_variant_id}");
+            }
+        });
+        
+        static::updated(function ($log) {
+            if ($log->item_variant_id) {
+                Cache::forget("variant_stock_{$log->item_variant_id}");
+            }
+        });
+    }
+}

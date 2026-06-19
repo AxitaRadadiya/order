@@ -61,9 +61,6 @@ class ItemController extends Controller
             'item_code'        => 'nullable|string|max:100|unique:items,item_code',
             'sub_category'     => 'nullable|exists:sub_categories,id',
             'sub_group'        => 'nullable|exists:sub_groups,id',
-            // 'colors'           => 'nullable|array',
-            // 'colors.*'         => 'nullable|exists:colors,id',
-            // 'sizes'            => 'nullable|array',
             'variants' => 'required|array|min:1',
             'variants.*.color_id' => 'required|exists:colors,id',
             'variants.*.size_id' => 'required|exists:sizes,id',
@@ -75,7 +72,6 @@ class ItemController extends Controller
             'price'            => 'required|numeric|min:0',
             'tax_id'           => 'nullable|exists:tax_masters,id',
             'video_link'       => 'nullable|url',
-            // images[] — up to 5 files, jpg/png only, max 2 MB each
             'images'           => 'nullable|array|max:5',
             'images.*'         => 'image|mimes:jpg,jpeg,png|max:2048',
             'status'           => 'nullable|in:0,1',
@@ -125,10 +121,6 @@ class ItemController extends Controller
         $validated['status']           = (int) ($validated['status'] ?? 1);
         $validated['show_item_on_web'] = (int) ($validated['show_item_on_web'] ?? 1);
 
-        // Extract colors (pivot) before creating — no `colors` column on items table
-        // $colors = $validated['colors'] ?? null;
-        // unset($validated['colors']);
-
         $variants = $validated['variants'] ?? [];
 
         $combinations = [];
@@ -159,17 +151,22 @@ class ItemController extends Controller
             $item = Item::create($validated);
 
             foreach ($variants as $variant) {
+                $quantity = (int) $variant['quantity'];
+                
+                // Create variant with production_quantity and sold_quantity
                 $createdVariant = $item->variants()->create([
                     'color_id' => $variant['color_id'],
                     'size_id' => $variant['size_id'],
-                    'quantity' => $variant['quantity'],
+                    'quantity' => $quantity,              // Current stock
+                    'production_quantity' => $quantity,   // Production = initial quantity
+                    'sold_quantity' => 0,                 // No sales yet
                 ]);
 
                 $createdVariant->inventoryLogs()->create([
                     'item_variant_id' => $createdVariant->id,
                     'order_master_id' => null,
                     'type' => 'restock',
-                    'qty' => $variant['quantity'],
+                    'qty' => $quantity,
                     'note' => 'Initial stock',
                     'created_by' => $userId,
                 ]);
@@ -384,6 +381,14 @@ class ItemController extends Controller
                 $type = $newQty > $oldQty ? 'restock' : 'deduct';
                 $note = $newQty > $oldQty ? 'Stock updated' : 'Stock adjusted';
 
+                // Update production_quantity or sold_quantity based on type
+                if ($type === 'restock') {
+                    $existingVariant->production_quantity = $existingVariant->production_quantity + $diff;
+                } else {
+                    $existingVariant->sold_quantity = $existingVariant->sold_quantity + $diff;
+                }
+                $existingVariant->save();
+
                 $existingVariant->inventoryLogs()->create([
                     'item_variant_id' => $existingVariant->id,
                     'order_master_id' => null,
@@ -399,6 +404,8 @@ class ItemController extends Controller
                     'color_id' => $variant['color_id'],
                     'size_id'  => $variant['size_id'],
                     'quantity' => $newQty,
+                    'production_quantity' => $newQty,   // Production = initial quantity
+                    'sold_quantity' => 0,               // No sales yet
                 ]);
 
                 // Log full qty as initial stock — same as store()
@@ -445,13 +452,20 @@ class ItemController extends Controller
     }
 
     public function catalog()
-     {
-         $items = Item::with(['category', 'group', 'colors'])
-                      ->where('status', 1)
-                      ->where('show_item_on_web', 1)
-                      ->latest()
-                      ->paginate(12);
-         return view('admin.catalog.index', compact('items')); 
+    {
+        $items = Item::with([
+            'category', 
+            'group', 
+            'colors',
+            'variants.color',
+            'variants.size'
+        ])
+        ->where('status', 1)
+        ->where('show_item_on_web', 1)
+        ->latest()
+        ->paginate(12);
+        
+        return view('admin.catalog.index', compact('items')); 
     }
     public function showCatalog(Item $item)
     {

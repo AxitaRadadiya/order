@@ -103,43 +103,6 @@
 								</select>
 							</div>
 						</div>
-						<!-- <div class="col-md-4">
-							<div class="form-group">
-								<label>Colors</label>
-								<select name="colors[]" class="form-control select2 @error('colors') is-invalid @enderror" multiple>
-									@foreach($colors as $color)
-									<option value="{{ $color->id }}" {{ in_array($color->id, (array) old('colors', $item->colors->pluck('id')->toArray())) ? 'selected' : '' }}>{{ $color->color_code }}</option>
-									@endforeach
-								</select>
-								@error('colors')<div class="invalid-feedback">{{ $message }}</div>@enderror
-							</div>
-						</div> -->
-
-						{{-- Sizes --}}
-						<!-- <div class="col-md-12">
-							<div class="form-group">
-								<label>Sizes</label>
-								@php
-								$sizesList     = $sizes ?? [28,30,32,34,36,38,40,42,44,46,48];
-								$selectedSizes = old('sizes', []);
-								if (empty($selectedSizes) && !empty($item->sizes)) {
-								    $selectedSizes = is_array($item->sizes)
-								        ? $item->sizes
-								        : array_map('trim', explode(',', $item->sizes));
-								}
-								$selectedSizes = array_map('strval', (array) $selectedSizes);
-								@endphp
-								<div>
-									@foreach($sizesList as $sz)
-									<div class="form-check form-check-inline">
-										<input class="form-check-input" type="checkbox" name="sizes[]" id="size_{{ $sz }}" value="{{ $sz }}"
-											{{ in_array((string)$sz, $selectedSizes) ? 'checked' : '' }}>
-										<label class="form-check-label" for="size_{{ $sz }}">{{ $sz }}</label>
-									</div>
-									@endforeach
-								</div>
-							</div>
-						</div> -->
 
 						<div class="col-md-3">
 							<div class="form-group">
@@ -245,9 +208,6 @@
 							<div class="card mt-3">
 								<div class="card-header pl-0">
 									<h5 class="mb-0">Item Variants</h5>
-									<!-- <button type="button" class="btn btn-sm btn-create" id="addVariantRow">
-										<i class="fas fa-plus"></i> Add Variant
-									</button> -->
 								</div>
 
 								<div class="card-body p-0">
@@ -299,24 +259,24 @@
 														<input type="number"
 															name="variants[{{ $index }}][quantity]"
 															class="form-control"
-															value="{{ $variant->quantity }}"
+															value="{{ $variant->current_stock }}"
 															min="0">
 													</td>
 
-<td class="text-center">
-<button type="button"
-													class="btn btn-create btn-sm restockBtn"
-													data-variant-id="{{ $variant->id }}"
-													data-color-code="{{ optional($variant->color)->color_code }}"
-													data-size-name="{{ optional($variant->size)->name }}"
-													data-current-qty="{{ $variant->quantity }}"
-													>
-													<i class="fas fa-plus"></i> Restock
-												</button>
-													<button type="button" class="btn btn-danger btn-sm removeRow">
-														<i class="fas fa-trash"></i>
-													</button>
-												</td>
+													<td class="text-center">
+														<button type="button"
+															class="btn btn-create btn-sm restockBtn"
+															data-variant-id="{{ $variant->id }}"
+															data-color-code="{{ optional($variant->color)->color_code }}"
+															data-size-name="{{ optional($variant->size)->name }}"
+															data-current-qty="{{ $variant->current_stock }}"
+														>
+															<i class="fas fa-plus"></i> Restock
+														</button>
+														<button type="button" class="btn btn-danger btn-sm removeRow">
+															<i class="fas fa-trash"></i>
+														</button>
+													</td>
 												</tr>
 
 												@php $index++; @endphp
@@ -344,18 +304,18 @@
 														<input type="number" name="variants[0][quantity]" class="form-control" value="0" min="0">
 													</td>
 
-<td class="text-center">
-<button type="button"
-													class="btn btn-create btn-sm restockBtn"
-													disabled
-													title="Select color/size first"
-												>
-													<i class="fas fa-plus"></i> Restock
-													</button>
-													<button type="button" class="btn btn-danger btn-sm removeRow">
-														<i class="fas fa-trash"></i>
-													</button>
-												</td>
+													<td class="text-center">
+														<button type="button"
+															class="btn btn-create btn-sm restockBtn"
+															disabled
+															title="Select color/size first"
+														>
+															<i class="fas fa-plus"></i> Restock
+														</button>
+														<button type="button" class="btn btn-danger btn-sm removeRow">
+															<i class="fas fa-trash"></i>
+														</button>
+													</td>
 												</tr>
 											@endforelse
 										</tbody>

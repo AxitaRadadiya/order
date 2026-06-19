@@ -13,7 +13,9 @@ class ItemVariant extends Model
         'item_id',
         'color_id',
         'size_id',
-        'quantity',
+        'quantity',          // Current stock
+        'production_quantity',
+        'sold_quantity',
     ];
 
     protected $appends = ['total_production', 'total_sold', 'current_stock'];
@@ -40,29 +42,28 @@ class ItemVariant extends Model
 
     public function getTotalProductionAttribute()
     {
-        $logs = $this->relationLoaded('inventoryLogs')
-            ? $this->inventoryLogs
-            : $this->inventoryLogs()->get();
-
-        return (int) $logs->where('type', 'restock')->sum('qty');
+        return (int) $this->production_quantity;
     }
 
-   public function getTotalSoldAttribute()
+    public function getTotalSoldAttribute()
     {
-        $logs = $this->relationLoaded('inventoryLogs')
-            ? $this->inventoryLogs
-            : $this->inventoryLogs()->get();
-
-        $deductTotal = (int) $logs->where('type', 'deduct')->sum('qty');
-        $restoreTotal = (int) $logs->where('type', 'restore')->sum('qty');
-        
-        return $deductTotal - $restoreTotal;
+        return (int) $this->sold_quantity;
     }
 
     public function getCurrentStockAttribute()
     {
-        return $this->total_production - $this->total_sold;
+        return (int) $this->quantity;
+    }
+
+    public function syncStockFromLogs()
+    {
+        $production = (int) $this->inventoryLogs()->where('type', 'restock')->sum('qty');
+        $deducted = (int) $this->inventoryLogs()->where('type', 'deduct')->sum('qty');
+        $restored = (int) $this->inventoryLogs()->where('type', 'restore')->sum('qty');
+        
+        $this->production_quantity = $production;
+        $this->sold_quantity = $deducted - $restored;
+        $this->quantity = $production - $this->sold_quantity;  // Current stock
+        $this->save();
     }
 }
-
-

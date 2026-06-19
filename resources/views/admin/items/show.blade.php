@@ -47,13 +47,6 @@
         <div class="container-fluid">
             <div class="row align-items-center">
                 <div class="col-md-6 mb-3 mb-md-0">
-                    <div class="d-flex align-items-center flex-wrap">
-                        <span class="text-muted font-weight-medium mr-2" style="font-size: 0.9rem;">Dashboard</span>
-                        <i class="fas fa-chevron-right text-muted mx-2" style="font-size: 0.75rem;"></i>
-                        <a href="{{ route('items.index') }}" class="text-theme font-weight-bold mx-2" style="font-size: 0.9rem;">Items</a>
-                        <i class="fas fa-chevron-right text-muted mx-2" style="font-size: 0.75rem;"></i>
-                        <span class="text-muted font-weight-medium mx-2" style="font-size: 0.9rem;">Item Details</span>
-                    </div>
                 </div>
                 <div class="col-md-6 text-md-right">
                     <a href="{{ route('items.index') }}" class="btn btn-outline-custom mr-2">
