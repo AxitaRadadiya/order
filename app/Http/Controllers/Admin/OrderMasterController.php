@@ -13,6 +13,7 @@ use App\Models\Color;
 use App\Models\ItemVariant;
 use App\Models\InventoryLog;
 use App\Models\Setting;
+use App\Models\TaxMaster;
 
 use Carbon\Carbon;
 use Yajra\DataTables\Facades\DataTables;
@@ -270,7 +271,6 @@ class OrderMasterController extends Controller
                     'item_id' => $entry['item_id'] ?? null,
                     'item_name' => $entry['name'] ?? ($itemModel?->name ?? ''),
                     'rate' => $entry['price'] ?? ($itemModel?->price ?? 0),
-                    'tax_rate' => $itemModel?->tax_percent ?? ($entry['tax_rate'] ?? 0),
                     'quantity' => $entry['qty'] ?? ($entry['quantity'] ?? 0),
                     'description' => $entry['description'] ?? ($itemModel?->description ?? ''),
                     'color' => $entry['color_id'] ?? $entry['color'] ?? null,
@@ -334,6 +334,16 @@ class OrderMasterController extends Controller
                 $fields['distributor_id'] = $authUser->id;
                 $fields['visible_to_superadmin'] = true;
             }
+            
+            // Handle tax selection
+            if ($request->filled('tax_id')) {
+                $tax = TaxMaster::find($request->tax_id);
+                if ($tax) {
+                    $fields['tax_id'] = $tax->id;
+                    $fields['tax_percentage'] = $tax->tax_percentage;
+                }
+            }
+            
             $order = OrderMaster::create($fields);
             $subtotal = $this->syncItems($order, $request->input('items', []));
 
@@ -386,7 +396,7 @@ class OrderMasterController extends Controller
         if (! $auth || ! $auth->hasPermission('order-view')) {
             abort(403);
         }
-        $order->load('items', 'customer');
+        $order->load('items', 'customer', 'tax');
 
         $user = auth()->user();
         if ($user) {
@@ -524,7 +534,20 @@ class OrderMasterController extends Controller
                 }
             }
 
-            $order->update($this->orderFields($request));
+            // Handle tax selection
+            $orderFields = $this->orderFields($request);
+            if ($request->filled('tax_id')) {
+                $tax = TaxMaster::find($request->tax_id);
+                if ($tax) {
+                    $orderFields['tax_id'] = $tax->id;
+                    $orderFields['tax_percentage'] = $tax->tax_percentage;
+                }
+            } else {
+                $orderFields['tax_id'] = null;
+                $orderFields['tax_percentage'] = null;
+            }
+            
+            $order->update($orderFields);
             
             $authUser = auth()->user();
             if ($authUser && $authUser->hasRole('distributor') && empty($order->distributor_id)) {
@@ -542,7 +565,6 @@ class OrderMasterController extends Controller
             $order->items()->delete();
             
             // Set flag to prevent syncItems from deducting stock
-            // We'll handle deductions manually after recreating items
             $this->skipStockDeduction = true;
             
             // Recreate items with new data
@@ -726,6 +748,7 @@ class OrderMasterController extends Controller
 
         $customers = $customersQuery->get();
         $items     = Item::with(['variants.color'])->orderBy('name')->get();
+        $taxes     = TaxMaster::orderBy('tax_percentage')->get();
 
         $customersJson = $customers->mapWithKeys(function (User $u) {
             $addr     = $u->address ?? null;
@@ -745,6 +768,7 @@ class OrderMasterController extends Controller
             'itemsJson'     => $this->buildItemsJson($items),
             'sizesJson'     => Size::activeLabels(),
             'colors'        => Color::orderBy('name')->get(),
+            'taxes'         => $taxes,
         ];
     }
 
@@ -794,7 +818,6 @@ class OrderMasterController extends Controller
                 'name'           => $item->name,
                 'unit'           => $item->unit ?? '',
                 'rate'           => $item->price ?? 0,
-                'tax'            => $item->tax_percent ?? 0,
                 'desc'           => $item->description ?? '',
                 'colors'         => $itemColors->map(fn ($color) => [
                     'id'         => $color->id,
@@ -848,8 +871,9 @@ class OrderMasterController extends Controller
             }
 
             $rate = (float) ($it['rate'] ?? 0);
-            $taxRate = (float) ($it['tax_rate'] ?? 0);
-            $total = round(($rate + ($rate * $taxRate / 100)) * $quantity, 2);
+            // REMOVED: Individual item tax calculation
+            // Tax is now applied at order level only
+            $total = round($rate * $quantity, 2);
             $subtotal += $total;
 
             $status = $it['status'] ?? 'pending';
@@ -867,7 +891,6 @@ class OrderMasterController extends Controller
                 'size_quantities' => !empty($sizeQuantities) ? $sizeQuantities : null,
                 'quantity'    => $quantity,
                 'rate'        => $rate,
-                'tax_rate'    => $taxRate,
                 'total'       => $total,
                 'status'      => $status,
                 'size_from'   => $it['size_from']   ?? null,
@@ -930,16 +953,30 @@ class OrderMasterController extends Controller
         $discountPercent = (float) $request->input('discount', 0);
         $discountAmount = $subtotal * $discountPercent / 100;
         $adjustment = (float) $request->input('adjustment', 0);
+        
+        // Get tax percentage from the selected tax
+        $taxPercentage = 0;
+        if ($request->filled('tax_id')) {
+            $tax = TaxMaster::find($request->tax_id);
+            if ($tax) {
+                $taxPercentage = $tax->tax_percentage;
+            }
+        }
+        
+        // Calculate after markdown and discount, then apply tax
+        $afterMarkdown = $subtotal - $markdownAmount;
+        $afterDiscount = $afterMarkdown - $discountAmount;
+        $taxAmount = $afterDiscount * $taxPercentage / 100;
+        $grandTotal = $afterDiscount + $taxAmount + $adjustment;
 
         return [
             'subtotal' => round($subtotal, 2),
             'markdown' => round($markdownPercent, 2),
             'discount' => round($discountPercent, 2),
-            'grand_total' => round($subtotal - $markdownAmount - $discountAmount + $adjustment, 2),
+            'grand_total' => round($grandTotal, 2),
         ];
     }
 
-  
     private function deductStockForOrderItem(\App\Models\OrderItem $orderItem): void
     {
         DB::transaction(function () use ($orderItem) {

@@ -182,10 +182,8 @@
                     <th>Item</th>
                     <th>Color code</th>
                     <th>Size(s)</th>
-                    <th>Description</th>
                     <th>Qty</th>
                     <th>MRP</th>
-                    <th>Tax %</th>
                     <th>Total</th>
                     <th>Status</th>
                     <th>Action</th>
@@ -202,7 +200,6 @@
                         <option value="{{ $itm->article_number }}"
                           data-id="{{ $itm->id }}"
                           data-rate="{{ $itm->price }}"
-                          data-tax="{{ $itm->tax_percent ?? 0 }}"
                           data-desc="{{ $itm->description ?? '' }}"
                           {{ (isset($it['item_id']) && $it['item_id'] == $itm->id) ? 'selected' : '' }}>
                           {{ $itm->article_number }}
@@ -274,10 +271,8 @@
                         @endforeach
                       </div>
                     </td>
-                    <td><input type="text" name="items[{{ $i }}][description]" class="form-control desc" value="{{ $it['description'] ?? '' }}" readonly></td>
                     <td><input type="number" step="0.01" name="items[{{ $i }}][quantity]" class="form-control qty" value="{{ $it['quantity'] ?? 0 }}" readonly></td>
                     <td><input type="number" step="0.01" name="items[{{ $i }}][rate]" class="form-control rate" value="{{ $it['rate'] ?? 0 }}" readonly></td>
-                    <td><input type="number" step="0.01" name="items[{{ $i }}][tax_rate]" class="form-control tax" value="{{ $it['tax_rate'] ?? 0 }}" readonly></td>
                     <td><input type="number" step="0.01" name="items[{{ $i }}][total]" class="form-control total" value="{{ $it['total'] ?? 0 }}" readonly></td>
                     <td>
                       @if($lockedStatus)
@@ -285,7 +280,7 @@
                       <span class="badge badge-secondary">{{ ucfirst($it['status'] ?? 'pending') }}</span>
                       @else
                       <select name="items[{{ $i }}][status]" class="form-control status-select">
-                        @foreach(['pending','draft','confirmed','shipped','delivered'] as $st)
+                        @foreach(['pending','draft','confirmed','shipped','delivered','cancelled'] as $st)
                         <option value="{{ $st }}" {{ (isset($it['status']) && $it['status'] == $st) ? 'selected' : '' }}>{{ ucfirst($st) }}</option>
                         @endforeach
                       </select>
@@ -303,7 +298,7 @@
                         @foreach($items as $itm)
                         <option value="{{ $itm->article_number }}"
                           data-id="{{ $itm->id }}" data-rate="{{ $itm->price }}"
-                          data-tax="{{ $itm->tax_percent??0 }}" data-desc="{{ $itm->description??'' }}">
+                          data-desc="{{ $itm->description??'' }}">
                           {{ $itm->article_number }}
                         </option>
                         @endforeach
@@ -313,7 +308,6 @@
                     <td><input type="text" name="items[0][item_name]" class="form-control item-name-input" value="" readonly></td>
                     <td>
                       @if(auth()->user() && auth()->user()->hasRole(['super-admin', 'superadmin']))
-                      {{-- keep placeholder until article is selected; JS will load assigned colors on article change --}}
                       <select name="items[0][color][]" class="form-control color-select select2">
                         <option value="">--</option>
                       </select>
@@ -334,10 +328,8 @@
                       </div>
                       <div class="size-qty-wrapper size-qty-panel" style="display:none;"></div>
                     </td>
-                    <td><input type="text" name="items[0][description]" class="form-control desc" readonly></td>
                     <td><input type="number" step="0.01" name="items[0][quantity]" class="form-control qty" value="0" readonly></td>
                     <td><input type="number" step="0.01" name="items[0][rate]" class="form-control rate" value="0" readonly></td>
-                    <td><input type="number" step="0.01" name="items[0][tax_rate]" class="form-control tax" value="0" readonly></td>
                     <td>
                       <input type="number" step="0.01" name="items[0][total]" class="form-control total" value="0" readonly>
                     </td>
@@ -347,7 +339,7 @@
                       <span class="badge badge-secondary">Pending</span>
                       @else
                       <select name="items[0][status]" class="form-control status-select" style="font-size:12px!important;">
-                        @foreach(['pending','draft','confirmed','shipped','delivered'] as $st)
+                        @foreach(['pending','draft','confirmed','shipped','delivered','cancelled'] as $st)
                         <option value="{{ $st }}">{{ ucfirst($st) }}</option>
                         @endforeach
                       </select>
@@ -387,8 +379,7 @@
                         <option value="">-- Select Item --</option>
                         @foreach($items as $itm)
                         <option value="{{ $itm->id }}"
-                          data-rate="{{ $itm->price }}"
-                          data-tax="{{ $itm->tax_percent ?? 0 }}">
+                          data-rate="{{ $itm->price }}">
                           {{ $itm->name }}
                         </option>
                         @endforeach
@@ -490,6 +481,26 @@
                     @endif
                   </div>
                   <div class="d-flex justify-content-between py-1">
+                    <strong>Tax</strong>
+                    @if(auth()->user() && auth()->user()->hasRole(['super-admin', 'superadmin']))
+                    <select name="tax_id" id="tax_id" class="form-control form-control-sm w-50 text-right">
+                      <option value="">No Tax</option>
+                      @foreach($taxes as $tax)
+                      <option value="{{ $tax->id }}"
+                        data-percentage="{{ $tax->tax_percentage }}"
+                        {{ old('tax_id') == $tax->id ? 'selected' : '' }}>
+                        {{ $tax->tax_name }} ({{ $tax->tax_percentage }}%)
+                      </option>
+                      @endforeach
+                    </select>
+                    @else
+                    <span class="form-control form-control-sm w-50 text-right" style="background:#e9ecef; display:inline-block;">
+                      No Tax
+                    </span>
+                    <input type="hidden" name="tax_id" value="">
+                    @endif
+                  </div>
+                  <div class="d-flex justify-content-between py-1">
                     <strong>Adjustment</strong>
                     @if(auth()->user() && auth()->user()->hasRole(['super-admin', 'superadmin']))
                     <input type="number" step="0.01" name="adjustment" id="adjustment"
@@ -536,6 +547,7 @@
                 <option value="confirmed" {{ old('status','pending') == 'confirmed' ? 'selected' : '' }}>Confirmed</option>
                 <option value="shipped" {{ old('status','pending') == 'shipped'   ? 'selected' : '' }}>Shipped</option>
                 <option value="delivered" {{ old('status','pending') == 'delivered' ? 'selected' : '' }}>Delivered</option>
+                <option value="cancelled" {{ old('status','pending') == 'cancelled' ? 'selected' : '' }}>Cancelled</option>
               </select>
               @endif
             </div>
@@ -709,9 +721,7 @@
     function variantSizeLabel(size, stockMap) {
       return String(size || '');
     }
-    // Returns the number of colors selected in a row.
-    // Rule: only ONE color code is allowed per row.
-    // If user selects multiple colors by mistake, qty should be based on 1 color only.
+    
     function colorCount($row) {
       var $cs = $row.find('.color-select');
       if ($cs.length) {
@@ -787,7 +797,7 @@
       }
     }
 
-    /* ── Recalc totals ────────────────────────────────────────────────────── */
+    /* ── Recalc totals (NO ITEM TAX) ────────────────────────────────────── */
 
     function recalc() {
       var sub = 0;
@@ -795,20 +805,30 @@
         var $tr = $(this);
         var qty = parseFloat($tr.find('.qty').val()) || 0;
         var rate = parseFloat($tr.find('.rate').val()) || 0;
-        var tax = parseFloat($tr.find('.tax').val()) || 0;
-        // qty = sum(size_quantities) × colorCount — already stored in .qty field by updateRowQty
-        var tot = rate * qty * (1 + tax / 100);
+        // No individual item tax calculation
+        var tot = rate * qty;
         $tr.find('.total').val(tot.toFixed(2));
         sub += tot;
       });
       $('#subtotal').val(sub.toFixed(2));
+      
       var markdownPercent = parseFloat($('#markdown').val()) || 0;
       var discountPercent = parseFloat($('#discount').val()) || 0;
-      var discountAmount = sub * discountPercent / 100;
-      var grand = sub -
-        (sub * markdownPercent / 100) -
-        discountAmount +
-        (parseFloat($('#adjustment').val()) || 0);
+      
+      // Get tax percentage from the selected tax dropdown
+      var taxPercent = 0;
+      var $taxSelect = $('#tax_id');
+      if ($taxSelect.length && $taxSelect.val()) {
+        var selectedOption = $taxSelect.find('option:selected');
+        taxPercent = parseFloat(selectedOption.data('percentage')) || 0;
+      }
+      
+      // Calculate after markdown and discount
+      var afterMarkdown = sub - (sub * markdownPercent / 100);
+      var afterDiscount = afterMarkdown - (afterMarkdown * discountPercent / 100);
+      var taxAmount = afterDiscount * taxPercent / 100;
+      var grand = afterDiscount + taxAmount + (parseFloat($('#adjustment').val()) || 0);
+      
       $('#grand_total').val(grand.toFixed(2));
     }
 
@@ -920,8 +940,15 @@
       recalc();
     });
 
-    // Rate / tax changes recalculate totals; color changes do NOT
-    $(document).on('input', '.rate,.tax', recalc);
+    // Rate changes recalculate totals
+    $(document).on('input', '.rate', recalc);
+
+    // Tax dropdown change event
+    $(document).on('change', '#tax_id', function() {
+      recalc();
+    });
+
+    // Other input events
     $('#markdown,#discount,#adjustment').on('input', recalc);
 
     // Color change → enforce only ONE color per row + load available sizes by item+color.
@@ -1040,7 +1067,6 @@
           id: $opt.data('id') || null,
           name: $opt.data('name') || '',
           rate: parseFloat($opt.data('rate')) || 0,
-          tax: parseFloat($opt.data('tax')) || 0,
           desc: $opt.data('desc') || ''
         };
       }
@@ -1048,7 +1074,6 @@
       $row.find('.item-id-hidden').val(found.id || '');
       $row.find('.item-name-input').val(found.name || found.article_number || '');
       $row.find('.rate').val(found.rate || 0);
-      $row.find('.tax').val(found.tax || 0);
       if (!$row.find('.desc').val()) $row.find('.desc').val(found.desc || '');
 
       // Populate colors from this selected item ONLY (many-to-many)
@@ -1093,7 +1118,6 @@
         return '<option value="' + esc(m.article_number || '') + '"' +
           ' data-id="' + (m.id || '') + '"' +
           ' data-rate="' + (m.rate || 0) + '"' +
-          ' data-tax="' + (m.tax || 0) + '"' +
           ' data-desc="' + (String(m.desc || '').replace(/"/g, '&quot;')) + '"' +
           (it.item_id == m.id ? ' selected' : '') +
           '>' + esc(m.article_number || '') + '</option>';
@@ -1114,7 +1138,7 @@
       var statusSel = IS_LOCKED_STATUS ?
         '<input type="hidden" name="items[' + idx + '][status]" value="pending"><span class="badge badge-secondary">Pending</span>' :
         '<select name="items[' + idx + '][status]" class="form-control status-select" style="font-size:12px!important;">' +
-        ['pending', 'draft', 'confirmed', 'shipped', 'delivered'].map(function(s) {
+        ['pending', 'draft', 'confirmed', 'shipped', 'delivered', 'cancelled'].map(function(s) {
           return '<option value="' + s + '"' + (it.status && it.status == s ? ' selected' : '') + '>' + s.charAt(0).toUpperCase() + s.slice(1) + '</option>';
         }).join('') +
         '</select>';
@@ -1161,10 +1185,8 @@
           '</div>'
         ) +
         '</td>' +
-        '<td><input type="text" name="items[' + idx + '][description]" class="form-control desc" value="' + (it.description || '') + '" readonly></td>' +
         '<td><input type="number" step="0.01" name="items[' + idx + '][quantity]" class="form-control qty" value="' + (it.quantity || 0) + '" readonly></td>' +
         '<td><input type="number" step="0.01" name="items[' + idx + '][rate]" class="form-control rate" value="' + (it.rate || 0) + '" readonly></td>' +
-        '<td><input type="number" step="0.01" name="items[' + idx + '][tax_rate]" class="form-control tax" value="' + (it.tax_rate || 0) + '" readonly></td>' +
         '<td><input type="number" step="0.01" name="items[' + idx + '][total]" class="form-control total" value="' + (it.total || 0) + '" readonly></td>' +
         '<td>' + statusSel + '</td>' +
         '<td><button type="button" class="btn btn-sm btn-danger remove-item"><i class="fas fa-trash"></i></button></td>' +
@@ -1316,7 +1338,6 @@
           item_id: it.item_id || it.id || null,
           item_name: it.item_name || it.name || '',
           rate: it.rate || 0,
-          tax_rate: it.tax_rate || 0,
           quantity: it.quantity || it.qty || 0,
           description: it.description || '',
           color: it.color || it.color_id || null,
@@ -1395,6 +1416,13 @@
       recalc();
     }
 
+    // Trigger change on tax dropdown to set initial percentage
+    $(document).ready(function() {
+      if ($('#tax_id').length) {
+        // Just initialize, no need to trigger change
+      }
+    });
+
     /* ── Variant Drawer ──────────────────────────────────────────────────── */
     var activeVariantRow = null;
     var drawerSizes = [];
@@ -1429,8 +1457,6 @@
         return [];
       }
     }
-
-
 
     function variantSelectedSizes($row) {
       return ($row.find('.size-select').val() || []).map(String);

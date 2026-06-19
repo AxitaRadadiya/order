@@ -21,6 +21,16 @@
   $discountPercent = (float) ($order->discount ?? 0);
   $discountAmount = round($subtotal * $discountPercent / 100, 2);
   $adjustment = (float) ($order->adjustment ?? 0);
+  
+  // Calculate tax
+  $taxPercent = (float) ($order->tax_percentage ?? 0);
+  $afterMarkdown = $subtotal - $markdownAmount;
+  $afterDiscount = $afterMarkdown - $discountAmount;
+  $taxAmount = round($afterDiscount * $taxPercent / 100, 2);
+  $taxName = 'No Tax';
+  if ($order->tax_id && $order->tax) {
+      $taxName = $order->tax->tax_name;
+  }
 @endphp
 
 <div class="order-detail-container">
@@ -212,6 +222,22 @@
                                 <div class="order-totals-row {{ $discountAmount > 0 ? 'deduction' : '' }}">
                                     <span class="label">Discount ({{ rtrim(rtrim(number_format($discountPercent, 2), '0'), '.') }}%)</span>
                                     <span class="value">{{ $discountAmount > 0 ? '− ' : '' }}₹{{ number_format($discountAmount, 2) }}</span>
+                                </div>
+                                <!-- Tax Row - NEW -->
+                                <div class="order-totals-row tax {{ $taxAmount > 0 ? 'addition' : '' }}">
+                                    <span class="label">
+                                        Tax 
+                                        @if($taxPercent > 0)
+                                            ({{ rtrim(rtrim(number_format($taxPercent, 2), '0'), '.') }}%)
+                                        @endif
+                                        @if($taxName != 'No Tax')
+                                            <span class="text-muted" style="font-weight:400; font-size:11px;">{{ $taxName }}</span>
+                                        @endif
+                                    </span>
+                                    <span class="value">
+                                        @if($taxAmount > 0)+ @endif
+                                        ₹{{ number_format($taxAmount, 2) }}
+                                    </span>
                                 </div>
                                 <div class="order-totals-row {{ $adjustment > 0 ? 'addition' : ($adjustment < 0 ? 'deduction' : '') }}">
                                     <span class="label">Adjustment</span>
