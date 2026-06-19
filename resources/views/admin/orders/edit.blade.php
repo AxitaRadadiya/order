@@ -50,6 +50,37 @@
     background: #e0d4f5;
     border-color: #7F53AC;
   }
+  .status-badge-locked {
+    padding: 5px 12px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 600;
+    display: inline-block;
+  }
+  .status-badge-confirmed {
+    background: #17a2b8;
+    color: #fff;
+  }
+  .status-badge-shipped {
+    background: #007bff;
+    color: #fff;
+  }
+  .status-badge-delivered {
+    background: #28a745;
+    color: #fff;
+  }
+  .status-badge-cancelled {
+    background: #dc3545;
+    color: #fff;
+  }
+  .status-badge-pending {
+    background: #ffc107;
+    color: #212529;
+  }
+  .status-badge-draft {
+    background: #6c757d;
+    color: #fff;
+  }
 </style>
 @endsection
 
@@ -97,7 +128,7 @@
             <div class="col-md-6">
               <div class="form-group">
                 <label>Customer Name <span class="text-danger">*</span></label>
-                <select name="user_id" id="customer_id" class="form-control select2">
+                <select name="user_id" id="customer_id" class="form-control select2" @if($hasLockedItem) disabled @endif>
                   <option value="">-- Select Customer --</option>
                   @foreach($customers as $c)
                   <option value="{{ $c->id }}"
@@ -114,19 +145,22 @@
                   </option>
                   @endforeach
                 </select>
+                @if($hasLockedItem)
+                <small class="text-muted">Customer selection is locked because order has confirmed/shipped/delivered/cancelled items.</small>
+                @endif
               </div>
             </div>
             <div class="col-md-3">
               <div class="form-group">
                 <label>Date</label>
-                <input type="date" name="date" class="form-control"
+                <input type="date" name="date" class="form-control" @if($hasLockedItem) readonly @endif
                   value="{{ old('date', $order->date?->format('Y-m-d')) }}">
               </div>
             </div>
             <div class="col-md-3">
               <div class="form-group">
                 <label>Expected Date</label>
-                <input type="date" name="expected_date" class="form-control"
+                <input type="date" name="expected_date" class="form-control" @if($hasLockedItem) readonly @endif
                   value="{{ old('expected_date', $order->expected_date?->format('Y-m-d')) }}">
               </div>
             </div>
@@ -137,21 +171,21 @@
             <div class="col-md-4">
               <div class="form-group">
                 <label>E-way Bill Number</label>
-                <input type="text" name="eway_bill_number" class="form-control"
+                <input type="text" name="eway_bill_number" class="form-control" @if($hasLockedItem) readonly @endif
                   value="{{ old('eway_bill_number', $order->eway_bill_number) }}">
               </div>
             </div>
             <div class="col-md-4">
               <div class="form-group">
                 <label>Transport Number</label>
-                <input type="text" name="transport_number" class="form-control"
+                <input type="text" name="transport_number" class="form-control" @if($hasLockedItem) readonly @endif
                   value="{{ old('transport_number', $order->transport_number) }}">
               </div>
             </div>
             <div class="col-md-4">
               <div class="form-group">
                 <label>LR Number</label>
-                <input type="text" name="lr_number" class="form-control"
+                <input type="text" name="lr_number" class="form-control" @if($hasLockedItem) readonly @endif
                   value="{{ old('lr_number', $order->lr_number) }}">
               </div>
             </div>
@@ -163,26 +197,17 @@
               <div class="form-group">
                 <label>Billing Address</label>
                 <textarea name="billing_address" id="billing_address"
-                  class="form-control" rows="2" readonly>{{ old('billing_address', $order->billing_address) }}</textarea>
+                  class="form-control" rows="2" @if($hasLockedItem) readonly @endif>{{ old('billing_address', $order->billing_address) }}</textarea>
               </div>
             </div>
             <div class="col-md-6">
               <div class="form-group">
                 <label>Shipping Address</label>
                 <textarea name="shipping_address" id="shipping_address"
-                  class="form-control" rows="2">{{ old('shipping_address', $order->shipping_address) }}</textarea>
+                  class="form-control" rows="2" @if($hasLockedItem) readonly @endif>{{ old('shipping_address', $order->shipping_address) }}</textarea>
               </div>
             </div>
           </div>
-
-          {{-- ── Mode Toggle ───────────────────────────────────────────── --}}
-          <!-- <div class="d-flex justify-content-between align-items-center mb-2">
-            <h5 class="m-0">Items</h5>
-            <div class="btn-group btn-group-sm">
-              <button type="button" id="modeNormal"    class="btn btn-outline-secondary active">Normal</button>
-              <button type="button" id="modeSizeRange" class="btn btn-outline-secondary">Size Range</button>
-            </div>
-          </div> -->
 
           {{-- ── Normal Items Table ────────────────────────────────────── --}}
           <div id="normalTable">
@@ -220,10 +245,18 @@
                 $rate = $isArr ? ($it['rate'] ?? 0) : ($it->rate ?? 0);
                 $taxRate = $isArr ? ($it['tax_rate'] ?? 0) : ($it->tax_rate ?? 0);
                 $total = $isArr ? ($it['total'] ?? 0) : ($it->total ?? 0);
+                $selectedStatus = $isArr ? ($it['status'] ?? '') : ($it->status ?? '');
+                $isLockedStatus = in_array($selectedStatus, ['confirmed', 'shipped', 'delivered', 'cancelled']);
                 @endphp
                 <tr>
                   <td>
                     @if(auth()->user() && auth()->user()->hasRole(['super-admin', 'superadmin']))
+                    @if($isLockedStatus || $hasLockedItem)
+                    <input type="text" class="form-control" value="{{ $articleNum }}" readonly>
+                    <input type="hidden" name="items[{{ $i }}][article_number]" value="{{ $articleNum }}">
+                    <input type="hidden" name="items[{{ $i }}][item_id]" class="item-id-hidden" value="{{ $itemId }}">
+                    <input type="hidden" name="items[{{ $i }}][order_item_id]" class="order-item-id-hidden" value="{{ $isArr ? ($it['id'] ?? '') : ($it->id ?? '') }}">
+                    @else
                     <select name="items[{{ $i }}][article_number]" class="form-control article-select">
                       <option value="">--</option>
                       @foreach($items as $itm)
@@ -239,6 +272,7 @@
                     </select>
                     <input type="hidden" name="items[{{ $i }}][item_id]" class="item-id-hidden" value="{{ $itemId }}">
                     <input type="hidden" name="items[{{ $i }}][order_item_id]" class="order-item-id-hidden" value="{{ $isArr ? ($it['id'] ?? '') : ($it->id ?? '') }}">
+                    @endif
                     @else
                     <input type="text" class="form-control" value="{{ ($items->firstWhere('id', $itemId)->article_number ?? $articleNum) }}" readonly>
                     <input type="hidden" name="items[{{ $i }}][article_number]" value="{{ ($items->firstWhere('id', $itemId)->article_number ?? $articleNum) }}">
@@ -247,7 +281,7 @@
                     @endif
                   </td>
                   <td>
-                    <input type="text" name="items[{{ $i }}][item_name]" class="form-control item-name-input" value="{{ $itemName }}" readonly>
+                    <input type="text" name="items[{{ $i }}][item_name]" class="form-control item-name-input" value="{{ $itemName }}" @if($isLockedStatus || $hasLockedItem) readonly @endif>
                   </td>
                   <td>
                     {{-- Color select --}}
@@ -275,11 +309,18 @@
                     }
                     @endphp
                     @if(auth()->user() && auth()->user()->hasRole(['super-admin', 'superadmin']))
+                    @if($isLockedStatus || $hasLockedItem)
+                    <div class="form-control color-read" readonly>{{ implode(', ', $selectedColorNames) }}</div>
+                    @foreach($selectedColors as $sc)
+                    <input type="hidden" name="items[{{ $i }}][color][]" value="{{ $sc }}">
+                    @endforeach
+                    @else
                     <select name="items[{{ $i }}][color][]" class="form-control color-select select2">
                       @foreach($rowColors as $col)
                       <option value="{{ $col->id }}" {{ in_array((string) $col->id, $selectedColors) ? 'selected' : '' }}>{{ $col->color_code }}</option>
                       @endforeach
                     </select>
+                    @endif
                     @else
                     <div class="form-control color-read" readonly>{{ implode(', ', $selectedColorNames) }}</div>
                     @foreach($selectedColors as $sc)
@@ -303,6 +344,12 @@
                     : 1;
                     @endphp
                     @if(auth()->user() && auth()->user()->hasRole(['super-admin', 'superadmin']))
+                    @if($isLockedStatus || $hasLockedItem)
+                    <div class="form-control size-readonly-box" readonly>{{ implode(', ', $selectedSizes) }}</div>
+                    @foreach($selectedSizes as $selectedSize)
+                    <input type="hidden" name="items[{{ $i }}][sizes][]" value="{{ $selectedSize }}">
+                    @endforeach
+                    @else
                     <select name="items[{{ $i }}][sizes][]" class="size-select d-none" multiple>
                       @foreach($sizesJson as $sz)
                       <option value="{{ $sz }}" {{ in_array($sz, $selectedSizes) ? 'selected' : '' }}>{{ $sz }}</option>
@@ -331,31 +378,42 @@
                       </div>
                       @endforeach
                     </div>
+                    @endif
                     @else
                     <div class="form-control size-readonly-box" readonly>{{ implode(', ', $selectedSizes) }}</div>
                     @endif
                   </td>
-                  <td><input type="text" name="items[{{ $i }}][description]" class="form-control desc" value="{{ $desc }}" readonly></td>
-                  <td><input type="number" step="0.01" name="items[{{ $i }}][quantity]" class="form-control qty" value="{{ $qty }}" readonly></td>
-                  <td><input type="number" step="0.01" name="items[{{ $i }}][rate]" class="form-control rate" value="{{ $rate }}" readonly></td>
-                  <td><input type="number" step="0.01" name="items[{{ $i }}][tax_rate]" class="form-control tax" value="{{ $taxRate }}" readonly></td>
-                  <td><input type="number" step="0.01" name="items[{{ $i }}][total]" class="form-control total" value="{{ $total }}" readonly></td>
-                  @php
-                  $selectedStatus = $isArr ? ($it['status'] ?? '') : ($it->status ?? '');
-                  @endphp
+                  <td><input type="text" name="items[{{ $i }}][description]" class="form-control desc" value="{{ $desc }}" @if($isLockedStatus || $hasLockedItem) readonly @endif></td>
+                  <td><input type="number" step="0.01" name="items[{{ $i }}][quantity]" class="form-control qty" value="{{ $qty }}" @if($isLockedStatus || $hasLockedItem) readonly @endif></td>
+                  <td><input type="number" step="0.01" name="items[{{ $i }}][rate]" class="form-control rate" value="{{ $rate }}" @if($isLockedStatus || $hasLockedItem) readonly @endif></td>
+                  <td><input type="number" step="0.01" name="items[{{ $i }}][tax_rate]" class="form-control tax" value="{{ $taxRate }}" @if($isLockedStatus || $hasLockedItem) readonly @endif></td>
+                  <td><input type="number" step="0.01" name="items[{{ $i }}][total]" class="form-control total" value="{{ $total }}" @if($isLockedStatus || $hasLockedItem) readonly @endif></td>
                   <td>
                     @if(auth()->user() && auth()->user()->hasRole('retailer'))
                     <input type="hidden" name="items[{{ $i }}][status]" value="{{ $selectedStatus ?: 'pending' }}">
                     <span class="badge badge-secondary">{{ ucfirst($selectedStatus ?: 'pending') }}</span>
                     @else
-                    <select name="items[{{ $i }}][status]" class="form-control status-select" data-order-item-id="{{ $isArr ? ($it['id'] ?? '') : ($it->id ?? '') }}" data-old-status="{{ $isArr ? ($it['status'] ?? 'pending') : ($it->status ?? 'pending') }}"> @foreach(['pending','draft','confirmed','shipped','delivered','cancelled'] as $st)
+                    @if($isLockedStatus || $hasLockedItem)
+                    <input type="hidden" name="items[{{ $i }}][status]" value="{{ $selectedStatus }}">
+                    <span class="status-badge-locked status-badge-{{ $selectedStatus }}">
+                      {{ ucfirst($selectedStatus) }}
+                    </span>
+                    @else
+                    <select name="items[{{ $i }}][status]" class="form-control status-select" data-order-item-id="{{ $isArr ? ($it['id'] ?? '') : ($it->id ?? '') }}" data-old-status="{{ $isArr ? ($it['status'] ?? 'pending') : ($it->status ?? 'pending') }}">
+                      @foreach(['pending','draft','confirmed','shipped','delivered','cancelled'] as $st)
                       <option value="{{ $st }}" {{ ($selectedStatus == $st) ? 'selected' : '' }}>{{ ucfirst($st) }}</option>
                       @endforeach
                     </select>
                     @endif
+                    @endif
                   </td>
-                  <td><button type="button" class="btn btn-sm btn-danger remove-item"><i class="fas fa-trash"></i></button></td>
-
+                  <td>
+                    @if(!$isLockedStatus && !$hasLockedItem && auth()->user() && auth()->user()->hasRole(['super-admin', 'superadmin']))
+                    <button type="button" class="btn btn-sm btn-danger remove-item"><i class="fas fa-trash"></i></button>
+                    @else
+                    <button type="button" class="btn btn-sm btn-danger remove-item" disabled><i class="fas fa-trash"></i></button>
+                    @endif
+                  </td>
                 </tr>
                 @endforeach
 
@@ -363,6 +421,11 @@
                 <tr>
                   <td>
                     @if(auth()->user() && auth()->user()->hasRole(['super-admin', 'superadmin']))
+                    @if($hasLockedItem)
+                    <input type="text" class="form-control" value="" readonly>
+                    <input type="hidden" name="items[0][article_number]" value="">
+                    <input type="hidden" name="items[0][item_id]" class="item-id-hidden" value="">
+                    @else
                     <select name="items[0][article_number]" class="form-control article-select">
                       <option value="">--</option>
                       @foreach($items as $itm)
@@ -376,6 +439,7 @@
                       @endforeach
                     </select>
                     <input type="hidden" name="items[0][item_id]" class="item-id-hidden" value="">
+                    @endif
                     @else
                     <input type="text" class="form-control" value="" readonly>
                     <input type="hidden" name="items[0][article_number]" value="">
@@ -383,19 +447,26 @@
                     @endif
                   </td>
                   <td>
-                    <input type="text" name="items[0][item_name]" class="form-control item-name-input" value="" readonly>
+                    <input type="text" name="items[0][item_name]" class="form-control item-name-input" value="" @if($hasLockedItem) readonly @endif>
                   </td>
                   <td>
                     @if(auth()->user() && auth()->user()->hasRole(['super-admin', 'superadmin']))
+                    @if($hasLockedItem)
+                    <input type="text" class="form-control color-read" readonly value="">
+                    @else
                     <select name="items[0][color][]" class="form-control color-select select2">
                       <option value="">--</option>
                     </select>
+                    @endif
                     @else
                     <input type="text" class="form-control color-read" readonly value="">
                     @endif
                   </td>
                   <td>
                     @if(auth()->user() && auth()->user()->hasRole(['super-admin', 'superadmin']))
+                    @if($hasLockedItem)
+                    <div class="form-control size-readonly-box" readonly></div>
+                    @else
                     <select name="items[0][sizes][]" class="size-select d-none" multiple>
                       @foreach($sizesJson as $sz)
                       <option value="{{ $sz }}">{{ $sz }}</option>
@@ -407,17 +478,22 @@
                       @endforeach
                     </div>
                     <div class="size-qty-wrapper size-qty-panel" style="display:none;"></div>
+                    @endif
                     @else
                     <div class="form-control size-readonly-box" readonly></div>
                     @endif
                   </td>
-                  <td><input type="text" name="items[0][description]" class="form-control desc" readonly></td>
-                  <td><input type="number" step="0.01" name="items[0][quantity]" class="form-control qty" value="0" readonly></td>
-                  <td><input type="number" step="0.01" name="items[0][rate]" class="form-control rate" value="0" readonly></td>
-                  <td><input type="number" step="0.01" name="items[0][tax_rate]" class="form-control tax" value="0" readonly></td>
-                  <td><input type="number" step="0.01" name="items[0][total]" class="form-control total" value="0" readonly></td>
+                  <td><input type="text" name="items[0][description]" class="form-control desc" @if($hasLockedItem) readonly @endif></td>
+                  <td><input type="number" step="0.01" name="items[0][quantity]" class="form-control qty" value="0" @if($hasLockedItem) readonly @endif></td>
+                  <td><input type="number" step="0.01" name="items[0][rate]" class="form-control rate" value="0" @if($hasLockedItem) readonly @endif></td>
+                  <td><input type="number" step="0.01" name="items[0][tax_rate]" class="form-control tax" value="0" @if($hasLockedItem) readonly @endif></td>
+                  <td><input type="number" step="0.01" name="items[0][total]" class="form-control total" value="0" @if($hasLockedItem) readonly @endif></td>
                   <td>
                     @if(auth()->user() && auth()->user()->hasRole('retailer'))
+                    <input type="hidden" name="items[0][status]" value="pending">
+                    <span class="badge badge-secondary">Pending</span>
+                    @else
+                    @if($hasLockedItem)
                     <input type="hidden" name="items[0][status]" value="pending">
                     <span class="badge badge-secondary">Pending</span>
                     @else
@@ -427,9 +503,14 @@
                       @endforeach
                     </select>
                     @endif
+                    @endif
                   </td>
                   @if(auth()->user() && auth()->user()->hasRole(['super-admin', 'superadmin']))
+                  @if(!$hasLockedItem)
                   <td><button type="button" class="btn btn-sm btn-danger remove-item"><i class="fas fa-trash"></i></button></td>
+                  @else
+                  <td><button type="button" class="btn btn-sm btn-danger remove-item" disabled><i class="fas fa-trash"></i></button></td>
+                  @endif
                   @else
                   <td></td>
                   @endif
@@ -438,7 +519,7 @@
               </tbody>
             </table>
             <div class="text-right mb-3">
-              @if(auth()->user() && auth()->user()->hasRole(['super-admin', 'superadmin']))
+              @if(auth()->user() && auth()->user()->hasRole(['super-admin', 'superadmin']) && !$hasLockedItem)
               <button type="button" id="addItem" class="btn-create">
                 <i class="fas fa-plus"></i> Add Row
               </button>
@@ -546,7 +627,7 @@
                   </div>
                   <div class="d-flex justify-content-between py-1">
                     <strong>Mark Down (%)</strong>
-                    @if(auth()->user() && auth()->user()->hasRole(['super-admin', 'superadmin']))
+                    @if(auth()->user() && auth()->user()->hasRole(['super-admin', 'superadmin']) && !$hasLockedItem)
                     <input type="number" step="0.01" name="markdown" id="markdown"
                       class="form-control form-control-sm w-50 text-right"
                       value="{{ old('markdown', $order->markdown ?? 0) }}">
@@ -558,7 +639,7 @@
                   </div>
                   <div class="d-flex justify-content-between py-1">
                     <strong>Discount (%)</strong>
-                    @if(auth()->user() && auth()->user()->hasRole(['super-admin', 'superadmin']))
+                    @if(auth()->user() && auth()->user()->hasRole(['super-admin', 'superadmin']) && !$hasLockedItem)
                     <input type="number" step="0.01" min="0" max="100" name="discount" id="discount"
                       class="form-control form-control-sm w-50 text-right"
                       value="{{ old('discount', $order->discount ?? 0) }}">
@@ -570,7 +651,7 @@
                   </div>
                   <div class="d-flex justify-content-between py-1">
                     <strong>Adjustment</strong>
-                    @if(auth()->user() && auth()->user()->hasRole(['super-admin', 'superadmin']))
+                    @if(auth()->user() && auth()->user()->hasRole(['super-admin', 'superadmin']) && !$hasLockedItem)
                     <input type="number" step="0.01" name="adjustment" id="adjustment"
                       class="form-control form-control-sm w-50 text-right"
                       value="{{ old('adjustment', $order->adjustment ?? 0) }}">
@@ -596,15 +677,19 @@
           <div class="row">
             <div class="form-group col-md-6">
               <label>Terms &amp; Conditions</label>
-              <textarea name="terms" class="form-control" rows="2">{{ old('terms', $order->terms) }}</textarea>
+              <textarea name="terms" class="form-control" rows="2" @if($hasLockedItem) readonly @endif>{{ old('terms', $order->terms) }}</textarea>
             </div>
             <div class="form-group col-md-6">
               <label>Notes</label>
-              <textarea name="notes" class="form-control" rows="2">{{ old('notes', $order->notes) }}</textarea>
+              <textarea name="notes" class="form-control" rows="2" @if($hasLockedItem) readonly @endif>{{ old('notes', $order->notes) }}</textarea>
             </div>
             <div class="form-group col-md-3">
               <label>Status</label>
               @if(auth()->user() && auth()->user()->hasRole('retailer'))
+              <input type="hidden" name="status" value="{{ old('status', $order->status) }}">
+              <div><span class="badge badge-secondary">{{ ucfirst(old('status', $order->status) ?? 'pending') }}</span></div>
+              @else
+              @if($hasLockedItem)
               <input type="hidden" name="status" value="{{ old('status', $order->status) }}">
               <div><span class="badge badge-secondary">{{ ucfirst(old('status', $order->status) ?? 'pending') }}</span></div>
               @else
@@ -613,6 +698,7 @@
                 <option value="{{ $val }}" {{ old('status', $order->status) == $val ? 'selected' : '' }}>{{ $label }}</option>
                 @endforeach
               </select>
+              @endif
               @endif
             </div>
           </div>
@@ -623,13 +709,17 @@
 
       <div class="mt-2 mb-2 mr-3 text-right">
         <a href="{{ route('orders.index') }}" class="btn-cancel mr-2"><i class="fas fa-times"></i> Cancel</a>
+        @if(!$hasLockedItem)
         <button type="submit" class="btn-submit"><i class="fas fa-save"></i> Update Order</button>
+        @else
+        <button type="button" class="btn btn-secondary" disabled><i class="fas fa-lock"></i> Order Locked</button>
+        @endif
       </div>
 
     </form>
   </div>
 </section>
-@if(auth()->user() && auth()->user()->hasRole(['super-admin', 'superadmin']))
+@if(auth()->user() && auth()->user()->hasRole(['super-admin', 'superadmin']) && !$hasLockedItem)
 <div class="variant-drawer-backdrop" id="variantDrawerBackdrop" aria-hidden="true">
   <div class="variant-drawer" role="dialog" aria-modal="true" aria-labelledby="variantDrawerTitle">
     <div class="variant-drawer-header">
@@ -709,6 +799,37 @@
     background: #e0d4f5;
     border-color: #7F53AC;
   }
+  .status-badge-locked {
+    padding: 5px 12px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 600;
+    display: inline-block;
+  }
+  .status-badge-confirmed {
+    background: #17a2b8;
+    color: #fff;
+  }
+  .status-badge-shipped {
+    background: #007bff;
+    color: #fff;
+  }
+  .status-badge-delivered {
+    background: #28a745;
+    color: #fff;
+  }
+  .status-badge-cancelled {
+    background: #dc3545;
+    color: #fff;
+  }
+  .status-badge-pending {
+    background: #ffc107;
+    color: #212529;
+  }
+  .status-badge-draft {
+    background: #6c757d;
+    color: #fff;
+  }
 </style>
 <script>
   $(function() {
@@ -721,6 +842,7 @@
     var IS_RETAILER = @json(optional(auth()->user())->hasRole('retailer') ?? false);
     var IS_SUPER_ADMIN = @json(optional(auth()->user())->hasRole(['super-admin', 'superadmin']) ?? false);
     var IS_DISTRIBUTOR = @json(optional(auth()->user())->hasRole('distributor') ?? false);
+    var HAS_LOCKED_ITEM = @json($hasLockedItem ?? false);
 
     function itemByArticle(val) {
       return ITEMS.find(function(i) {
@@ -866,9 +988,9 @@
           '<div class="input-group input-group-sm mb-1">' +
           '<div class="input-group-prepend"><span class="input-group-text">' + escapeHtml(sz) + '</span></div>' +
           '<div class="size-stepper">' +
-          (IS_SUPER_ADMIN ? '<button type="button" class="stepper-btn minus">−</button>' : '') +
-          (IS_SUPER_ADMIN ? '<input type="text" step="1" min="0" name="items[' + idx + '][size_quantities][' + escapeHtml(sz) + ']" class="size-qty" value="' + escapeHtml(q) + '" readonly>' : '<input type="text" name="items[' + idx + '][size_quantities][' + escapeHtml(sz) + ']" class="size-qty" value="' + escapeHtml(q) + '" readonly>') +
-          (IS_SUPER_ADMIN ? '<button type="button" class="stepper-btn plus">+</button>' : '') +
+          (IS_SUPER_ADMIN && !HAS_LOCKED_ITEM ? '<button type="button" class="stepper-btn minus">−</button>' : '') +
+          (IS_SUPER_ADMIN && !HAS_LOCKED_ITEM ? '<input type="text" step="1" min="0" name="items[' + idx + '][size_quantities][' + escapeHtml(sz) + ']" class="size-qty" value="' + escapeHtml(q) + '" readonly>' : '<input type="text" name="items[' + idx + '][size_quantities][' + escapeHtml(sz) + ']" class="size-qty" value="' + escapeHtml(q) + '" readonly>') +
+          (IS_SUPER_ADMIN && !HAS_LOCKED_ITEM ? '<button type="button" class="stepper-btn plus">+</button>' : '') +
           '</div></div></div>';
       }).join('');
 
@@ -893,13 +1015,12 @@
 
     // size-chip click
     $(document).on('click', '.size-chip', function() {
+      if (!IS_SUPER_ADMIN || HAS_LOCKED_ITEM) return;
       var $chip = $(this);
       var $row = $chip.closest('tr');
       var $sel = $row.find('.size-select');
       var size = String($chip.data('size'));
       var cur = $sel.val() || [];
-
-      if (!IS_SUPER_ADMIN) return;
 
       if ($chip.hasClass('active')) {
         cur = cur.filter(function(s) {
@@ -914,6 +1035,7 @@
 
     // stepper handlers
     $(document).on('click', '.stepper-btn', function() {
+      if (HAS_LOCKED_ITEM) return;
       var $btn = $(this);
       var $input = $btn.siblings('input.size-qty');
       var val = parseFloat($input.val()) || 0;
@@ -924,6 +1046,7 @@
       recalc();
     });
     $(document).on('input', '.size-qty', function() {
+      if (HAS_LOCKED_ITEM) return;
       var $row = $(this).closest('tr');
       updateTotalQtyBadge($row);
       updateRowQty($row);
@@ -931,6 +1054,7 @@
     });
 
     function syncSizeQtyInputs($row) {
+      if (HAS_LOCKED_ITEM) return;
       var idx = rowIndex($row);
       var sizes = $row.find('.size-select').val() || [];
       var oldValues = {};
@@ -989,6 +1113,7 @@
     $(document).on('input', '.size-qty,.rate,.tax', recalc);
     // Color change → re-run qty × color multiplication and update totals
     $(document).on('change', '.color-select', function() {
+      if (HAS_LOCKED_ITEM) return;
       var $row = $(this).closest('tr');
       var $cs = $(this);
 
@@ -1050,7 +1175,7 @@
             return '<option value="' + esc(s) + '">' + esc(variantSizeLabel(s, stockMap)) + '</option>';
           }).join(''));
 
-          if (IS_SUPER_ADMIN) {
+          if (IS_SUPER_ADMIN && !HAS_LOCKED_ITEM) {
             $row.find('.size-chips-wrap').html(
               availableSizes.map(function(s) {
                 return '<button type="button" class="size-chip" data-size="' + esc(s) + '">' + esc(s) + '</button>';
@@ -1074,6 +1199,7 @@
       recalc();
     });
     $(document).on('change', '.size-select', function() {
+      if (HAS_LOCKED_ITEM) return;
       var $row = $(this).closest('tr');
       if (IS_SUPER_ADMIN) {
         rebuildSizePanel($row);
@@ -1086,6 +1212,7 @@
 
     // ── Auto-fill row when item selected ─────────────────────────────────────
     $(document).on('change', '.article-select', function() {
+      if (HAS_LOCKED_ITEM) return;
       var $row = $(this).closest('tr');
       var id = $(this).val();
       if (!id) return;
@@ -1123,7 +1250,7 @@
         $size.select2('destroy');
       }
       $size.html(sizeOpts);
-      if (IS_SUPER_ADMIN) {
+      if (IS_SUPER_ADMIN && !HAS_LOCKED_ITEM) {
         var $chips = $row.find('.size-chips-wrap');
         $chips.empty();
         $row.find('.size-qty-wrapper').hide().html('');
@@ -1167,7 +1294,7 @@
         return '<option value="' + s + '" selected>' + s + '</option>';
       }).join('') : '';
       var sizeChips = '';
-      if (IS_SUPER_ADMIN) {
+      if (IS_SUPER_ADMIN && !HAS_LOCKED_ITEM) {
         sizeChips = ALL_SIZES.map(function(s) {
           return '<button type="button" class="size-chip" data-size="' + escapeHtml(s) + '">' + escapeHtml(s) + '</button>';
         }).join('');
@@ -1232,7 +1359,7 @@
 
     var rowCounter = $('#itemsTable tbody tr').length;
     // replace selects with hidden fields so the server receives a controlled value.
-    if (IS_RETAILER) {
+    if (IS_RETAILER || HAS_LOCKED_ITEM) {
       $('#itemsTable tbody tr').each(function() {
         var $s = $(this).find('.status-select');
         if ($s.length) {
@@ -1248,12 +1375,12 @@
     function updateRemoveButtonsState() {
       var onlyOneRow = $('#itemsTable tbody tr').length <= 1;
       $('#itemsTable tbody .remove-item')
-        .prop('disabled', onlyOneRow)
-        .toggleClass('disabled', onlyOneRow);
+        .prop('disabled', onlyOneRow || HAS_LOCKED_ITEM)
+        .toggleClass('disabled', onlyOneRow || HAS_LOCKED_ITEM);
     }
 
     $(document).on('click', '.remove-item', function() {
-      if ($('#itemsTable tbody tr').length <= 1) {
+      if (HAS_LOCKED_ITEM || $('#itemsTable tbody tr').length <= 1) {
         return;
       }
       $(this).closest('tr').remove();
@@ -1262,6 +1389,10 @@
     });
 
     $('#addItem').on('click', function() {
+      if (HAS_LOCKED_ITEM || !IS_SUPER_ADMIN) {
+        alert('Not allowed');
+        return;
+      }
       $('#itemsTable tbody').append(buildRow(rowCounter));
       // initialize Select2 on newly appended row
       var $new = $('#itemsTable tbody tr:last');
@@ -1274,7 +1405,7 @@
         width: '100%'
       });
       // initialize size chips / panel
-      if (IS_SUPER_ADMIN) {
+      if (IS_SUPER_ADMIN && !HAS_LOCKED_ITEM) {
         $new.find('.size-chips-wrap').html(ALL_SIZES.map(function(s) {
           return '<button type="button" class="size-chip" data-size="' + escapeHtml(s) + '">' + escapeHtml(s) + '</button>';
         }).join(''));
@@ -1283,7 +1414,7 @@
       rowCounter++;
       recalc();
       updateRemoveButtonsState();
-      if (IS_RETAILER) {
+      if (IS_RETAILER || HAS_LOCKED_ITEM) {
         var $last = $('#itemsTable tbody tr:last');
         var $s = $last.find('.status-select');
         if ($s.length) {
@@ -1391,7 +1522,7 @@
     });
 
     $('#sr_add').on('click', function() {
-      if (!IS_SUPER_ADMIN) {
+      if (!IS_SUPER_ADMIN || HAS_LOCKED_ITEM) {
         alert('Not allowed');
         return;
       }
@@ -1667,7 +1798,7 @@
 
 
     function openVariantDrawer($row) {
-      if (!IS_SUPER_ADMIN) return;
+      if (!IS_SUPER_ADMIN || HAS_LOCKED_ITEM) return;
       activeVariantRow = $row;
       drawerSizes = variantSelectedSizes($row);
       drawerQtys = variantQtyMap($row);
@@ -1692,7 +1823,7 @@
     }
 
     function applyVariantDrawer() {
-      if (!activeVariantRow) return;
+      if (!activeVariantRow || HAS_LOCKED_ITEM) return;
       activeVariantRow.find('.size-select').val(drawerSizes);
       rebuildSizePanel(activeVariantRow);
       drawerSizes.forEach(function(size) {
@@ -1715,6 +1846,7 @@
       if (event.target === this) closeVariantDrawer();
     });
     $(document).on('click', '.variant-drawer-size', function() {
+      if (HAS_LOCKED_ITEM) return;
       var size = String($(this).data('size'));
       if (drawerSizes.indexOf(size) === -1) {
         drawerSizes.push(size);
@@ -1728,6 +1860,7 @@
       renderVariantDrawer();
     });
     $(document).on('click', '.variant-drawer-plus,.variant-drawer-minus', function() {
+      if (HAS_LOCKED_ITEM) return;
       var $btn = $(this);
       var size = String($btn.closest('.variant-selected-row').data('size'));
       var qty = parseFloat(drawerQtys[size]) || 0;
@@ -1775,6 +1908,7 @@
     });
     /* ── Drawer qty: direct typing with stock cap ────────────────────────── */
     $(document).on('input', '.variant-drawer-qty', function() {
+      if (HAS_LOCKED_ITEM) return;
       var $input = $(this);
       var size = String($input.data('size') ||
         $input.closest('.variant-selected-row').data('size'));
@@ -1837,6 +1971,7 @@
     });
 
     $(document).on('blur', '.variant-drawer-qty', function() {
+      if (HAS_LOCKED_ITEM) return;
       var $input = $(this);
       var size = String($input.data('size') ||
         $input.closest('.variant-selected-row').data('size'));
@@ -1867,6 +2002,7 @@
       renderVariantDrawer();
     });
     $('#variantClearAll').on('click', function() {
+      if (HAS_LOCKED_ITEM) return;
       drawerSizes = [];
       drawerQtys = {};
       renderVariantDrawer();
@@ -1884,6 +2020,7 @@
 
     /* ── Individual item row status change with stock check ─────────────── */
     $(document).on('change', '.status-select', function() {
+      if (HAS_LOCKED_ITEM) return;
       var $select = $(this);
       var $row = $select.closest('tr');
       var newStatus = $select.val();
@@ -1932,6 +2069,7 @@
     });
 
     function updateRowStatus($select, orderItemId, newStatus, oldStatus) {
+      if (HAS_LOCKED_ITEM) return;
       $.ajax({
         url: '/order-items/' + orderItemId + '/status',
         type: 'POST',
@@ -1996,8 +2134,6 @@
       }
     });
 
-    // Preload available-sizes/stock data for rows that already have a saved
-    // color, so the Edit Variants drawer isn't empty for existing items.
     if (IS_SUPER_ADMIN) {
       $('#itemsTable tbody tr').each(function() {
         var $row = $(this);
