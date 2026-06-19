@@ -26,7 +26,8 @@ class WhatsAppOtpService
             $mobileNo = $defaultCountryCode . $mobileNo;
         }
 
-        $apiUrl = "https://graph.facebook.com/v19.0/{$phoneNumberId}/messages";
+        // $apiUrl = "https://graph.facebook.com/v19.0/{$phoneNumberId}/messages";
+        $apiUrl = "https://crm.officialwa.com/api/meta/v19.0/{$phoneNumberId}/messages";
 
         $data = [
             'messaging_product' => 'whatsapp',
@@ -38,10 +39,21 @@ class WhatsAppOtpService
                     'policy' => 'deterministic',
                     'code' => $templateLanguageCode,
                 ],
-                'name' => $templateName,    
+                'name' => $templateName,
                 'components' => [
                     [
                         'type' => 'body',
+                        'parameters' => [
+                            [
+                                'type' => 'text',
+                                'text' => $otp,
+                            ],
+                        ],
+                    ],
+                    [
+                        'type' => 'button',
+                        'sub_type' => 'url',
+                        'index' => 0,
                         'parameters' => [
                             [
                                 'type' => 'text',
