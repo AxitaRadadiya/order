@@ -200,14 +200,14 @@
               <div class="form-group">
                 <label>Billing Address</label>
                 <textarea name="billing_address" id="billing_address"
-                  class="form-control" rows="2" @if($hasLockedItem) readonly @endif>{{ old('billing_address', $order->billing_address) }}</textarea>
+                  class="form-control" rows="2" readonly>{{ old('billing_address', $order->billing_address) }}</textarea>
               </div>
             </div>
             <div class="col-md-6">
               <div class="form-group">
                 <label>Shipping Address</label>
                 <textarea name="shipping_address" id="shipping_address"
-                  class="form-control" rows="2" @if($hasLockedItem) readonly @endif>{{ old('shipping_address', $order->shipping_address) }}</textarea>
+                  class="form-control" rows="2" readonly>{{ old('shipping_address', $order->shipping_address) }}</textarea>
               </div>
             </div>
           </div>
@@ -284,7 +284,7 @@
                     @endif
                   </td>
                   <td>
-                    <input type="text" name="items[{{ $i }}][item_name]" class="form-control item-name-input" value="{{ $itemName }}" @if($isLockedStatus || $hasLockedItem) readonly @endif>
+                    <input type="text" name="items[{{ $i }}][item_name]" class="form-control item-name-input" value="{{ $itemName }}" readonly>
                   </td>
                   <td>
                     {{-- Color select --}}
@@ -386,11 +386,11 @@
                     <div class="form-control size-readonly-box" readonly>{{ implode(', ', $selectedSizes) }}</div>
                     @endif
                   </td>
-                  <td><input type="text" name="items[{{ $i }}][description]" class="form-control desc" value="{{ $desc }}" @if($isLockedStatus || $hasLockedItem) readonly @endif></td>
-                  <td><input type="number" step="0.01" name="items[{{ $i }}][quantity]" class="form-control qty" value="{{ $qty }}" @if($isLockedStatus || $hasLockedItem) readonly @endif></td>
-                  <td><input type="number" step="0.01" name="items[{{ $i }}][rate]" class="form-control rate" value="{{ $rate }}" @if($isLockedStatus || $hasLockedItem) readonly @endif></td>
-                  <td><input type="number" step="0.01" name="items[{{ $i }}][tax_rate]" class="form-control tax" value="{{ $taxRate }}" @if($isLockedStatus || $hasLockedItem) readonly @endif></td>
-                  <td><input type="number" step="0.01" name="items[{{ $i }}][total]" class="form-control total" value="{{ $total }}" @if($isLockedStatus || $hasLockedItem) readonly @endif></td>
+                  <td><input type="text" name="items[{{ $i }}][description]" class="form-control desc" value="{{ $desc }}" readonly></td>
+                  <td><input type="number" step="0.01" name="items[{{ $i }}][quantity]" class="form-control qty" value="{{ $qty }}" readonly></td>
+                  <td><input type="number" step="0.01" name="items[{{ $i }}][rate]" class="form-control rate" value="{{ $rate }}" readonly></td>
+                  <td><input type="number" step="0.01" name="items[{{ $i }}][tax_rate]" class="form-control tax" value="{{ $taxRate }}" readonly></td>
+                  <td><input type="number" step="0.01" name="items[{{ $i }}][total]" class="form-control total" value="{{ $total }}" readonly></td>
                   <td>
                     @if(auth()->user() && auth()->user()->hasRole('retailer'))
                     <input type="hidden" name="items[{{ $i }}][status]" value="{{ $selectedStatus ?: 'pending' }}">
@@ -450,7 +450,7 @@
                     @endif
                   </td>
                   <td>
-                    <input type="text" name="items[0][item_name]" class="form-control item-name-input" value="" @if($hasLockedItem) readonly @endif>
+                    <input type="text" name="items[0][item_name]" class="form-control item-name-input" value="" readonly>
                   </td>
                   <td>
                     @if(auth()->user() && auth()->user()->hasRole(['super-admin', 'superadmin']))
@@ -486,11 +486,11 @@
                     <div class="form-control size-readonly-box" readonly></div>
                     @endif
                   </td>
-                  <td><input type="text" name="items[0][description]" class="form-control desc" @if($hasLockedItem) readonly @endif></td>
-                  <td><input type="number" step="0.01" name="items[0][quantity]" class="form-control qty" value="0" @if($hasLockedItem) readonly @endif></td>
-                  <td><input type="number" step="0.01" name="items[0][rate]" class="form-control rate" value="0" @if($hasLockedItem) readonly @endif></td>
-                  <td><input type="number" step="0.01" name="items[0][tax_rate]" class="form-control tax" value="0" @if($hasLockedItem) readonly @endif></td>
-                  <td><input type="number" step="0.01" name="items[0][total]" class="form-control total" value="0" @if($hasLockedItem) readonly @endif></td>
+                  <td><input type="text" name="items[0][description]" class="form-control desc" readonly></td>
+                  <td><input type="number" step="0.01" name="items[0][quantity]" class="form-control qty" value="0" readonly></td>
+                  <td><input type="number" step="0.01" name="items[0][rate]" class="form-control rate" value="0" readonly></td>
+                  <td><input type="number" step="0.01" name="items[0][tax_rate]" class="form-control tax" value="0" readonly></td>
+                  <td><input type="number" step="0.01" name="items[0][total]" class="form-control total" value="0" readonly></td>
                   <td>
                     @if(auth()->user() && auth()->user()->hasRole('retailer'))
                     <input type="hidden" name="items[0][status]" value="pending">
