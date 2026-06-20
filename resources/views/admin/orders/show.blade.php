@@ -18,13 +18,13 @@
   $subtotal = (float) ($order->subtotal ?: $order->items->sum('total'));
   $markdownPercent = (float) ($order->markdown ?? 0);
   $markdownAmount = round($subtotal * $markdownPercent / 100, 2);
+  $afterMarkdown = $subtotal - $markdownAmount;
   $discountPercent = (float) ($order->discount ?? 0);
-  $discountAmount = round($subtotal * $discountPercent / 100, 2);
+  $discountAmount = round($afterMarkdown * $discountPercent / 100, 2);
   $adjustment = (float) ($order->adjustment ?? 0);
   
   // Calculate tax
   $taxPercent = (float) ($order->tax_percentage ?? 0);
-  $afterMarkdown = $subtotal - $markdownAmount;
   $afterDiscount = $afterMarkdown - $discountAmount;
   $taxAmount = round($afterDiscount * $taxPercent / 100, 2);
   $taxName = 'No Tax';

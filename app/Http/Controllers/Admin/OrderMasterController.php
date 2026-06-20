@@ -950,8 +950,9 @@ class OrderMasterController extends Controller
     {
         $markdownPercent = (float) $request->input('markdown', 0);
         $markdownAmount = $subtotal * $markdownPercent / 100;
+        $afterMarkdown = $subtotal - $markdownAmount;
         $discountPercent = (float) $request->input('discount', 0);
-        $discountAmount = $subtotal * $discountPercent / 100;
+        $discountAmount = $afterMarkdown * $discountPercent / 100;
         $adjustment = (float) $request->input('adjustment', 0);
         
         // Get tax percentage from the selected tax
@@ -964,7 +965,6 @@ class OrderMasterController extends Controller
         }
         
         // Calculate after markdown and discount, then apply tax
-        $afterMarkdown = $subtotal - $markdownAmount;
         $afterDiscount = $afterMarkdown - $discountAmount;
         $taxAmount = $afterDiscount * $taxPercentage / 100;
         $grandTotal = $afterDiscount + $taxAmount + $adjustment;
