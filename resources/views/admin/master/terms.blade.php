@@ -5,11 +5,6 @@
                 <h5 class="mb-0">Terms & Conditions</h5>
             </div>
             <div class="card-body">
-                @if(session('success'))
-                    <div class="alert alert-success">
-                        {{ session('success') }}
-                    </div>
-                @endif
 
                 <form action="{{ route('master.settings.save') }}" method="POST">
                     @csrf
