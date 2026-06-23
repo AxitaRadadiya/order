@@ -1,50 +1,6 @@
 @extends('admin.layouts.app')
 @section('title', 'Create Order')
 
-@section('style')
-<style>
-  .flash-warning {
-    animation: flashWarn 0.6s ease;
-  }
-  @keyframes flashWarn {
-    0% { background-color: transparent; }
-    30% { background-color: #ffe0e0; }
-    100% { background-color: transparent; }
-  }
-  #variantSaveBtn:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-  }
-  .remove-item:disabled,
-  .deleteButton:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-  }
-  .variant-drawer-size {
-    background: #f0f0f0;
-    color: #333;
-    border: 2px solid #ccc;
-    border-radius: 8px;
-    padding: 6px 14px;
-    margin: 4px;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.15s ease;
-  }
-  .variant-drawer-size.active {
-    background: #7F53AC;
-    color: #fff;
-    border-color: #7F53AC;
-    font-weight: 700;
-    box-shadow: 0 2px 6px rgba(127, 83, 172, 0.3);
-  }
-  .variant-drawer-size:hover:not(.active) {
-    background: #e0d4f5;
-    border-color: #7F53AC;
-  }
-</style>
-@endsection
-
 @section('content')
 <div class="content-header">
   <div class="container-fluid">

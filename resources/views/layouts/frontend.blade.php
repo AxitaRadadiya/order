@@ -129,15 +129,6 @@
               Ahmedabad, Gujarat, India
           </p> -->
         </div>
-
-        <!-- <div class="col-md-2 mb-4">
-          <h5 class="footer-title">Follow</h5>
-          <ul class="list-unstyled d-flex">
-            <li class="mr-2"><a class="text-white-50" href="#" aria-label="Follow on Facebook"><i class="fab fa-facebook fa-lg"></i></a></li>
-            <li class="mr-2"><a class="text-white-50" href="#" aria-label="Follow on Instagram"><i class="fab fa-instagram fa-lg"></i></a></li>
-            <li><a class="text-white-50" href="#" aria-label="Follow on Twitter"><i class="fab fa-twitter fa-lg"></i></a></li>
-          </ul>
-        </div> -->
       </div>
 
       <div class="row mt-3">

@@ -224,52 +224,6 @@
                 @error('gst_number')<p class="err">{{ $message }}</p>@enderror
             </div>
 
-            <!-- <div class="field">
-                <label for="distributor_id">Distributor (optional)</label>
-                <div class="input-wrap">
-                    <span class="input-icon">
-                        <svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-3.33 0-10 1.67-10 5v3h20v-3c0-3.33-6.67-5-10-5z"/></svg>
-                    </span>
-                    <select id="distributor_id" name="distributor_id" style="width:100%;height:44px;background:var(--bg3);border:1px solid var(--border2);border-radius:9px;padding:0 12px 0 38px;font-size:.88rem;color:black;outline:none;">
-                        <option value="">-- Select distributor (optional) --</option>
-                        @foreach($distributors ?? [] as $d)
-                            <option value="{{ $d->id }}" {{ old('distributor_id') == $d->id ? 'selected' : '' }}>{{ $d->company_name ?: $d->name }}</option>
-                        @endforeach
-                    </select>
-                </div>
-                @error('distributor_id')<p class="err">{{ $message }}</p>@enderror
-            </div>
-
-            <div class="field">
-                <label for="password">Password</label>
-                <div class="input-wrap">
-                    <span class="input-icon">
-                        <svg viewBox="0 0 24 24"><path d="M12 1a7 7 0 00-7 7v2H4a2 2 0 00-2 2v9a2 2 0 002 2h16a2 2 0 002-2v-9a2 2 0 00-2-2h-1V8a7 7 0 00-7-7zm0 2a5 5 0 015 5v2H7V8a5 5 0 015-5zm0 10a2 2 0 110 4 2 2 0 010-4z"/></svg>
-                    </span>
-                    <input id="password" type="password" name="password" placeholder="••••••••" required autocomplete="new-password">
-                    <button type="button" class="eye-btn" onclick="var p=document.getElementById('password');var s=this.querySelectorAll('svg');if(p.type==='password'){p.type='text';s[0].style.display='none';s[1].style.display='block'}else{p.type='password';s[0].style.display='block';s[1].style.display='none'}">
-                        <svg viewBox="0 0 24 24"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5C21.27 7.61 17 4.5 12 4.5zM12 17a5 5 0 110-10 5 5 0 010 10zm0-8a3 3 0 100 6 3 3 0 000-6z"/></svg>
-                        <svg viewBox="0 0 24 24" style="display:none"><path d="M2 5.27L3.28 4 20 20.72 18.73 22l-3.08-3.08A10.49 10.49 0 0112 19.5C7 19.5 2.73 16.39 1 12a10.44 10.44 0 014.35-5.38L2 5.27zM12 6a5 5 0 014.9 4.07L11.93 5A4.97 4.97 0 0112 6zm0 11a5 5 0 01-4.9-4.07L12.07 18A5 5 0 0112 17z"/></svg>
-                    </button>
-                </div>
-                @error('password')<p class="err">{{ $message }}</p>@enderror
-            </div>
-
-            <div class="field">
-                <label for="password_confirmation">Confirm password</label>
-                <div class="input-wrap">
-                    <span class="input-icon">
-                        <svg viewBox="0 0 24 24"><path d="M12 1a7 7 0 00-7 7v2H4a2 2 0 00-2 2v9a2 2 0 002 2h16a2 2 0 002-2v-9a2 2 0 00-2-2h-1V8a7 7 0 00-7-7zm0 2a5 5 0 015 5v2H7V8a5 5 0 015-5zm0 10a2 2 0 110 4 2 2 0 010-4z"/></svg>
-                    </span>
-                    <input id="password_confirmation" type="password" name="password_confirmation" placeholder="••••••••" required autocomplete="new-password">
-                    <button type="button" class="eye-btn" onclick="var p=document.getElementById('password_confirmation');var s=this.querySelectorAll('svg');if(p.type==='password'){p.type='text';s[0].style.display='none';s[1].style.display='block'}else{p.type='password';s[0].style.display='block';s[1].style.display='none'}">
-                        <svg viewBox="0 0 24 24"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5C21.27 7.61 17 4.5 12 4.5zM12 17a5 5 0 110-10 5 5 0 010 10zm0-8a3 3 0 100 6 3 3 0 000-6z"/></svg>
-                        <svg viewBox="0 0 24 24" style="display:none"><path d="M2 5.27L3.28 4 20 20.72 18.73 22l-3.08-3.08A10.49 10.49 0 0112 19.5C7 19.5 2.73 16.39 1 12a10.44 10.44 0 014.35-5.38L2 5.27zM12 6a5 5 0 014.9 4.07L11.93 5A4.97 4.97 0 0112 6zm0 11a5 5 0 01-4.9-4.07L12.07 18A5 5 0 0112 17z"/></svg>
-                    </button>
-                </div>
-                @error('password_confirmation')<p class="err">{{ $message }}</p>@enderror
-            </div> -->
-
             <div class="meta-row">
                 <div></div>
                 <div class="text-sm">
@@ -306,51 +260,10 @@
     });
     }
 
-    // function populateCities($sel, stateId, selectedId) {
-    // $sel.empty().append('<option value="">-- Select City --</option>');
-
-    // CITIES.forEach(function (c) {
-    //     if (String(c.state_id) === String(stateId)) {
-    //     $sel.append(
-    //         $('<option>', {
-    //         value: c.id,
-    //         text: c.name
-    //         }).prop('selected', String(c.id) === String(selectedId))
-    //     );
-    //     }
-    // });
-    // }
-
     function getStateId($stateSelect) {
     return $stateSelect.val();
     }
 
-    // document.addEventListener('DOMContentLoaded', function () {
-
-    //     const stateSelect = document.getElementById('state_id');
-    //     const citySelect  = document.getElementById('city_id');
-
-    //     function populateCities(stateId) {
-    //         citySelect.innerHTML = '<option value="">Select City</option>';
-    //         CITIES.forEach(function (c) {
-    //             if (String(c.state_id) === String(stateId)) {
-
-    //                 const option = document.createElement('option');
-    //                 option.value = c.id;
-    //                 option.text  = c.name;
-
-    //                 citySelect.appendChild(option);
-    //             }
-    //         });
-    //         $('#city_id').trigger('change.select2');
-    //     }
-    //     stateSelect.addEventListener('change', function () {
-    //         populateCities(this.value);
-    //     });
-    //     if (stateSelect.value) {
-    //         populateCities(stateSelect.value);
-    //     }
-    // });
     $(document).ready(function () {
 
         $('#state_id').select2({

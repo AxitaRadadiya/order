@@ -207,30 +207,6 @@ document.addEventListener('DOMContentLoaded', function () {
         }
         loadProducts();
     }
-
-
-  // function loadCategory(id, name) {
-  //   var title = document.getElementById('itemsTitle');
-  //       if (title) title.textContent = 'Products — ' + name;
-
-  //   var pag = document.getElementById('itemsPagination'); if (pag) pag.innerHTML = '';
-  //   fetch("{{ url('/') }}" + '/api/category/' + id + '/items')
-  //     .then(function (r) { return r.json(); })
-  //     .then(function (data) { renderItems(data.items || []); })
-  //     .catch(function () { document.getElementById('itemsGrid').innerHTML = '<div class="col-12 text-danger">Failed to load items.</div>'; });
-  // }
-
-  // document.querySelectorAll('.category-link, .category-tile').forEach(function (el) {
-  //   el.addEventListener('click', function (e) {
-  //     e.preventDefault();
-  //     var id = this.dataset.id;
-  //     var name = this.textContent.trim();
-  //     loadCategory(id, name);
-  //     document.querySelectorAll('.list-group .active').forEach(function(a){ a.classList.remove('active'); });
-  //     if (this.classList.contains('list-group-item')) this.classList.add('active');
-  //     window.scrollTo({ top: 200, behavior: 'smooth' });
-  //   });
-  // });
 });
 </script>
 @endpush

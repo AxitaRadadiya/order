@@ -19,14 +19,6 @@
     @endphp
 
     {{-- Elegant back button navigation --}}
-    <!-- <div class="mb-4">
-        <a href="{{ route('products') }}" class="btn-back-custom">
-            <span class="icon-circle">
-                <i class="fas fa-chevron-left"></i>
-            </span>
-            <span class="btn-back-text">Back to Products</span>
-        </a>
-    </div> -->
     <div aria-label="breadcrumb" class="mb-2">
         <ol class="breadcrumb custom-breadcrumb justify-content-end">
             <li class="breadcrumb-item">
