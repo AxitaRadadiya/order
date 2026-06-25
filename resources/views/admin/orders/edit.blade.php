@@ -149,7 +149,7 @@
                   @endforeach
                 </select>
                 @if($hasLockedItem)
-                <small class="text-muted">Customer selection is locked because order has confirmed/shipped/cancelled items.</small>
+                <small class="text-muted">Customer selection is locked because order has confirmed/shipped/delivered/cancelled items.</small>
                 @endif
               </div>
             </div>
@@ -246,7 +246,7 @@
                 $rate = $isArr ? ($it['rate'] ?? 0) : ($it->rate ?? 0);
                 $total = $isArr ? ($it['total'] ?? 0) : ($it->total ?? 0);
                 $selectedStatus = $isArr ? ($it['status'] ?? '') : ($it->status ?? '');
-                $isLockedStatus = in_array($selectedStatus, ['confirmed', 'shipped', 'partial_dispatch', 'delivered', 'cancelled']);
+                $isLockedStatus = in_array($selectedStatus, ['confirmed', 'shipped', 'delivered', 'cancelled']);
                 @endphp
                 <tr>
                   <td>
@@ -395,7 +395,7 @@
                     </span>
                     @else
                     <select name="items[{{ $i }}][status]" class="form-control status-select" data-order-item-id="{{ $isArr ? ($it['id'] ?? '') : ($it->id ?? '') }}" data-old-status="{{ $isArr ? ($it['status'] ?? 'pending') : ($it->status ?? 'pending') }}">
-                      @foreach(['pending','confirmed','shipped','cancelled'] as $st)
+                      @foreach(['pending','draft','confirmed','shipped','delivered','cancelled'] as $st)
                       <option value="{{ $st }}" {{ ($selectedStatus == $st) ? 'selected' : '' }}>{{ ucfirst($st) }}</option>
                       @endforeach
                     </select>
@@ -490,7 +490,7 @@
                     <span class="badge badge-secondary">Pending</span>
                     @else
                     <select name="items[0][status]" class="form-control status-select">
-                      @foreach(['pending','confirmed','shipped','cancelled'] as $st)
+                      @foreach(['pending','draft','confirmed','shipped','delivered','cancelled'] as $st)
                       <option value="{{ $st }}">{{ ucfirst($st) }}</option>
                       @endforeach
                     </select>
@@ -718,7 +718,7 @@
               <div><span class="badge badge-secondary">{{ ucfirst(old('status', $order->status) ?? 'pending') }}</span></div>
               @else
               <select name="status" class="form-control">
-                @foreach(['pending' => 'Pending', 'confirmed' => 'Confirmed', 'shipped' => 'Shipped', 'partial_dispatch' => 'Partial Dispatch', 'cancelled' => 'Cancelled'] as $val => $label)
+                @foreach(['pending' => 'Pending', 'draft' => 'Draft', 'confirmed' => 'Confirmed', 'shipped' => 'Shipped', 'delivered' => 'Delivered', 'cancelled' => 'Cancelled'] as $val => $label)
                 <option value="{{ $val }}" {{ old('status', $order->status) == $val ? 'selected' : '' }}>{{ $label }}</option>
                 @endforeach
               </select>
@@ -754,10 +754,6 @@
     </div>
     <div class="variant-drawer-body">
       <span class="variant-drawer-label">Choose Sizes</span>
-      <div class="mb-3">
-        <label class="variant-drawer-label mb-1">Color</label>
-        <select id="variantDrawerColor" class="form-control"></select>
-      </div>
       <div class="variant-drawer-sizes" id="variantDrawerSizes"></div>
       <div class="d-flex align-items-center justify-content-between mb-2">
         <span class="variant-drawer-label mb-0">Selected Size</span>
@@ -842,8 +838,8 @@
     background: #007bff;
     color: #fff;
   }
-  .status-badge-partial_dispatch {
-    background: #6f42c1;
+  .status-badge-delivered {
+    background: #28a745;
     color: #fff;
   }
   .status-badge-cancelled {
@@ -853,6 +849,10 @@
   .status-badge-pending {
     background: #ffc107;
     color: #212529;
+  }
+  .status-badge-draft {
+    background: #6c757d;
+    color: #fff;
   }
 </style>
 <script>
@@ -1364,7 +1364,7 @@
         '<td><input type="number" step="0.01" name="items[' + idx + '][rate]"        class="form-control rate"        value="' + (it.rate || 0) + '" readonly></td>' +
         '<td><input type="number" step="0.01" name="items[' + idx + '][total]"       class="form-control total"       value="' + (it.total || 0) + '" readonly></td>' +
         '<td>' +
-        '<select name="items[' + idx + '][status]" class="form-control status-select">' + ['pending', 'confirmed', 'shipped', 'partial_dispatch', 'cancelled'].map(function(s) {
+        '<select name="items[' + idx + '][status]" class="form-control status-select">' + ['pending', 'draft', 'confirmed', 'shipped', 'delivered', 'cancelled'].map(function(s) {
           return '<option value="' + s + '"' + ((it.status && it.status == s) ? ' selected' : '') + '>' + (s.charAt(0).toUpperCase() + s.slice(1)) + '</option>';
         }).join('') +
         '</select>' +
@@ -1571,72 +1571,6 @@
     var activeVariantRow = null;
     var drawerSizes = [];
     var drawerQtys = {};
-    var activeVariantColor = null;
-
-    function variantSelectedColors($row) {
-      var val = $row.find('.color-select').val();
-      if (Array.isArray(val)) {
-        return val.map(String).filter(Boolean);
-      }
-      return val ? [String(val)] : [];
-    }
-
-    function variantColorLabel(colorId) {
-      colorId = String(colorId);
-      var color = (COLORS || []).find(function(c) {
-        return String(c.id) === colorId;
-      });
-      return color ? (color.color_code || color.name || colorId) : colorId;
-    }
-
-    function populateVariantDrawerColorSelect($row) {
-      var colors = variantSelectedColors($row);
-      var $select = $('#variantDrawerColor');
-      $select.empty();
-      if (!colors.length) {
-        $select.append('<option value="">Select color first</option>');
-        $select.prop('disabled', true);
-        activeVariantColor = null;
-        return;
-      }
-      colors.forEach(function(colorId) {
-        $select.append('<option value="' + variantEscape(colorId) + '">' + variantEscape(variantColorLabel(colorId)) + '</option>');
-      });
-      activeVariantColor = activeVariantColor && colors.indexOf(activeVariantColor) !== -1 ? activeVariantColor : colors[0];
-      $select.val(activeVariantColor).prop('disabled', false);
-    }
-
-    function loadVariantSizesForColor($row, colorId, callback) {
-      var itemId = String($row.find('.item-id-hidden').val() || '').trim();
-      if (!itemId || !colorId) {
-        $row.attr('data-available-sizes', JSON.stringify([]));
-        $row.attr('data-stock-map', JSON.stringify({}));
-        if (typeof callback === 'function') callback();
-        return;
-      }
-      $.ajax({
-        url: '/api/item-variants/sizes-by-color',
-        method: 'GET',
-        dataType: 'json',
-        data: { item_id: itemId, color_id: colorId },
-        success: function(resp) {
-          var sizes = Array.isArray(resp && resp.sizes) ? resp.sizes : [];
-          var availableSizes = sizes.map(function(s) { return String(s.label); });
-          var stockMap = {};
-          sizes.forEach(function(s) {
-            stockMap[String(s.label)] = parseFloat(s.available_qty) || 0;
-          });
-          $row.attr('data-available-sizes', JSON.stringify(availableSizes));
-          $row.attr('data-stock-map', JSON.stringify(stockMap));
-          if (typeof callback === 'function') callback();
-        },
-        error: function() {
-          $row.attr('data-available-sizes', JSON.stringify([]));
-          $row.attr('data-stock-map', JSON.stringify({}));
-          if (typeof callback === 'function') callback();
-        }
-      });
-    }
 
     function variantEscape(value) {
       return String(value).replace(/[&<>"']/g, function(ch) {
@@ -1816,8 +1750,10 @@
 
         if (anyExceed) {
           $('#variantDrawerBackdrop').attr('data-has-stock-warning', 'true');
+          $('#variantSaveBtn').prop('disabled', true).attr('title', 'Fix stock issues before saving');
         } else {
           $('#variantDrawerBackdrop').removeAttr('data-has-stock-warning');
+          $('#variantSaveBtn').prop('disabled', false).removeAttr('title');
         }
       }
 
@@ -1842,20 +1778,7 @@
         if (!drawerQtys[size]) drawerQtys[size] = 1;
       });
       $('#variantDrawerItem').text(variantRowLabel($row));
-      populateVariantDrawerColorSelect($row);
-      if (activeVariantColor) {
-        loadVariantSizesForColor($row, activeVariantColor, function() {
-          drawerSizes = drawerSizes.filter(function(size) {
-            return variantSizeOptions(activeVariantRow).indexOf(String(size)) !== -1;
-          });
-          drawerSizes.forEach(function(size) {
-            if (!drawerQtys[size]) drawerQtys[size] = 1;
-          });
-          renderVariantDrawer();
-        });
-      } else {
-        renderVariantDrawer();
-      }
+      renderVariantDrawer();
       $('#variantDrawerBackdrop').addClass('show').attr('aria-hidden', 'false');
       $('body').addClass('variant-drawer-open');
     }
@@ -1890,19 +1813,6 @@
     $(document).on('click', '[data-variant-close]', closeVariantDrawer);
     $('#variantDrawerBackdrop').on('click', function(event) {
       if (event.target === this) closeVariantDrawer();
-    });
-    $('#variantDrawerColor').on('change', function() {
-      if (!activeVariantRow) return;
-      activeVariantColor = $(this).val();
-      loadVariantSizesForColor(activeVariantRow, activeVariantColor, function() {
-        drawerSizes = drawerSizes.filter(function(size) {
-          return variantSizeOptions(activeVariantRow).indexOf(String(size)) !== -1;
-        });
-        drawerSizes.forEach(function(size) {
-          if (!drawerQtys[size]) drawerQtys[size] = 1;
-        });
-        renderVariantDrawer();
-      });
     });
     $(document).on('click', '.variant-drawer-size', function() {
       if (HAS_LOCKED_ITEM) return;
@@ -1946,9 +1856,13 @@
               $warning.removeClass('flash-warning');
             }, 600);
           }
+          return;
         }
 
         var newQty = qty + 1;
+        if (available !== null && !isNaN(available) && newQty > available) {
+          newQty = available;
+        }
         drawerQtys[size] = newQty;
         renderVariantDrawer();
         return;
@@ -1979,7 +1893,18 @@
       var available = (stockMap[size] !== undefined) ?
         parseInt(stockMap[size], 10) : null;
 
-      $input.val(val);
+      if (available !== null && !isNaN(available) && val > available) {
+        val = available;
+        $input.val(val);
+        var $warning = $input.closest('.variant-selected-row').find('.stock-warning');
+        if ($warning.length) {
+          $warning.addClass('flash-warning');
+          setTimeout(function() {
+            $warning.removeClass('flash-warning');
+          }, 600);
+        }
+      }
+
       drawerQtys[size] = val;
 
       var hasStockWarning = false;
@@ -2087,35 +2012,6 @@
               try {
                 $select.trigger('change.select2');
               } catch (e) {}
-              return;
-            }
-            updateRowStatus($select, orderItemId, newStatus, oldStatus);
-          },
-          error: function() {
-            alert('Failed to check stock. Please try again.');
-            $select.val(oldStatus);
-          }
-        });
-        return;
-      }
-
-      // If attempting to mark as shipped, ensure stock is sufficient first.
-      if (newStatus === 'shipped') {
-        $.ajax({
-          url: "{{ route('api.item-variants.check-stock') }}",
-          type: 'GET',
-          data: {
-            order_item_id: orderItemId
-          },
-          success: function(res) {
-            if (!res.ok) {
-              var messages = res.issues.map(function(i) { return i.message; }).join('\n');
-              alert('Insufficient stock for shipping. Status will be set to Confirmed.\n\n' + messages);
-              $select.val('confirmed');
-              try {
-                $select.trigger('change.select2');
-              } catch (e) {}
-              updateRowStatus($select, orderItemId, 'confirmed', oldStatus);
               return;
             }
             updateRowStatus($select, orderItemId, newStatus, oldStatus);
