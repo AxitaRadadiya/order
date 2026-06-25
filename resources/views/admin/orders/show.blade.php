@@ -4,14 +4,14 @@
 @section('content')
 @php
   $statusKey = strtolower(str_replace(' ', '-', $order->status ?? 'default'));
-  $statusClass = in_array($statusKey, ['pending','confirmed','shipped','delivered','cancelled'])
+  $statusClass = in_array($statusKey, ['pending','confirmed','shipped','partial_dispatch','cancelled'])
     ? 'order-status-' . $statusKey : 'order-status-default';
   $statusIcons = [
-    'pending'   => 'fa-clock',
-    'confirmed' => 'fa-check-circle',
-    'shipped'   => 'fa-truck',
-    'delivered' => 'fa-box-open',
-    'cancelled' => 'fa-times-circle',
+    'pending'          => 'fa-clock',
+    'confirmed'        => 'fa-check-circle',
+    'shipped'          => 'fa-truck',
+    'partial_dispatch' => 'fa-truck-loading',
+    'cancelled'        => 'fa-times-circle',
   ];
   $statusIcon = $statusIcons[$statusKey] ?? 'fa-circle';
 
@@ -174,7 +174,7 @@
                                             ->implode(', ');
 
                                         $itStatusKey = strtolower($it->status ?? 'default');
-                                        $itStatusClass = in_array($itStatusKey, ['pending','confirmed','shipped','delivered','cancelled'])
+                                        $itStatusClass = in_array($itStatusKey, ['pending','confirmed','shipped','partial_dispatch','cancelled'])
                                             ? 'order-status-' . $itStatusKey : 'order-status-default';
                                     @endphp
                                     <tr>

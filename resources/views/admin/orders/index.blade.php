@@ -32,6 +32,59 @@
       </div>
     </div>
     <div class="card-body">
+      <div class="row mb-3">
+        <div class="col-md-3">
+          <div class="form-group">
+            <label for="filter_customer_name">Customer name / email</label>
+            <input type="text" id="filter_customer_name" class="form-control" placeholder="Search customer">
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="form-group">
+            <label for="filter_status">Order status</label>
+            <select id="filter_status" class="form-control">
+              <option value="">All statuses</option>
+              <option value="pending">Pending</option>
+              <option value="confirmed">Confirmed</option>
+              <option value="shipped">Shipped</option>
+              <option value="partial_dispatch">Partial Dispatch</option>
+              <option value="cancelled">Cancelled</option>
+            </select>
+          </div>
+        </div>
+        <div class="col-md-2">
+          <div class="form-group">
+            <label for="filter_date_from">Date from</label>
+            <input type="date" id="filter_date_from" class="form-control">
+          </div>
+        </div>
+        <div class="col-md-2">
+          <div class="form-group">
+            <label for="filter_date_to">Date to</label>
+            <input type="date" id="filter_date_to" class="form-control">
+          </div>
+        </div>
+       <div class="col-md-2 d-flex align-items-end">
+    <div class="row w-100">
+        <div class="col-6 pr-1">
+            <button type="button"
+                    id="filter_apply"
+                    class="btn btn-create">
+                Apply
+            </button>
+        </div>
+
+        <div class="col-6 pl-1">
+            <button type="button"
+                    id="filter_reset"
+                    class="btn btn-secondary">
+                Reset
+            </button>
+        </div>
+    </div>
+</div>
+      </div>
+
       <table id="orderTable" class="table table-bordered table-hover table-sm w-100">
         <thead>
           <tr>

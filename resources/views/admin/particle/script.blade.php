@@ -197,14 +197,35 @@ $(document).ready(function () {
     load_customer();
 
     // Filter buttons (if present on the page)
-    $(document).on('click', '#filter_apply', function(e){ e.preventDefault(); load_customer(); });
-    $(document).on('click', '#filter_reset', function(e){ e.preventDefault(); $('#filter_country,#filter_state,#filter_city,#filter_status').val(''); load_customer(); });
+    $(document).on('click', '#filter_apply', function(e){ e.preventDefault(); load_order(); });
+    $(document).on('click', '#filter_reset', function(e){
+        e.preventDefault();
+        $('#filter_customer_name,#filter_status,#filter_date_from,#filter_date_to').val('');
+        load_order();
+    });
 
     function load_order() {
         if ($.fn.dataTable.isDataTable('#orderTable')) {
             $('#orderTable').DataTable().clear().destroy();
             $('#orderTable tbody').empty();
         }
+
+        var params = {
+            _token: '{{csrf_token()}}'
+        };
+        if ($('#filter_customer_name').length) {
+            params.customer_name = $('#filter_customer_name').val();
+        }
+        if ($('#filter_status').length) {
+            params.status = $('#filter_status').val();
+        }
+        if ($('#filter_date_from').length) {
+            params.date_from = $('#filter_date_from').val();
+        }
+        if ($('#filter_date_to').length) {
+            params.date_to = $('#filter_date_to').val();
+        }
+
         $('#orderTable').DataTable({
             paging: true, lengthChange: true, searching: true, ordering: true, info: true,
             autoWidth: false, responsive: true, processing: true, serverSide: true,
@@ -213,7 +234,7 @@ $(document).ready(function () {
                 url: '{{ route('orders.list') }}',
                 dataType: 'json',
                 type: 'GET',
-                data: { _token: '{{csrf_token()}}' }
+                data: params
             },
             columns: [
             { data: 'id' },

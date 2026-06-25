@@ -80,6 +80,19 @@
           <p>Activity Logs</p>
         </a>
       </li>
+      <li class="nav-header">Reports</li>
+      <li class="nav-item">
+        <a href="{{ route('reports.items') }}" class="nav-link {{ Request::routeIs('reports.items') ? 'active' : '' }}">
+          <span class="nav-icon">📈</span>
+          <p>Item Report</p>
+        </a>
+      </li>
+      <li class="nav-item">
+        <a href="{{ route('reports.orders') }}" class="nav-link {{ Request::routeIs('reports.orders') ? 'active' : '' }}">
+          <span class="nav-icon">🧾</span>
+          <p>Order Report</p>
+        </a>
+      </li>
 
       @elseif($user)
       @php

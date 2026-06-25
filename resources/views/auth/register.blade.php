@@ -193,18 +193,27 @@
 
             <div class="row">
                 <div class="field col-md-6">
-                    <label for="state_id">State</label>
-                    <select name="state_id" id="state_id" class="form-control select2" required>
-                        <option value="">Select State</option>
-                        @foreach($states as $state)
-                            <option value="{{ $state->id }}"
-                                {{ old('state_id') == $state->id ? 'selected' : '' }}>
-                                {{ $state->name }}
-                            </option>
+                    <label for="country_id">Country</label>
+                    <select name="country_id" id="country_id" class="form-control select2">
+                        <option value="">Select Country</option>
+                        @foreach($countries ?? [] as $country)
+                            <option value="{{ $country->id }}" {{ old('country_id') == $country->id ? 'selected' : '' }}>{{ $country->name }}</option>
                         @endforeach
                     </select>
                 </div>
 
+                <div class="field col-md-6">
+                    <label for="state_id">State</label>
+                    <select name="state_id" id="state_id" class="form-control select2" required>
+                        <option value="">Select State</option>
+                        @foreach($states ?? [] as $state)
+                            <option value="{{ $state->id }}" {{ old('state_id') == $state->id ? 'selected' : '' }}>{{ $state->name }}</option>
+                        @endforeach
+                    </select>
+                </div>
+            </div>
+
+            <div class="row">
                 <div class="field col-md-6">
                     <label for="city_id">City</label>
                     <select name="city_id" id="city_id" class="form-control select2" required>
@@ -289,113 +298,86 @@
 <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <script>
-    var STATES = @json($states);
-    var CITIES = @json($cities);
-    function populateStates($sel, countryId, selectedId) {
-    $sel.empty().append('<option value="">-- Select State --</option>');
+    var COUNTRIES = @json($countries ?? []);
+    var STATES = @json($states ?? []);
+    var CITIES = @json($cities ?? []);
 
-    STATES.forEach(function (s) {
-        if (String(s.country_id) === String(countryId)) {
-        $sel.append(
-            $('<option>', {
-            value: s.id,
-            text: s.name
-            }).prop('selected', String(s.id) === String(selectedId))
-        );
-        }
-    });
+    function populateStateOptions(countryId) {
+        var $state = $('#state_id');
+        $state.empty().append(new Option('Select State', ''));
+
+        STATES.forEach(function (s) {
+            // if countryId provided, filter, otherwise include all
+            if (!countryId || String(s.country_id) === String(countryId)) {
+                $state.append(new Option(s.name, s.id));
+            }
+        });
+
+        $state.trigger('change');
     }
 
-    // function populateCities($sel, stateId, selectedId) {
-    // $sel.empty().append('<option value="">-- Select City --</option>');
+    function populateCityOptions(stateId) {
+        var $city = $('#city_id');
+        $city.empty().append(new Option('Select City', ''));
 
-    // CITIES.forEach(function (c) {
-    //     if (String(c.state_id) === String(stateId)) {
-    //     $sel.append(
-    //         $('<option>', {
-    //         value: c.id,
-    //         text: c.name
-    //         }).prop('selected', String(c.id) === String(selectedId))
-    //     );
-    //     }
-    // });
-    // }
+        CITIES.forEach(function (c) {
+            if (String(c.state_id) === String(stateId)) {
+                $city.append(new Option(c.name, c.id));
+            }
+        });
 
-    function getStateId($stateSelect) {
-    return $stateSelect.val();
+        $city.trigger('change');
     }
 
-    // document.addEventListener('DOMContentLoaded', function () {
-
-    //     const stateSelect = document.getElementById('state_id');
-    //     const citySelect  = document.getElementById('city_id');
-
-    //     function populateCities(stateId) {
-    //         citySelect.innerHTML = '<option value="">Select City</option>';
-    //         CITIES.forEach(function (c) {
-    //             if (String(c.state_id) === String(stateId)) {
-
-    //                 const option = document.createElement('option');
-    //                 option.value = c.id;
-    //                 option.text  = c.name;
-
-    //                 citySelect.appendChild(option);
-    //             }
-    //         });
-    //         $('#city_id').trigger('change.select2');
-    //     }
-    //     stateSelect.addEventListener('change', function () {
-    //         populateCities(this.value);
-    //     });
-    //     if (stateSelect.value) {
-    //         populateCities(stateSelect.value);
-    //     }
-    // });
     $(document).ready(function () {
+        $('#country_id').select2({ placeholder: 'Select Country', width: '100%' });
+        $('#state_id').select2({ placeholder: 'Select State', width: '100%' });
+        $('#city_id').select2({ placeholder: 'Select City', width: '100%' });
 
-        $('#state_id').select2({
-            placeholder: 'Select State',
-            width: '100%'
+        // When country changes, repopulate states (filtered). If empty, show all states.
+        $('#country_id').on('change', function () {
+            var cid = $(this).val();
+            populateStateOptions(cid);
+            // clear cities
+            $('#city_id').empty().append(new Option('Select City', '')).trigger('change');
         });
 
-        $('#city_id').select2({
-            placeholder: 'Select City',
-            width: '100%'
-        });
-
-        function loadCities(stateId) {
-
-            $('#city_id').empty();
-            $('#city_id').append(
-                '<option value="">Select City</option>'
-            );
-
-            CITIES.forEach(function (city) {
-                if (String(city.state_id) === String(stateId)) {
-                    $('#city_id').append(
-                        new Option(city.name, city.id)
-                    );
-                }
-            });
-
-            // Refresh Select2
-            $('#city_id').trigger('change');
-        }
-
+        // When state changes, populate cities
         $('#state_id').on('change', function () {
-            loadCities($(this).val());
+            var sid = $(this).val();
+            if (sid) populateCityOptions(sid);
+            else $('#city_id').empty().append(new Option('Select City', '')).trigger('change');
         });
 
-        // For old selected state after validation error
-        let oldState = $('#state_id').val();
+        // Initial population: if a country is pre-selected, filter by it; otherwise populate states (all)
+        var initialCountry = $('#country_id').val();
+        populateStateOptions(initialCountry);
 
-        if (oldState) {
-            loadCities(oldState);
+        // Restore old selections after server-side validation (if any)
+        var oldState = "{{ old('state_id') }}";
+        var oldCity = "{{ old('city_id') }}";
+        var oldCountry = "{{ old('country_id') }}";
 
-            let oldCity = "{{ old('city_id') }}";
-
-            if (oldCity) {
-                $('#city_id').val(oldCity).trigger('change');
+        if (oldCountry) {
+            // ensure country select shows the old value
+            $('#country_id').val(oldCountry).trigger('change');
+            // delay to allow states to be populated
+            setTimeout(function () {
+                if (oldState) {
+                    $('#state_id').val(oldState).trigger('change');
+                    setTimeout(function () {
+                        if (oldCity) {
+                            $('#city_id').val(oldCity).trigger('change');
+                        }
+                    }, 50);
+                }
+            }, 50);
+        } else {
+            if (oldState) {
+                $('#state_id').val(oldState).trigger('change');
+                setTimeout(function () {
+                    if (oldCity) $('#city_id').val(oldCity).trigger('change');
+                }, 50);
             }
         }
     });

@@ -75,6 +75,10 @@ Route::group(['middleware' => ['auth']], function () {
     Route::resource('users', UserController::class);
     Route::get('activity-logs',       [ActivityLogController::class, 'index'])->name('activity-logs.index');
     Route::get('activity-logs/{activityLog}', [ActivityLogController::class, 'show'])->name('activity-logs.show');
+    Route::get('reports/items', [OrderMasterController::class, 'report'])->name('reports.items');
+    Route::get('reports/items/data', [OrderMasterController::class, 'reportData'])->name('reports.items.data');
+    Route::get('reports/orders', [OrderMasterController::class, 'orderReportPage'])->name('reports.orders');
+    Route::get('reports/orders/detail', [OrderMasterController::class, 'reportOrder'])->name('reports.orders.detail');
     Route::get('customers-list', [CustomerController::class,'list'])->name('customers.list');
     Route::post('customers/{customer}/verify-distributor', [CustomerController::class, 'verifyByDistributor'])->name('customers.verify.distributor');
     Route::resource('customers', CustomerController::class);
