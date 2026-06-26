@@ -179,27 +179,6 @@
               <label>Google Location Link</label>
               <input type="text" class="form-control" name="google_location_link" value="{{ old('google_location_link') }}">
             </div>
-            <!-- <div class="col-md-3">
-              <div class="form-group">
-                <label>Password <span class="text-danger">*</span></label>
-                  <div class="input-group">
-                    <input type="password" class="form-control @error('password') is-invalid @enderror"
-                           id="password" name="password" placeholder="Password" required>
-                    @error('password')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                  </div>
-              </div>
-            </div>
-            <div class="col-md-3">
-              <div class="form-group">
-                <label>Confirm Password <span class="text-danger">*</span></label>
-                <div class="input-group">
-                  <input type="password" class="form-control @error('password_confirmation') is-invalid @enderror"
-                         id="password_confirmation" name="password_confirmation"
-                         placeholder="Confirm Password" required>
-                  @error('password_confirmation')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                </div>
-              </div>
-            </div> -->
             <div class="col-md-3">
               <div class="form-group">
                 <label>Payment Terms</label>
@@ -309,14 +288,6 @@
                            placeholder="PIN Code" maxlength="6">
                   </div>
                 </div>
-
-                <!-- <div class="col-md-12">
-                  <div class="form-group"><label>GST Number</label>
-                    <input type="text" class="form-control bf upper" id="b_gst"
-                           name="billing_gst_number" value="{{ old('billing_gst_number') }}"
-                           placeholder="GST Number">
-                  </div>
-                </div> -->
               </div>
             </div>
           </div>
@@ -406,14 +377,6 @@
                            placeholder="PIN Code" maxlength="6">
                   </div>
                 </div>
-
-                <!-- <div class="col-md-12">
-                  <div class="form-group"><label>GST Number</label>
-                    <input type="text" class="form-control upper" id="s_gst"
-                           name="shipping_gst_number" value="{{ old('shipping_gst_number') }}"
-                           placeholder="GST Number">
-                  </div>
-                </div> -->
               </div>
             </div>
           </div>
@@ -774,26 +737,6 @@ $(function () {
       return false;
     }
   });
-
-  /* ── Show/hide distributor when role is retailer ───────────────────── */
-  /*function toggleDistributor() {
-    var $opt = $('select[name="role_id"] option:selected');
-    var selName = $opt.data('name');
-    var text = $opt.text() || '';
-    var name = String(selName || text).toLowerCase();
-    var val = $('select[name="role_id"]').val();
-    if (val === '' || name.indexOf('retailer') !== -1) {
-      $('#distributor_field').show();
-    } else {
-      $('#distributor_field').hide();
-      $('#distributor_field select').val('');
-    }
-  }
-  $('select[name="role_id"]').on('change', toggleDistributor);
- 
-  toggleDistributor();
-  */
-
 });
 </script>
 @endsection

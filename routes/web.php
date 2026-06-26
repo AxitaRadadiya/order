@@ -42,7 +42,8 @@ Route::middleware('auth')->get('/api/item-variants/sizes-by-color', [\App\Http\C
 
 Route::get('/products/{item}', [FrontendController::class, 'show'])->name('products.show');
 Route::view('/about', 'frontend.about')->name('about');
-Route::get('/network', [FrontendController::class, 'network'])->name('network');
+Route::view('/network', 'frontend.network')->name('network');
+// Route::get('/network', [FrontendController::class, 'network'])->name('network');
 Route::view('/contact', 'frontend.contact')->name('contact');
 //Route::get('/catalog', [ItemController::class, 'catalogs'])->name('catalog');
 Route::post('/contact', [ContactController::class, 'store'])->name('contact.store');

@@ -177,8 +177,8 @@
                                     <div class="list-row-label">Google Location</div>
                                 </div>
                                 <div class="list-row-value">
-                                    @if(!empty($customer->google_location_url))
-                                        <a href="{{ $customer->google_location_url }}" target="_blank" class="text-purple font-weight-bold">View on Map <i class="fas fa-external-link-alt ml-1" style="font-size: 0.8rem;"></i></a>
+                                    @if(!empty($customer->google_location_link))
+                                        <a href="{{ $customer->google_location_link }}" target="_blank" class="text-purple font-weight-bold">View on Map <i class="fas fa-external-link-alt ml-1" style="font-size: 0.8rem;"></i></a>
                                     @else
                                         -
                                     @endif

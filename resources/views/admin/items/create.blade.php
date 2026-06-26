@@ -106,37 +106,6 @@
 								@error('sub_category')<div class="invalid-feedback">{{ $message }}</div>@enderror
 							</div>
 						</div>
-						<!-- <div class="col-md-4">
-							<div class="form-group">
-								<label>Colors</label>
-								<select name="colors[]" class="form-control select2 @error('colors') is-invalid @enderror" multiple>
-									@foreach($colors as $color)
-									<option value="{{ $color->id }}" {{ in_array($color->id, (array) old('colors', [])) ? 'selected' : '' }}>{{ $color->color_code }}</option>
-									@endforeach
-								</select>
-								@error('colors')<div class="invalid-feedback">{{ $message }}</div>@enderror
-							</div>
-						</div> -->
-
-						{{-- Sizes --}}
-						<!-- <div class="col-md-12">
-							<div class="form-group">
-								<label>Sizes</label>
-								@php
-								$sizesList    = $sizes ?? [28,30,32,34,36,38,40,42,44,46,48];
-								$selectedSizes = old('sizes', []);
-								@endphp
-								<div>
-									@foreach($sizesList as $sz)
-									<div class="form-check form-check-inline">
-										<input class="form-check-input" type="checkbox" name="sizes[]" id="size_{{ $sz }}" value="{{ $sz }}"
-											{{ in_array((string)$sz, array_map('strval', (array)$selectedSizes)) ? 'checked' : '' }}>
-										<label class="form-check-label" for="size_{{ $sz }}">{{ $sz }}</label>
-									</div>
-									@endforeach
-								</div>
-							</div>
-						</div> -->
 
 						<div class="col-md-3">
 							<div class="form-group">
@@ -167,7 +136,7 @@
 							</div>
 						</div>
 
-						{{-- ✅ MULTIPLE IMAGES: up to 5, jpg/png only, max 2 MB each --}}
+						{{-- MULTIPLE IMAGES: up to 5, jpg/png only, max 2 MB each --}}
 						<div class="col-md-12">
 							<div class="form-group">
 								<label>
@@ -224,9 +193,6 @@
 							<div class="card mt-3">
 								<div class="card-header pl-0">
 									<h5 class="mb-0">Item Variants</h5>
-									<!-- <button type="button" class="btn btn-sm btn-create" id="addVariantRow">
-										<i class="fas fa-plus"></i> Add Variant
-									</button> -->
 								</div>
 
 								<div class="card-body p-0">

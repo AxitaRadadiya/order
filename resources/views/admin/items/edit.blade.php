@@ -133,7 +133,7 @@
 							</div>
 						</div>
 
-						{{-- ✅ MULTIPLE IMAGES: up to 5, jpg/png only, max 2 MB each --}}
+						{{-- MULTIPLE IMAGES: up to 5, jpg/png only, max 2 MB each --}}
 						<div class="col-md-12">
 							<div class="form-group">
 								<label>
