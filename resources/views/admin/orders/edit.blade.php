@@ -246,7 +246,8 @@
                 $rate = $isArr ? ($it['rate'] ?? 0) : ($it->rate ?? 0);
                 $total = $isArr ? ($it['total'] ?? 0) : ($it->total ?? 0);
                 $selectedStatus = $isArr ? ($it['status'] ?? '') : ($it->status ?? '');
-                $isLockedStatus = in_array($selectedStatus, ['confirmed', 'shipped', 'delivered', 'cancelled']);
+                // confirmed rows stay editable for status only; article/color/size lock on shipped/delivered/cancelled
+                $isLockedStatus = in_array($selectedStatus, ['shipped', 'delivered', 'cancelled']);
                 @endphp
                 <tr>
                   <td>
@@ -388,11 +389,24 @@
                     <input type="hidden" name="items[{{ $i }}][status]" value="{{ $selectedStatus ?: 'pending' }}">
                     <span class="badge badge-secondary">{{ ucfirst($selectedStatus ?: 'pending') }}</span>
                     @else
-                    @if($isLockedStatus || $hasLockedItem)
+                    @php
+                      // Statuses that are fully locked (no further editing allowed)
+                      $isHardLocked = in_array($selectedStatus, ['shipped', 'delivered', 'cancelled']);
+                      // Confirmed is editable but restricted to confirmed→shipped only
+                      $isConfirmedEditable = ($selectedStatus === 'confirmed');
+                    @endphp
+                    @if($isHardLocked || $hasLockedItem)
                     <input type="hidden" name="items[{{ $i }}][status]" value="{{ $selectedStatus }}">
                     <span class="status-badge-locked status-badge-{{ $selectedStatus }}">
                       {{ ucfirst($selectedStatus) }}
                     </span>
+                    @elseif($isConfirmedEditable)
+                    {{-- Confirmed: editable dropdown restricted to confirmed / shipped only --}}
+                    <select name="items[{{ $i }}][status]" class="form-control status-select" data-order-item-id="{{ $isArr ? ($it['id'] ?? '') : ($it->id ?? '') }}" data-old-status="confirmed">
+                      @foreach(['confirmed','shipped'] as $st)
+                      <option value="{{ $st }}" {{ ($selectedStatus == $st) ? 'selected' : '' }}>{{ ucfirst($st) }}</option>
+                      @endforeach
+                    </select>
                     @else
                     <select name="items[{{ $i }}][status]" class="form-control status-select" data-order-item-id="{{ $isArr ? ($it['id'] ?? '') : ($it->id ?? '') }}" data-old-status="{{ $isArr ? ($it['status'] ?? 'pending') : ($it->status ?? 'pending') }}">
                       @foreach(['pending','draft','confirmed','shipped','delivered','cancelled'] as $st)
@@ -1995,23 +2009,22 @@
 
       if (!orderItemId) return;
 
-      if (newStatus === 'confirmed' && oldStatus !== 'confirmed') {
+      // Stock check required for both 'confirmed' and 'shipped' transitions
+      var needsStockCheck = (newStatus === 'confirmed' && oldStatus !== 'confirmed') ||
+                            (newStatus === 'shipped'   && oldStatus === 'confirmed');
+
+      if (needsStockCheck) {
+        var alertMsg = newStatus === 'confirmed' ? 'Cannot confirm — stock issues:\n\n' : 'Cannot ship — stock issues:\n\n';
         $.ajax({
           url: "{{ route('api.item-variants.check-stock') }}",
           type: 'GET',
-          data: {
-            order_item_id: orderItemId
-          },
+          data: { order_item_id: orderItemId },
           success: function(res) {
             if (!res.ok) {
-              var messages = res.issues.map(function(i) {
-                return i.message;
-              }).join('\n');
-              alert('Cannot confirm — stock issues:\n\n' + messages);
+              var messages = res.issues.map(function(i) { return i.message; }).join('\n');
+              alert(alertMsg + messages);
               $select.val(oldStatus);
-              try {
-                $select.trigger('change.select2');
-              } catch (e) {}
+              try { $select.trigger('change.select2'); } catch (e) {}
               return;
             }
             updateRowStatus($select, orderItemId, newStatus, oldStatus);
@@ -2039,11 +2052,19 @@
         success: function(res) {
           if (res.success) {
             $select.data('old-status', newStatus);
+
+            // After confirming: restrict dropdown to confirmed/shipped only
+            if (newStatus === 'confirmed') {
+              restrictStatusToShipped($select);
+            }
+            // After shipping: lock row (replace dropdown with badge)
+            if (newStatus === 'shipped') {
+              lockStatusAsBadge($select, newStatus);
+            }
+
             var $badge = $('<span class="badge badge-success ml-1">Saved</span>');
             $select.after($badge);
-            setTimeout(function() {
-              $badge.remove();
-            }, 1500);
+            setTimeout(function() { $badge.remove(); }, 1500);
           } else {
             alert(res.message || 'Failed to update status.');
             $select.val(oldStatus);
@@ -2057,6 +2078,29 @@
           $select.val(oldStatus);
         }
       });
+    }
+
+    // Restrict a status <select> to only confirmed / shipped options
+    function restrictStatusToShipped($select) {
+      var name = $select.attr('name');
+      var id   = $select.data('order-item-id');
+      $select.html(
+        '<option value="confirmed">Confirmed</option>' +
+        '<option value="shipped">Shipped</option>'
+      );
+      $select.val('confirmed');
+    }
+
+    // Replace dropdown with a locked badge (for shipped / delivered / cancelled)
+    function lockStatusAsBadge($select, status) {
+      var name = $select.attr('name');
+      $select.after(
+        '<input type="hidden" name="' + name + '" value="' + status + '">' +
+        '<span class="status-badge-locked status-badge-' + status + '">' +
+          status.charAt(0).toUpperCase() + status.slice(1) +
+        '</span>'
+      );
+      $select.remove();
     }
 
     refreshAllVariantCells();

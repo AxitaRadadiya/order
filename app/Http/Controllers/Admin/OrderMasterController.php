@@ -389,8 +389,24 @@ class OrderMasterController extends Controller
 
         $order->load('items');
 
-        $data          = array_merge($this->viewData(), compact('order'));
-        $data['terms'] = Setting::getValue('terms_and_conditions', '');
+        // Lock form fields when any item is shipped/delivered/cancelled.
+        // Confirmed items remain editable (can still be moved to shipped).
+        $hardLockedStatuses = ["shipped", "delivered", "cancelled"];
+        $hasLockedItem = $order->items->contains(
+            fn ($item) => in_array(strtolower($item->status ?? ""), $hardLockedStatuses)
+        );
+
+
+        // Lock form fields when any item is shipped/delivered/cancelled.
+        // Confirmed items remain editable (can still be moved to shipped).
+        $hardLockedStatuses = ['shipped', 'delivered', 'cancelled'];
+        $hasLockedItem = $order->items->contains(
+            fn ($item) => in_array(strtolower($item->status ?? ''), $hardLockedStatuses)
+        );
+
+        $data                  = array_merge($this->viewData(), compact('order'));
+        $data['terms']         = Setting::getValue('terms_and_conditions', '');
+        $data['hasLockedItem'] = $hasLockedItem;
 
         return view('admin.orders.edit', $data);
     }
